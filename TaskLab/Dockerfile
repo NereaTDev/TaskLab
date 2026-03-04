@@ -25,11 +25,6 @@ COPY . .
 # Install PHP dependencies and optimize autoloader
 RUN composer install --no-dev --prefer-dist --optimize-autoloader
 
-# Cache config, routes and views
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-
 # Expose port used by artisan serve
 EXPOSE 10000
 
