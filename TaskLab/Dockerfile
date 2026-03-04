@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Composer settings: allow root and no memory limit (Render containers can be tight)
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
 
 # Copy full Laravel app
 COPY . .
@@ -33,7 +36,8 @@ COPY . .
 # Copy built frontend assets from the first stage
 COPY --from=frontend /app/public/build ./public/build
 
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
+# Install PHP dependencies in non-interactive, optimized mode
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 EXPOSE 10000
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
