@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="max-w-6xl mx-auto py-8 px-4 space-y-4">
+    <div class="max-w-6xl mx-auto py-8 px-4 space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-semibold text-slate-900">Tasks</h1>
@@ -16,10 +16,20 @@
             </div>
         @endif
 
+        {{-- Stats cards estilo DevTask --}}
+        <x-task-stats :stats="$stats ?? []" />
+
+        @if(!$tasks->isEmpty())
+            {{-- Quick board estilo mini-Kanban --}}
+            <div class="mt-4">
+                <x-task-quick-board :tasks="$tasks->getCollection()" />
+            </div>
+        @endif
+
         @if($tasks->isEmpty())
             <p class="text-sm text-slate-500">No tasks yet.</p>
         @else
-            <div class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <table class="min-w-full text-xs">
                     <thead class="bg-slate-50 text-slate-500">
                         <tr>

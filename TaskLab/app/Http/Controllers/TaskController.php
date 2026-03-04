@@ -10,9 +10,18 @@ class TaskController extends Controller
 {
     public function index()
     {
+        // Listado paginado para la tabla principal
         $tasks = Task::latest()->paginate(15);
 
-        return view('tasks.index', compact('tasks'));
+        // Stats sencillas para el dashboard (inspirado en DevTask)
+        $stats = [
+            'total'       => Task::count(),
+            'pending'     => Task::where('status', 'new')->count(),
+            'in_progress' => Task::whereIn('status', ['in_refinement', 'ready_for_dev', 'in_progress'])->count(),
+            'done'        => Task::where('status', 'done')->count(),
+        ];
+
+        return view('tasks.index', compact('tasks', 'stats'));
     }
 
     public function create()
