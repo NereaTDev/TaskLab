@@ -12,7 +12,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
-  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+  <body class="min-h-screen bg-tasklab-bg text-tasklab-text antialiased">
     {{-- Global toast notifications for guest layouts --}}
     <x-toast :message="session('success') ?? session('status')" type="success" />
     <x-toast :message="session('error')" type="error" />

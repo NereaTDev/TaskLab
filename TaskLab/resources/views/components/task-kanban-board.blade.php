@@ -6,33 +6,33 @@
       'label'   => 'Pendiente',
       'statuses' => ['new', 'in_refinement', 'ready_for_dev'],
       'icon'    => 'clock',
-      'bg'      => 'bg-amber-50',
-      'header'  => 'bg-amber-50/80 border-amber-200',
-      'badge'   => 'bg-amber-100 text-amber-800',
+      'bg'      => 'bg-slate-900',
+      'header'  => 'bg-slate-800 border-slate-700',
+      'badge'   => 'bg-slate-700 text-slate-100',
     ],
     'in_progress' => [
       'label'    => 'En Progreso',
       'statuses' => ['in_progress'],
       'icon'     => 'bolt',
-      'bg'       => 'bg-sky-50',
-      'header'   => 'bg-sky-50/80 border-sky-200',
-      'badge'    => 'bg-sky-100 text-sky-800',
+      'bg'       => 'bg-slate-900',
+      'header'   => 'bg-sky-900/50 border-sky-700',
+      'badge'    => 'bg-sky-800 text-sky-100',
     ],
     'in_review' => [
       'label'    => 'En Revisión',
       'statuses' => ['blocked'],
       'icon'     => 'eye',
-      'bg'       => 'bg-violet-50',
-      'header'   => 'bg-violet-50/80 border-violet-200',
-      'badge'    => 'bg-violet-100 text-violet-800',
+      'bg'       => 'bg-slate-900',
+      'header'   => 'bg-violet-900/40 border-violet-700',
+      'badge'    => 'bg-violet-800 text-violet-100',
     ],
     'done' => [
       'label'    => 'Completada',
       'statuses' => ['done'],
       'icon'     => 'check',
-      'bg'       => 'bg-emerald-50',
-      'header'   => 'bg-emerald-50/80 border-emerald-200',
-      'badge'    => 'bg-emerald-100 text-emerald-800',
+      'bg'       => 'bg-slate-900',
+      'header'   => 'bg-emerald-900/40 border-emerald-700',
+      'badge'    => 'bg-emerald-800 text-emerald-100',
     ],
   ];
 
@@ -57,7 +57,7 @@
       $colTasks = $tasks->whereIn('status', $col['statuses']);
       $count = $colTasks->count();
     @endphp
-    <div class="rounded-xl border border-slate-200 {{ $col['bg'] }} flex flex-col min-h-[400px]">
+    <div class="rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]">
       {{-- Encabezado de columna --}}
       <div class="flex items-center justify-between px-3 py-2.5 rounded-t-xl border-b {{ $col['header'] }}">
         <div class="flex items-center gap-2">
@@ -70,7 +70,7 @@
           @else
             <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           @endif
-          <span class="text-sm font-semibold text-slate-800">{{ $col['label'] }}</span>
+          <span class="text-sm font-semibold text-tasklab-text">{{ $col['label'] }}</span>
         </div>
         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $col['badge'] }}">{{ $count }}</span>
         @if(in_array($key, ['pending', 'in_progress']))
@@ -82,7 +82,7 @@
 
       <div class="flex-1 p-2 space-y-2 overflow-y-auto">
         @forelse($colTasks as $task)
-          <a href="{{ route('tasks.show', $task) }}" class="block rounded-lg border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md hover:border-slate-300 transition-shadow">
+          <a href="{{ route('tasks.show', $task) }}" class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow">
             <h3 class="text-sm font-medium text-slate-900 line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
             <div class="mt-2 flex flex-wrap gap-1">
               <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
