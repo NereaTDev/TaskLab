@@ -303,4 +303,47 @@ class TeamController extends Controller
             'value'   => $value->name,
         ]);
     }
+
+    public function updateUserRole(Request $request)
+    {
+        $current = $request->user();
+
+        // Solo el Super Admin puede gestionar roles desde Equipo
+        abort_unless($current && $current->isSuperAdmin(), 403);
+
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'role'    => ['required', 'string', 'in:standard,admin,super_admin'],
+        ]);
+
+        /** @var User $user */
+        $user = User::findOrFail($validated['user_id']);
+
+        // No gestionamos aquí al propio Super Admin principal si en algún momento se quiere blindar
+        // (por ahora solo aplicamos reglas generales: el comando ensure-super-admin puede restaurarlo).
+
+        switch ($validated['role']) {
+            case 'standard':
+                $user->is_admin = false;
+                $user->is_super_admin = false;
+                break;
+            case 'admin':
+                $user->is_admin = true;
+                $user->is_super_admin = false;
+                break;
+            case 'super_admin':
+                $user->is_admin = true;
+                $user->is_super_admin = true;
+                break;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status'         => 'ok',
+            'user_id'        => $user->id,
+            'is_admin'       => (bool) $user->is_admin,
+            'is_super_admin' => (bool) $user->is_super_admin,
+        ]);
+    }
 }

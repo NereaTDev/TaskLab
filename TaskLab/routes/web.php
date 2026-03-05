@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     Route::post('/team/reassign-department', [TeamController::class, 'reassignDepartment'])->name('team.reassign-department');
     Route::post('/team/reassign-category', [TeamController::class, 'reassignCategory'])->name('team.reassign-category');
+    Route::post('/team/update-role', [TeamController::class, 'updateUserRole'])->name('team.users.update-role');
 
     // Configuración (solo Super Admin, enforcement en controller)
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
