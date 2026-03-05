@@ -16,8 +16,19 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
+        // Ensure a developer profile object is always available for the view (even if not persisted yet)
+        $developerProfile = $user->developerProfile ?? $user->developerProfile()->make([
+            'type'               => null,
+            'areas'              => [],
+            'max_parallel_tasks' => null,
+            'active'             => false,
+        ]);
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user'             => $user,
+            'developerProfile' => $developerProfile,
         ]);
     }
 
@@ -26,13 +37,46 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Handle developer profile fields (optional)
+        $devData = $request->validate([
+            'developer.type'               => ['nullable', 'in:frontend,backend,fullstack'],
+            'developer.areas'              => ['nullable', 'array'],
+            'developer.areas.*'            => ['in:web,plataforma,frontierz,dashboard_empresas'],
+            'developer.max_parallel_tasks' => ['nullable', 'integer', 'min:1'],
+            'developer.active'             => ['nullable', 'boolean'],
+        ]);
+
+        if (! empty($devData)) {
+            $payload = [
+                'type'               => $devData['developer']['type'] ?? null,
+                'areas'              => $devData['developer']['areas'] ?? [],
+                'max_parallel_tasks' => $devData['developer']['max_parallel_tasks'] ?? null,
+                'active'             => $devData['developer']['active'] ?? false,
+            ];
+
+            // If type is null and no areas are provided, we can treat it as "no dev profile"
+            if ($payload['type'] === null && empty($payload['areas'])) {
+                // Optional: delete existing profile or leave as-is. For now, we keep it but mark inactive.
+                if ($user->developerProfile) {
+                    $user->developerProfile->update([
+                        'areas'  => [],
+                        'active' => false,
+                    ]);
+                }
+            } else {
+                $user->developerProfile()->updateOrCreate([], $payload);
+            }
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
