@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-body text-tasklab-muted">
-            {{ __("Update your account's profile information.") }}
+            {{ __("Update your account's basic profile information.") }}
         </p>
     </header>
 
@@ -51,39 +51,6 @@
                 @endif
             </div>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <x-input-label for="department" :value="__('Department')" />
-                <x-text-input id="department" name="department" type="text" class="mt-1 block w-full" :value="old('department', $user->department)" placeholder="e.g. Product, Tech, CX" />
-                <x-input-error class="mt-2" :messages="$errors->get('department')" />
-            </div>
-
-            <div>
-                <x-input-label for="position" :value="__('Position / Role')" />
-                <x-text-input id="position" name="position" type="text" class="mt-1 block w-full" :value="old('position', $user->position)" placeholder="e.g. Frontend dev, PM" />
-                <x-input-error class="mt-2" :messages="$errors->get('position')" />
-            </div>
-        </div>
-
-        @if (! method_exists($user, 'isSuperAdmin') || ! $user->isSuperAdmin())
-            <div>
-                <label class="inline-flex items-center gap-2 text-label text-tasklab-muted">
-                    <input type="hidden" name="is_admin" value="0" />
-                    <input
-                        type="checkbox"
-                        name="is_admin"
-                        value="1"
-                        @checked(old('is_admin', $user->is_admin))
-                        class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted"
-                    >
-                    <span>{{ __('Administrator') }}</span>
-                </label>
-                <p class="mt-1 text-label text-tasklab-muted">
-                    {{ __('Admins can manage TaskLab configuration and team settings (future behavior).') }}
-                </p>
-            </div>
-        @endif
 
         <div class="flex items-center gap-4">
             <x-primary-button class="text-body">{{ __('Save') }}</x-primary-button>

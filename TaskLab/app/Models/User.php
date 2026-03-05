@@ -57,6 +57,16 @@ class User extends Authenticatable
         return $this->hasOne(DeveloperProfile::class);
     }
 
+    public function categoryAssignments()
+    {
+        return $this->hasMany(UserCategoryAssignment::class);
+    }
+
+    public function categoryValues()
+    {
+        return $this->belongsToMany(CategoryValue::class, 'user_category_assignments');
+    }
+
     public function isSuperAdmin(): bool
     {
         return (bool) ($this->is_super_admin ?? false);

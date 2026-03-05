@@ -110,7 +110,7 @@
                   </button>
 
                   {{-- Dropdown usuario --}}
-                  <div x-show="open" x-transition class="absolute right-4 top-14 w-44 rounded-xl border border-slate-800 bg-tasklab-bg-muted shadow-card text-xs z-50">
+                  <div x-show="open" x-transition class="absolute top-16 w-44 rounded-xl border border-slate-800 bg-tasklab-bg-muted shadow-card text-xs z-50">
                     <div class="px-3 py-2 border-b border-slate-800">
                       <p class="font-medium text-tasklab-text truncate">{{ Auth::user()->name }}</p>
                       <p class="text-[11px] text-tasklab-muted truncate">{{ Auth::user()->email }}</p>
