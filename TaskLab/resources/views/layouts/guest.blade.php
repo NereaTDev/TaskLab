@@ -20,11 +20,11 @@
     <div class="min-h-screen flex items-center justify-center px-4">
       <div class="w-full max-w-md">
         <div class="flex items-center justify-center mb-6">
-          <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 text-sm font-semibold text-white mr-2">TL</span>
-          <span class="text-sm font-semibold tracking-tight text-slate-900">TaskLab</span>
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-tasklab-primary text-sm font-semibold text-white mr-2">TL</span>
+          <span class="text-sm font-semibold tracking-tight text-tasklab-text">TaskLab</span>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white/80 shadow-sm px-6 py-5">
+        <div class="rounded-2xl border border-slate-800 bg-tasklab-bg-muted shadow-card px-6 py-5">
           {{ $slot }}
         </div>
       </div>
