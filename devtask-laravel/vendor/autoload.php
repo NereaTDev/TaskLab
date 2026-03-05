@@ -1,1 +1,0 @@
-<?php // Autoloader placeholder
