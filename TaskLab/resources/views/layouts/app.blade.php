@@ -19,7 +19,7 @@
       <x-toast :message="session('error')" type="error" />
 
       {{-- Header estilo DevTask Manager --}}
-      <header class="border-b border-slate-800 bg-tasklab-bg-muted">
+      <header class="bg-tasklab-bg-muted">
         <div class="max-w-[1600px] mx-auto px-4 py-3">
           <div class="flex items-center justify-between gap-4">
             {{-- Logo + título --}}
@@ -61,10 +61,7 @@
                     <p class="text-[11px] text-tasklab-muted leading-tight">Project Manager</p>
                   </div>
                 </div>
-                <a href="{{ route('tasks.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-slate-800">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  Nueva Tarea
-                </a>
+
                 <form method="POST" action="{{ route('logout') }}" class="hidden sm:inline">
                   @csrf
                   <button type="submit" class="text-xs text-tasklab-muted hover:text-tasklab-text">Cerrar sesión</button>
@@ -80,31 +77,44 @@
         </div>
 
         {{-- Tabs de navegación --}}
-        <nav class="border-t border-slate-100">
-          <div class="max-w-[1600px] mx-auto px-4">
-            <div class="flex gap-6 text-sm">
-              <a href="{{ route('tasks.index') }}" class="flex items-center gap-2 py-3 border-b-2 {{ request()->routeIs('tasks.index') && in_array(request()->get('view'), [null, 'dashboard'], true) ? 'border-tasklab-primary text-tasklab-text font-medium' : 'border-transparent text-tasklab-muted hover:text-tasklab-text' }}">
+        <nav class="border-t border-slate-800">
+          <div class="max-w-[1600px] mx-auto px-4 py-2 flex justify-between items-center gap-4">
+            <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-1 py-1 text-xs">
+              <a href="{{ route('tasks.index') }}"
+                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('tasks.index') && in_array(request()->get('view'), [null, 'dashboard'], true) ? 'bg-tasklab-bg text-tasklab-text' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 Dashboard
               </a>
-              <a href="{{ route('tasks.index') }}?view=board" class="flex items-center gap-2 py-3 border-b-2 {{ request()->get('view') === 'board' ? 'border-tasklab-primary text-tasklab-text font-medium' : 'border-transparent text-tasklab-muted hover:text-tasklab-text' }}">
+
+              <span class="h-5 w-px bg-slate-700"></span>
+
+              <a href="{{ route('tasks.index') }}?view=board"
+                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'board' ? 'bg-tasklab-bg text-tasklab-text' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 Tablero
               </a>
-              <a href="{{ route('tasks.index') }}?view=analysis" class="flex items-center gap-2 py-3 border-b-2 {{ request()->get('view') === 'analysis' ? 'border-tasklab-primary text-tasklab-text font-medium' : 'border-transparent text-tasklab-muted hover:text-tasklab-text' }}">
+
+              <a href="{{ route('tasks.index') }}?view=analysis"
+                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'analysis' ? 'bg-tasklab-bg text-tasklab-text' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 Análisis
               </a>
 
               @auth
                   @if (auth()->user()->is_admin)
-                      <a href="{{ route('team.index') }}" class="flex items-center gap-2 py-3 border-b-2 {{ request()->routeIs('team.index') ? 'border-tasklab-primary text-tasklab-text font-medium' : 'border-transparent text-tasklab-muted hover:text-tasklab-text' }}">
+                      <a href="{{ route('team.index') }}"
+                         class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('team.index') ? 'bg-tasklab-bg text-tasklab-text' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20h6M3 20h5v-2a4 4 0 00-3-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0zM5 10a4 4 0 100-8 4 4 0 000 8zM19 10a4 4 0 100-8 4 4 0 000 8z"/></svg>
                           Equipo
                       </a>
                   @endif
               @endauth
             </div>
+
+            <a href="{{ route('tasks.create') }}" class="inline-flex items-center gap-2 rounded-full bg-tasklab-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-tasklab-primary-soft">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Nueva tarea
+            </a>
           </div>
         </nav>
       </header>
