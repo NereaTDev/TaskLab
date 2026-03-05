@@ -29,17 +29,33 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        $validated = $request->validate([
+            'name'       => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+            'department' => ['nullable', 'string', 'max:255'],
+            'position'   => ['nullable', 'string', 'max:255'],
+            'user_type'  => ['required', 'in:requester,developer'],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'department' => $validated['department'] ?? null,
+            'position'   => $validated['position'] ?? null,
+            'user_type'  => $validated['user_type'] ?? 'requester',
         ]);
+
+        // If the user is a developer, create an initial developer profile
+        if ($user->user_type === 'developer') {
+            $user->developerProfile()->create([
+                'type'               => null,
+                'areas'              => [],
+                'max_parallel_tasks' => null,
+                'active'             => true,
+            ]);
+        }
 
         event(new Registered($user));
 
