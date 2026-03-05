@@ -51,21 +51,39 @@
               </button>
             </div>
 
-            {{-- Derecha: usuario + Nueva Tarea --}}
+            {{-- Derecha: usuario --}}
             <div class="flex items-center gap-3 ml-auto">
               @auth
-                <div class="hidden sm:flex items-center gap-2 text-left">
-                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-white">{{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}</span>
-                  <div>
-                    <p class="text-xs font-medium text-tasklab-text leading-tight">{{ Auth::user()->name }}</p>
-                    <p class="text-[11px] text-tasklab-muted leading-tight">Project Manager</p>
+                <div class="hidden sm:flex items-center gap-2 text-left" x-data="{ open: false }" @click.outside="open = false">
+                  <button type="button" class="inline-flex items-center gap-2" @click="open = !open">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-white">{{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}</span>
+                    <div class="text-left">
+                      <p class="text-xs font-medium text-tasklab-text leading-tight">{{ Auth::user()->name }}</p>
+                      <p class="text-[11px] text-tasklab-muted leading-tight">Project Manager</p>
+                    </div>
+                  </button>
+
+                  {{-- Dropdown usuario --}}
+                  <div x-show="open" x-transition class="absolute right-4 top-14 w-44 rounded-xl border border-slate-800 bg-tasklab-bg-muted shadow-card text-xs z-50">
+                    <div class="px-3 py-2 border-b border-slate-800">
+                      <p class="font-medium text-tasklab-text truncate">{{ Auth::user()->name }}</p>
+                      <p class="text-[11px] text-tasklab-muted truncate">{{ Auth::user()->email }}</p>
+                    </div>
+                    <div class="py-1">
+                      <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Perfil
+                      </a>
+                      <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center gap-2 px-3 py-1.5 text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
+                          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m0-10V5a2 2 0 114 0v1"/></svg>
+                          Cerrar sesión
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
-
-                <form method="POST" action="{{ route('logout') }}" class="hidden sm:inline">
-                  @csrf
-                  <button type="submit" class="text-xs text-tasklab-muted hover:text-tasklab-text">Cerrar sesión</button>
-                </form>
               @endauth
 
               @guest
@@ -77,7 +95,7 @@
         </div>
 
         {{-- Tabs de navegación --}}
-        <nav class="border-t border-slate-800">
+        <nav class="border-t border-slate-800 bg-tasklab-bg">
           <div class="max-w-[1600px] mx-auto px-4 py-2 flex justify-between items-center gap-4">
             <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-1 py-1 text-xs">
               <a href="{{ route('tasks.index') }}"
