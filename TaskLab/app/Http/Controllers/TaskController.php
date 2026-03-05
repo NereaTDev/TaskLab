@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\RefineTaskWithAi;
 use App\Models\Task;
+use App\Services\TaskAssignmentService;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -38,13 +39,15 @@ class TaskController extends Controller
         return view('tasks.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, TaskAssignmentService $assignmentService)
     {
         $validated = $request->validate([
-            'type'        => ['required', 'in:bug,feature,improvement,question'],
-            'url'         => ['nullable', 'string', 'max:255'],
-            'priority'    => ['required', 'in:low,medium,high,critical'],
-            'description' => ['required', 'string'],
+            'type'            => ['required', 'in:bug,feature,improvement,question'],
+            'url'             => ['nullable', 'string', 'max:255'],
+            'priority'        => ['required', 'in:low,medium,high,critical'],
+            'description'     => ['required', 'string'],
+            'area'            => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
+            'estimated_effort'=> ['nullable', 'in:low,medium,high'],
         ]);
 
         $descriptionRaw = $validated['description'];
@@ -53,20 +56,26 @@ class TaskController extends Controller
         }
 
         $task = Task::create([
-            'title'           => null,
-            'description_raw' => $descriptionRaw,
-            'type'            => $validated['type'],
-            'status'          => 'new',
-            'priority'        => $validated['priority'],
-            'reporter_id'     => auth()->id(),
-            'source'          => 'web_form',
+            'title'            => null,
+            'description_raw'  => $descriptionRaw,
+            'type'             => $validated['type'],
+            'status'           => 'new',
+            'priority'         => $validated['priority'],
+            'reporter_id'      => auth()->id(),
+            'source'           => 'web_form',
+            'area'             => $validated['area'] ?? null,
+            'estimated_effort' => $validated['estimated_effort'] ?? 'medium',
         ]);
 
+        // Lanzamos la IA de refinamiento
         RefineTaskWithAi::dispatch($task);
+
+        // Intentamos asignación automática (no falla si no encuentra dev)
+        $assignmentService->assign($task);
 
         return redirect()
             ->route('tasks.show', $task)
-            ->with('status', 'Task created. AI refinement in progress.');
+            ->with('status', 'Task created. AI refinement in progress and auto-assignment attempted.');
     }
 
     public function show(Task $task)

@@ -22,11 +22,13 @@ class Task extends Model
         'reporter_id',
         'assignee_id',
         'source',
+        'area',
+        'estimated_effort',
     ];
 
     protected $casts = [
-        'requirements' => 'array',
-        'test_cases'   => 'array',
+        'requirements'      => 'array',
+        'test_cases'        => 'array',
     ];
 
     public function reporter()
