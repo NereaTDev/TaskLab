@@ -3,12 +3,12 @@
         {{-- Barra de búsqueda y filtros (estilo DevTask) --}}
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div class="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-                <div class="flex-1 min-w-[200px] flex items-center gap-2 rounded-lg border border-slate-800 bg-tasklab-bg-muted px-3 py-2 text-sm">
+                <div class="flex-1 min-w-[200px] flex items-center gap-2 rounded-xl border border-slate-800 bg-tasklab-bg-muted px-3 py-1 text-sm">
                     <svg class="h-4 w-4 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
                         type="text"
                         placeholder="Buscar tareas..."
-                        class="w-full border-none text-sm text-tasklab-text placeholder:text-tasklab-muted focus:outline-none focus:ring-0"
+                        class="w-full bg-transparent border-none text-sm text-tasklab-text placeholder:text-tasklab-muted focus:outline-none focus:ring-0 p-1"
                     >
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5">
