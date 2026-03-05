@@ -56,7 +56,9 @@
             <div class="flex-1">
                 <x-input-label for="developer_max_parallel_tasks" :value="__('Max parallel tasks')" />
                 <x-text-input id="developer_max_parallel_tasks" name="developer[max_parallel_tasks]" type="number" min="1" class="mt-1 block w-full" :value="old('developer.max_parallel_tasks', $dev->max_parallel_tasks)" />
-                <p class="mt-1 text-xs text-gray-500">{{ __('Leave empty for no hard limit.') }}</p>
+                <p class="mt-1 text-xs text-gray-500">
+                    {{ __('Maximum number of active tasks TaskLab can auto-assign to you at the same time. Leave empty for no hard limit.') }}
+                </p>
             </div>
 
             <div class="pt-6">
