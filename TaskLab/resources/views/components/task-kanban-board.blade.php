@@ -8,7 +8,7 @@
       'icon'    => 'clock',
       'bg'      => 'bg-slate-900',
       'header'  => 'bg-slate-800 border-slate-700',
-      'badge'   => 'bg-slate-700 text-slate-100',
+      'badge'   => 'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40',
     ],
     'in_progress' => [
       'label'    => 'En Progreso',
