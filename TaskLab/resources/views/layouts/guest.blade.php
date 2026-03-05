@@ -13,6 +13,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
   <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    {{-- Global toast notifications for guest layouts --}}
+    <x-toast :message="session('success') ?? session('status')" type="success" />
+    <x-toast :message="session('error')" type="error" />
+
     <div class="min-h-screen flex items-center justify-center px-4">
       <div class="w-full max-w-md">
         <div class="flex items-center justify-center mb-6">

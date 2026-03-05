@@ -14,6 +14,10 @@
   </head>
   <body class="min-h-screen bg-white text-slate-900 antialiased">
     <div class="min-h-screen flex flex-col">
+      {{-- Global toast notifications --}}
+      <x-toast :message="session('success') ?? session('status')" type="success" />
+      <x-toast :message="session('error')" type="error" />
+
       {{-- Header estilo DevTask Manager --}}
       <header class="border-b border-slate-200 bg-white">
         <div class="max-w-[1600px] mx-auto px-4 py-3">
