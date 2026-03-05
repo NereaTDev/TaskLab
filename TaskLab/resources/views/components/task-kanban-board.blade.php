@@ -83,7 +83,7 @@
       <div class="flex-1 p-2 space-y-2 overflow-y-auto">
         @forelse($colTasks as $task)
           <a href="{{ route('tasks.show', $task) }}" class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow">
-            <h3 class="text-sm font-medium text-slate-900 line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
+            <h3 class="text-sm font-medium text-tasklab-text line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
             <div class="mt-2 flex flex-wrap gap-1">
               <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
                 {{ $task->priority === 'critical' ? 'Crítica' : ucfirst($task->priority) }}
@@ -92,7 +92,7 @@
                 {{ $typeLabels[$task->type] ?? ucfirst($task->type) }}
               </span>
             </div>
-            <div class="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
+            <div class="mt-2 flex items-center gap-3 text-[11px] text-tasklab-muted">
               <span class="flex items-center gap-1">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 —
@@ -102,11 +102,11 @@
                 {{ $task->created_at->format('d M') }}
               </span>
             </div>
-            <div class="mt-1.5 flex items-center gap-1 text-[11px] text-slate-500">
+            <div class="mt-1.5 flex items-center gap-1 text-[11px] text-tasklab-muted">
               <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
               {{ $task->assignee ? $task->assignee->name : 'Sin asignar' }}
             </div>
-            <p class="mt-1 text-[10px] text-slate-400">Admin Panel</p>
+            <p class="mt-1 text-[10px] text-tasklab-muted">Admin Panel</p>
             <div class="mt-2 flex flex-wrap gap-1">
               <span class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">#frontend</span>
               <span class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">#backend</span>

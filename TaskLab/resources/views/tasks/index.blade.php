@@ -3,12 +3,12 @@
         {{-- Barra de búsqueda y filtros (estilo DevTask) --}}
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div class="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-                <div class="flex-1 min-w-[200px] flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                    <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <div class="flex-1 min-w-[200px] flex items-center gap-2 rounded-lg border border-slate-800 bg-tasklab-bg-muted px-3 py-2 text-sm">
+                    <svg class="h-4 w-4 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
                         type="text"
                         placeholder="Buscar tareas..."
-                        class="w-full border-none text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                        class="w-full border-none text-sm text-tasklab-text placeholder:text-tasklab-muted focus:outline-none focus:ring-0"
                     >
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5">
@@ -34,7 +34,7 @@
                     </button>
                 </div>
             </div>
-            <a href="{{ route('tasks.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <a href="{{ route('tasks.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-lg bg-tasklab-primary px-4 py-2 text-sm font-medium text-white hover:bg-tasklab-primary-soft">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Nueva Tarea
             </a>
