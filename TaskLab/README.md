@@ -5,7 +5,7 @@ Internal tool to capture bug/feature requests, auto-refine them with AI into cle
 ## Stack
 
 - Laravel 12
-- Blade + Tailwind CSS (via CDN)
+- Blade + Tailwind CSS (via Vite build)
 - Laravel queue jobs for asynchronous "AI refinement" (currently a fake implementation)
 
 ## Core concepts
@@ -29,6 +29,13 @@ php artisan migrate
 php artisan serve
 ```
 
+## Production notes (Render + Supabase)
+
+- Use `DB_CONNECTION=pgsql` and the connection parameters from Supabase (host, port, database, user, password).
+- Set `SESSION_DRIVER=file` unless you also create the `sessions` table and want DB-backed sessions.
+- Ensure `APP_KEY` is set from `php artisan key:generate --show`.
+- Do **not** commit `public/hot`; assets are served from `public/build` built by Vite.
+
 ## Main routes
 
 - `GET /` → redirect to `/tasks`
@@ -47,7 +54,7 @@ php artisan serve
 
 ## Next steps / ideas
 
-- Add authentication and roles (`requester`, `developer`, `admin`).
+- Add roles (`requester`, `developer`, `admin`).
 - Replace fake AI with a real provider.
 - Add attachments (screenshots) to tasks.
 - Add a Teams integration endpoint to create tasks from channel messages.
