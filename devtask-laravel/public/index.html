@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTask Manager - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .task-card { transition: all 0.2s ease; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+                        <i class="fas fa-tasks text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">DevTask Manager</h1>
+                        <p class="text-xs text-slate-500">Gestión de tareas para equipos</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex items-center gap-6">
+                    <div class="flex items-center gap-2 text-sm text-slate-600">
+                        <i class="fas fa-bolt text-yellow-500"></i>
+                        <span>Auto-asignación</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="autoAssignToggle" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                    </div>
+                    <button class="relative p-2 text-slate-600 hover:text-slate-900">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    <div class="flex items-center gap-2 pl-4 border-l border-slate-200">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-medium">AD</div>
+                        <div class="hidden lg:block">
+                            <p class="text-sm font-medium">Admin User</p>
+                            <p class="text-xs text-slate-500">Project Manager</p>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">Total Tareas</span>
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><i class="fas fa-clipboard-list text-blue-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold" id="stat-total">12</div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">Pendientes</span>
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><i class="fas fa-clock text-amber-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold" id="stat-pending">3</div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">En Progreso</span>
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center"><i class="fas fa-spinner text-purple-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold" id="stat-progress">4</div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">Completadas</span>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center"><i class="fas fa-check-circle text-emerald-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold" id="stat-completed">3</div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">Vencidas</span>
+                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold" id="stat-overdue">2</div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-500">Tasa de Éxito</span>
+                    <div class="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center"><i class="fas fa-chart-line text-cyan-500"></i></div>
+                </div>
+                <div class="text-2xl font-bold">25%</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Left: Filters & Board -->
+            <div class="lg:col-span-3 space-y-4">
+                <!-- Filters -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <div class="relative flex-1 min-w-[250px]">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="searchInput" placeholder="Buscar tareas..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <select id="typeFilter" class="px-4 py-2 border border-slate-200 rounded-lg">
+                            <option value="">Todos los tipos</option>
+                            <option value="evolutiva">Evolutiva</option>
+                            <option value="correctiva">Correctiva</option>
+                            <option value="preventiva">Preventiva</option>
+                            <option value="soporte">Soporte</option>
+                        </select>
+                        <select id="priorityFilter" class="px-4 py-2 border border-slate-200 rounded-lg">
+                            <option value="">Todas las prioridades</option>
+                            <option value="critica">Crítica</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                        <button onclick="openModal('createTaskModal')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Nueva Tarea
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kanban Board -->
+                <div class="bg-slate-100 rounded-xl p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="kanbanBoard">
+                        <!-- Columns will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Team -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="p-4 border-b border-slate-100">
+                        <h3 class="font-semibold flex items-center gap-2"><i class="fas fa-users"></i> Equipo</h3>
+                    </div>
+                    <div class="p-4 space-y-4" id="teamList">
+                        <!-- Team members populated by JS -->
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                    <h4 class="font-medium text-sm mb-2">Auto-asignación activa</h4>
+                    <p class="text-xs text-slate-600 mb-3">Las nuevas tareas se asignan automáticamente.</p>
+                    <div class="flex items-center gap-2 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="text-emerald-600 font-medium">Sistema activo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Task Modal -->
+    <div id="createTaskModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-semibold">Crear Nueva Tarea</h3>
+                <button onclick="closeModal('createTaskModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="createTaskForm" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título *</label>
+                    <input type="text" name="title" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ej: Implementar módulo">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tipo</label>
+                        <select name="type" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                            <option value="evolutiva">Evolutiva</option>
+                            <option value="correctiva">Correctiva</option>
+                            <option value="preventiva">Preventiva</option>
+                            <option value="soporte">Soporte</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Prioridad</label>
+                        <select name="priority" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                            <option value="critica">Crítica</option>
+                            <option value="alta">Alta</option>
+                            <option value="media" selected>Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Asignar a</label>
+                    <select name="assignee_id" id="assigneeSelect" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                        <option value="">Auto-asignar</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-4">
+                    <button type="button" onclick="closeModal('createTaskModal')" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const developers = [
+            { id: '1', name: 'Ana García', avatar: 'AG', role: 'Senior Frontend', skills: ['React', 'TypeScript'], max_tasks: 5, current_tasks: 2 },
+            { id: '2', name: 'Carlos López', avatar: 'CL', role: 'Backend Lead', skills: ['Node.js', 'Python'], max_tasks: 4, current_tasks: 1 },
+            { id: '3', name: 'María Rodríguez', avatar: 'MR', role: 'Full Stack', skills: ['React', 'Node.js'], max_tasks: 5, current_tasks: 3 },
+            { id: '4', name: 'Juan Martínez', avatar: 'JM', role: 'DevOps', skills: ['Docker', 'AWS'], max_tasks: 3, current_tasks: 1 },
+            { id: '5', name: 'Laura Sánchez', avatar: 'LS', role: 'Junior Dev', skills: ['JavaScript', 'HTML'], max_tasks: 4, current_tasks: 2 },
+        ];
+
+        const taskTitles = {
+            evolutiva: ['Implementar módulo de reportes', 'Agregar exportación CSV', 'Crear dashboard'],
+            correctiva: ['Fix: Error en login', 'Fix: Memory leak', 'Fix: Validación'],
+            preventiva: ['Actualizar dependencias', 'Optimizar queries', 'Refactorizar'],
+            soporte: ['Atender ticket #2345', 'Revisar incidente', 'Configurar ambiente']
+        };
+
+        let tasks = [];
+        let autoAssign = true;
+
+        // Generate initial tasks
+        function generateTasks() {
+            const types = ['evolutiva', 'correctiva', 'preventiva', 'soporte'];
+            const priorities = ['critica', 'alta', 'media', 'baja'];
+            const statuses = ['pendiente', 'en-progreso', 'en-revision', 'completada'];
+            const projects = ['E-commerce', 'CRM', 'Mobile App', 'API Gateway'];
+            
+            for (let i = 0; i < 12; i++) {
+                const type = types[Math.floor(Math.random() * types.length)];
+                const priority = priorities[Math.floor(Math.random() * priorities.length)];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const assignee = developers[Math.floor(Math.random() * developers.length)];
+                
+                tasks.push({
+                    id: 'task-' + i,
+                    title: taskTitles[type][Math.floor(Math.random() * taskTitles[type].length)],
+                    description: `Tarea ${type}`,
+                    type,
+                    priority,
+                    status,
+                    assignee,
+                    due_date: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    estimated_hours: Math.floor(Math.random() * 14) + 2,
+                    tags: ['frontend', 'backend'].slice(0, Math.floor(Math.random() * 2) + 1),
+                    project: projects[Math.floor(Math.random() * projects.length)]
+                });
+            }
+        }
+
+        // Get available developer
+        function getAvailableDeveloper() {
+            const available = developers.filter(d => d.current_tasks < d.max_tasks);
+            if (available.length === 0) return null;
+            return available.sort((a, b) => a.current_tasks - b.current_tasks)[0];
+        }
+
+        // Priority colors
+        function priorityColor(p) {
+            return { critica: 'bg-red-500 text-white', alta: 'bg-orange-500 text-white', media: 'bg-yellow-500 text-black', baja: 'bg-green-500 text-white' }[p];
+        }
+
+        function typeColor(t) {
+            return { evolutiva: 'bg-blue-100 text-blue-700', correctiva: 'bg-red-100 text-red-700', preventiva: 'bg-purple-100 text-purple-700', soporte: 'bg-slate-100 text-slate-700' }[t];
+        }
+
+        function statusColor(s) {
+            return { pendiente: 'bg-amber-100 text-amber-700', 'en-progreso': 'bg-blue-100 text-blue-700', 'en-revision': 'bg-purple-100 text-purple-700', completada: 'bg-emerald-100 text-emerald-700' }[s];
+        }
+
+        function statusLabel(s) {
+            return { pendiente: 'Pendiente', 'en-progreso': 'En Progreso', 'en-revision': 'En Revisión', completada: 'Completada' }[s];
+        }
+
+        // Render kanban
+        function renderKanban() {
+            const columns = {
+                pendiente: 'Pendiente',
+                'en-progreso': 'En Progreso',
+                'en-revision': 'En Revisión',
+                completada: 'Completada'
+            };
+            
+            const filters = {
+                search: document.getElementById('searchInput').value.toLowerCase(),
+                type: document.getElementById('typeFilter').value,
+                priority: document.getElementById('priorityFilter').value
+            };
+
+            const filteredTasks = tasks.filter(t => {
+                if (filters.search && !t.title.toLowerCase().includes(filters.search)) return false;
+                if (filters.type && t.type !== filters.type) return false;
+                if (filters.priority && t.priority !== filters.priority) return false;
+                return true;
+            });
+
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = '';
+
+            Object.entries(columns).forEach(([status, label]) => {
+                const columnTasks = filteredTasks.filter(t => t.status === status);
+                const nextStatus = { pendiente: 'en-progreso', 'en-progreso': 'en-revision', 'en-revision': 'completada' }[status];
+                
+                board.innerHTML += `
+                    <div class="bg-slate-50 rounded-lg p-3">
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border mb-3 ${statusColor(status)}">
+                            <i class="fas fa-${status === 'pendiente' ? 'clock' : status === 'en-progreso' ? 'spinner' : status === 'en-revision' ? 'eye' : 'check-circle'}"></i>
+                            <span class="font-medium text-sm">${label}</span>
+                            <span class="bg-white/50 text-xs rounded-full px-2 py-0.5">${columnTasks.length}</span>
+                        </div>
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
+                            ${columnTasks.map(task => `
+                                <div class="task-card bg-white rounded-lg p-4 shadow-sm border-l-4 ${status === 'pendiente' ? 'border-l-amber-400' : status === 'en-progreso' ? 'border-l-blue-400' : status === 'en-revision' ? 'border-l-purple-400' : 'border-l-emerald-400'}">
+                                    <h4 class="font-semibold text-sm mb-2">${task.title}</h4>
+                                    <div class="flex flex-wrap gap-1.5 mb-2">
+                                        <span class="text-xs px-2 py-0.5 rounded-full ${priorityColor(task.priority)}">${task.priority}</span>
+                                        <span class="text-xs px-2 py-0.5 rounded-full ${typeColor(task.type)}">${task.type}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                        <span><i class="fas fa-clock mr-1"></i>${task.estimated_hours}h</span>
+                                        <span><i class="fas fa-calendar mr-1"></i>${task.due_date}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium">${task.assignee?.avatar || '?'}</div>
+                                            <span class="text-xs text-slate-500">${task.assignee?.name.split(' ')[0] || 'Sin asignar'}</span>
+                                        </div>
+                                        ${nextStatus ? `<button onclick="moveTask('${task.id}', '${nextStatus}')" class="text-xs text-blue-600 hover:text-blue-700"><i class="fas fa-arrow-right"></i></button>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${columnTasks.length === 0 ? '<div class="text-center py-8 text-slate-400"><i class="fas fa-inbox text-3xl mb-2"></i><p class="text-sm">Sin tareas</p></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Render team
+        function renderTeam() {
+            const list = document.getElementById('teamList');
+            list.innerHTML = developers.map(dev => {
+                const percent = (dev.current_tasks / dev.max_tasks) * 100;
+                const color = percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-yellow-500' : 'bg-emerald-500';
+                return `
+                    <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-200 to-blue-100 flex items-center justify-center text-sm font-medium border border-blue-200">${dev.avatar}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-medium text-sm">${dev.name}</h4>
+                                <span class="text-xs px-2 py-0.5 rounded-full ${dev.current_tasks >= dev.max_tasks ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}">${dev.current_tasks}/${dev.max_tasks}</span>
+                            </div>
+                            <p class="text-xs text-slate-500">${dev.role}</p>
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs mb-1"><span class="text-slate-500">Carga</span><span>${Math.round(percent)}%</span></div>
+                                <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${color}" style="width: ${percent}%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Move task
+        function moveTask(taskId, newStatus) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = newStatus;
+                renderKanban();
+                updateStats();
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('stat-total').textContent = tasks.length;
+            document.getElementById('stat-pending').textContent = tasks.filter(t => t.status === 'pendiente').length;
+            document.getElementById('stat-progress').textContent = tasks.filter(t => t.status === 'en-progreso').length;
+            document.getElementById('stat-completed').textContent = tasks.filter(t => t.status === 'completada').length;
+            document.getElementById('stat-overdue').textContent = tasks.filter(t => t.status !== 'completada' && new Date(t.due_date) < new Date()).length;
+        }
+
+        // Modal functions
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Populate assignee select
+        function populateAssigneeSelect() {
+            const select = document.getElementById('assigneeSelect');
+            select.innerHTML = '<option value="">Auto-asignar</option>' + 
+                developers.map(d => `<option value="${d.id}">${d.name} (${d.current_tasks}/${d.max_tasks})</option>`).join('');
+        }
+
+        // Create task
+        document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const assigneeId = formData.get('assignee_id');
+            let assignee = null;
+            
+            if (assigneeId) {
+                assignee = developers.find(d => d.id === assigneeId);
+            } else if (autoAssign) {
+                assignee = getAvailableDeveloper();
+            }
+            
+            if (assignee) assignee.current_tasks++;
+            
+            tasks.push({
+                id: 'task-' + Date.now(),
+                title: formData.get('title'),
+                type: formData.get('type'),
+                priority: formData.get('priority'),
+                status: 'pendiente',
+                assignee,
+                due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                estimated_hours: 4,
+                tags: [],
+                project: 'General'
+            });
+            
+            closeModal('createTaskModal');
+            e.target.reset();
+            renderKanban();
+            renderTeam();
+            updateStats();
+        });
+
+        // Filter listeners
+        document.getElementById('searchInput').addEventListener('input', renderKanban);
+        document.getElementById('typeFilter').addEventListener('change', renderKanban);
+        document.getElementById('priorityFilter').addEventListener('change', renderKanban);
+
+        // Auto-assign toggle
+        document.getElementById('autoAssignToggle').addEventListener('change', function(e) {
+            autoAssign = e.target.checked;
+        });
+
+        // Initialize
+        generateTasks();
+        populateAssigneeSelect();
+        renderKanban();
+        renderTeam();
+        updateStats();
+
+        // Simulate new tasks
+        setInterval(() => {
+            if (Math.random() > 0.7 && autoAssign) {
+                const types = ['evolutiva', 'correctiva', 'preventiva', 'soporte'];
+                const priorities = ['critica', 'alta', 'media', 'baja'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const assignee = getAvailableDeveloper();
+                
+                if (assignee) {
+                    assignee.current_tasks++;
+                    tasks.push({
+                        id: 'task-' + Date.now(),
+                        title: '[AUTO] ' + taskTitles[type][Math.floor(Math.random() * taskTitles[type].length)],
+                        type,
+                        priority: priorities[Math.floor(Math.random() * priorities.length)],
+                        status: 'pendiente',
+                        assignee,
+                        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        estimated_hours: Math.floor(Math.random() * 8) + 2,
+                        tags: [],
+                        project: 'Auto-generated'
+                    });
+                    renderKanban();
+                    renderTeam();
+                    updateStats();
+                }
+            }
+        }, 15000);
+    </script>
+</body>
+</html>
