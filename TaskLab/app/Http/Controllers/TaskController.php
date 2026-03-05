@@ -12,9 +12,20 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+
+        // Vista solicitada: dashboard | board | analysis (por defecto dashboard)
         $view = $request->get('view', 'dashboard');
 
-        // Stats globales para tarjetas
+        // Usuarios estándar: siempre dashboard personal
+        if ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser()) {
+            $view = 'dashboard';
+        } else {
+            // Admin / Super Admin: solo vistas conocidas
+            $view = in_array($view, ['dashboard', 'board', 'analysis'], true) ? $view : 'dashboard';
+        }
+
+        // Stats globales para tarjetas (por ahora no filtramos por usuario)
         $stats = [
             'total'        => Task::count(),
             'pending'      => Task::whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
@@ -191,16 +202,16 @@ class TaskController extends Controller
             }
         }
 
-        $boardTasks = null;   // tablero global
-        $dashboardTasks = null; // tareas del usuario
+        $boardTasks = null;     // tablero global (solo admins)
+        $dashboardTasks = null; // tareas del usuario (dashboard personal)
 
         if ($view === 'board') {
-            // Tablero: todas las tareas de la empresa
+            // Tablero: todas las tareas de la empresa (solo para admins / super admins)
             $boardTasks = Task::with(['reporter', 'assignee'])->get();
         } else {
             // Dashboard: tareas del usuario autenticado
             $dashboardTasks = Task::with(['reporter', 'assignee'])
-                ->where('assignee_id', auth()->id())
+                ->where('assignee_id', optional($user)->id)
                 ->get();
         }
 
@@ -232,6 +243,8 @@ class TaskController extends Controller
             'estimated_effort'=> ['nullable', 'in:low,medium,high'],
         ]);
 
+        $user = $request->user();
+
         $descriptionRaw = $validated['description'];
         if (!empty($validated['url'])) {
             $descriptionRaw .= "\n\nURL: " . $validated['url'];
@@ -243,7 +256,7 @@ class TaskController extends Controller
             'type'             => $validated['type'],
             'status'           => 'new',
             'priority'         => $validated['priority'],
-            'reporter_id'      => auth()->id(),
+            'reporter_id'      => optional($user)->id,
             'source'           => 'web_form',
             'area'             => $validated['area'] ?? null,
             'estimated_effort' => $validated['estimated_effort'] ?? 'medium',
@@ -255,8 +268,13 @@ class TaskController extends Controller
         // Intentamos asignación automática (no falla si no encuentra dev)
         $assignmentService->assign($task);
 
+        // Redirección según rol: usuarios estándar al dashboard, admins/SA al tablero
+        $targetView = ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser())
+            ? 'dashboard'
+            : 'board';
+
         return redirect()
-            ->route('tasks.show', $task)
+            ->route('tasks.index', ['view' => $targetView])
             ->with('status', 'Task created. AI refinement in progress and auto-assignment attempted.');
     }
 
@@ -272,6 +290,14 @@ class TaskController extends Controller
         ]);
 
         $task->update(['status' => $validated['status']]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status'     => 'ok',
+                'task_id'    => $task->id,
+                'new_status' => $task->status,
+            ]);
+        }
 
         return back()->with('status', 'Task status updated.');
     }

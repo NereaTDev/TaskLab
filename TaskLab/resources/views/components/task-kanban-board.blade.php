@@ -3,16 +3,18 @@
 @php
   $columnConfig = [
     'pending' => [
-      'label'   => 'Pendiente',
+      'label'    => 'Pendiente',
       'statuses' => ['new', 'in_refinement', 'ready_for_dev'],
-      'icon'    => 'clock',
-      'bg'      => 'bg-slate-900',
-      'header'  => 'bg-slate-800 border-slate-700',
-      'badge'   => 'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40',
+      'target'   => 'new',
+      'icon'     => 'clock',
+      'bg'       => 'bg-slate-900',
+      'header'   => 'bg-slate-800 border-slate-700',
+      'badge'    => 'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40',
     ],
     'in_progress' => [
       'label'    => 'En Progreso',
       'statuses' => ['in_progress'],
+      'target'   => 'in_progress',
       'icon'     => 'bolt',
       'bg'       => 'bg-slate-900',
       'header'   => 'bg-tasklab-primary/10 border-tasklab-primary/40',
@@ -21,6 +23,7 @@
     'in_review' => [
       'label'    => 'En Revisión',
       'statuses' => ['blocked'],
+      'target'   => 'blocked',
       'icon'     => 'eye',
       'bg'       => 'bg-slate-900',
       'header'   => 'bg-violet-900/30 border-violet-600/70',
@@ -29,6 +32,7 @@
     'done' => [
       'label'    => 'Completada',
       'statuses' => ['done'],
+      'target'   => 'done',
       'icon'     => 'check',
       'bg'       => 'bg-slate-900',
       'header'   => 'bg-tasklab-success/15 border-tasklab-success/40',
@@ -51,13 +55,20 @@
   ];
 @endphp
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div
+  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+  x-data="taskBoard('{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER']) }}')"
+>
   @foreach($columnConfig as $key => $col)
     @php
       $colTasks = $tasks->whereIn('status', $col['statuses']);
       $count = $colTasks->count();
     @endphp
-    <div class="rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]">
+    <div
+      class="rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]"
+      @dragover.prevent
+      @drop.prevent="moveTaskToStatus('{{ $col['target'] }}')"
+    >
       {{-- Encabezado de columna --}}
       <div class="flex items-center justify-between px-3 py-2.5 rounded-t-xl border-b {{ $col['header'] }}">
         <div class="flex items-center gap-2">
@@ -82,7 +93,35 @@
 
       <div class="flex-1 p-2 space-y-2 overflow-y-auto">
         @forelse($colTasks as $task)
-          <a href="{{ route('tasks.show', $task) }}" class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow">
+          <div
+            class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow cursor-move"
+            draggable="true"
+            @dragstart="draggedTaskId = {{ $task->id }}"
+            @dragend="draggedTaskId = null"
+            @click.stop="openTaskModal(@js([
+                'id'               => $task->id,
+                'title'            => $task->title ?? 'Sin título #'.$task->id,
+                'status'           => $task->status,
+                'type'             => $task->type,
+                'priority'         => $task->priority,
+                'description_raw'  => $task->description_raw,
+                'description_ai'   => $task->description_ai,
+                'area'             => $task->area,
+                'estimated_effort' => $task->estimated_effort,
+                'source'           => $task->source,
+                'created_at'       => optional($task->created_at)->format('d/m/Y H:i'),
+                'reporter'         => $task->reporter ? [
+                    'id'    => $task->reporter->id,
+                    'name'  => $task->reporter->name,
+                    'email' => $task->reporter->email,
+                ] : null,
+                'assignee'         => $task->assignee ? [
+                    'id'    => $task->assignee->id,
+                    'name'  => $task->assignee->name,
+                    'email' => $task->assignee->email,
+                ] : null,
+            ]))"
+          >
             <h3 class="text-sm font-medium text-tasklab-text line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
             <div class="mt-2 flex flex-wrap gap-1">
               <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
@@ -112,7 +151,7 @@
               <span class="rounded-full border border-tasklab-primary/40 bg-tasklab-primary/10 px-1.5 py-0.5 text-[10px] text-tasklab-primary">#backend</span>
               <span class="rounded-full border border-tasklab-muted/40 bg-tasklab-bg-muted px-1.5 py-0.5 text-[10px] text-tasklab-muted">#database</span>
             </div>
-          </a>
+          </div>
         @empty
           <div class="flex flex-col items-center justify-center py-12 text-tasklab-muted">
             @if($col['icon'] === 'clock')
@@ -130,4 +169,82 @@
       </div>
     </div>
   @endforeach
+
+  {{-- Modal detalle de tarea --}}
+  <div
+    x-cloak
+    x-show="isTaskModalOpen"
+    class="fixed inset-0 z-40 flex items-center justify-center bg-black/60"
+    @keydown.escape.window="closeTaskModal()"
+  >
+    <div
+      class="w-full max-w-xl rounded-2xl border border-slate-800 bg-tasklab-bg shadow-card p-6"
+      @click.outside="closeTaskModal()"
+    >
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div class="flex items-start gap-3">
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text">
+            <span x-text="modalTask && modalTask.title ? modalTask.title.substring(0,2).toUpperCase() : 'TS'"></span>
+          </span>
+          <div>
+            <p class="text-body font-semibold text-tasklab-text" x-text="modalTask ? modalTask.title : ''"></p>
+            <p class="text-meta text-tasklab-muted mt-0.5">
+              <span x-text="modalTask ? modalTask.type : ''"></span>
+              ·
+              Prioridad: <span x-text="modalTask ? modalTask.priority : ''"></span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-slate-700 bg-tasklab-bg text-tasklab-muted hover:text-tasklab-accent hover:border-tasklab-accent"
+          @click="closeTaskModal()"
+          aria-label="Cerrar"
+        >
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-label text-tasklab-muted">
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Estado</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask ? modalTask.status : ''"></p>
+        </div>
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha de creación</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.created_at ? modalTask.created_at : '—'"></p>
+        </div>
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Asignado a</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.assignee ? modalTask.assignee.name : 'Sin asignar'"></p>
+        </div>
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Reportado por</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.reporter ? modalTask.reporter.name : '—'"></p>
+        </div>
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Área</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.area ? modalTask.area : '—'"></p>
+        </div>
+        <div>
+          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Esfuerzo estimado</p>
+          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.estimated_effort ? modalTask.estimated_effort : '—'"></p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
+          <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción refinada</h3>
+          <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_ai ? modalTask.description_ai : 'Refinamiento pendiente o no disponible.'"></p>
+        </section>
+        <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
+          <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción original</h3>
+          <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"></p>
+        </section>
+      </div>
+    </div>
+  </div>
 </div>

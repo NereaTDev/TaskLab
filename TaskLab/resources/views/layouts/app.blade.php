@@ -24,6 +24,7 @@
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-4">
               {{-- Tabs de navegación en pastilla, alineadas con el logo --}}
+              @php $navUser = auth()->user(); @endphp
               <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-1 py-1 text-xs">
                 <a href="{{ route('tasks.index') }}"
                    class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('tasks.index') && in_array(request()->get('view'), [null, 'dashboard'], true) ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
@@ -33,26 +34,29 @@
                   Dashboard
                 </a>
 
-                <span class="h-5 w-px bg-slate-700"></span>
+                @if($navUser && (method_exists($navUser, 'isAreaAdmin') ? $navUser->isAreaAdmin() : $navUser->is_admin || false) || ($navUser && method_exists($navUser, 'isSuperAdmin') && $navUser->isSuperAdmin()))
+                  <span class="h-5 w-px bg-slate-700"></span>
 
-                <a href="{{ route('tasks.index') }}?view=board"
-                   class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'board' ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                  </svg>
-                  Tablero
-                </a>
+                  <a href="{{ route('tasks.index', ['view' => 'board']) }}"
+                     class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'board' ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Tablero
+                  </a>
 
-                <a href="{{ route('tasks.index') }}?view=analysis"
-                   class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'analysis' ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                  </svg>
-                  Análisis
-                </a>
+                  <a href="{{ route('tasks.index', ['view' => 'analysis']) }}"
+                     class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'analysis' ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Análisis
+                  </a>
+                @endif
 
                 @auth
-                  @if (auth()->user()->is_admin || auth()->user()->isSuperAdmin())
+                  @php $navUser = auth()->user(); @endphp
+                  @if ($navUser && ($navUser->is_admin || (method_exists($navUser, 'isAreaAdmin') && $navUser->isAreaAdmin()) || (method_exists($navUser, 'isSuperAdmin') && $navUser->isSuperAdmin())))
                     <a href="{{ route('team.index') }}"
                        class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('team.index') ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +66,7 @@
                     </a>
                   @endif
 
-                  @if (auth()->user()->isSuperAdmin())
+                  @if ($navUser && method_exists($navUser, 'isSuperAdmin') && $navUser->isSuperAdmin())
                     <a href="{{ route('settings.index') }}"
                        class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('settings.index') ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
