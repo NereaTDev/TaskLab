@@ -4,7 +4,7 @@ FROM node:20 AS frontend
 WORKDIR /app
 
 # Copy only files needed for frontend build
-COPY package*.json vite.config.js postcss.config.js ./
+COPY package*.json vite.config.js postcss.config.js tailwind.config.js ./
 COPY resources ./resources
 
 RUN npm ci
