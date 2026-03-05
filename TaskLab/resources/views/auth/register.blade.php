@@ -1,6 +1,6 @@
 <x-guest-layout>
-    <h1 class="text-lg font-semibold text-slate-900 mb-1">Create your TaskLab account</h1>
-    <p class="text-xs text-slate-500 mb-4">Sign up to start capturing and refining tasks with your team.</p>
+    <h1 class="text-heading font-semibold text-tasklab-text mb-1">Create your TaskLab account</h1>
+    <p class="text-label text-tasklab-muted mb-4">Sign up to start capturing and refining tasks with your team.</p>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
@@ -35,10 +35,10 @@
         </div>
 
         <div class="mt-4 flex items-center justify-between">
-            <p class="text-[11px] text-slate-500">Already have an account?
-                <a href="{{ route('login') }}" class="font-medium text-sky-600 hover:text-sky-700">Sign in</a>
+            <p class="text-meta text-tasklab-muted">Already have an account?
+                <a href="{{ route('login') }}" class="font-medium text-tasklab-accent hover:text-tasklab-accent-soft">Sign in</a>
             </p>
-            <x-primary-button>
+            <x-primary-button class="text-body">
                 {{ __('Register') }}
             </x-primary-button>
         </div>

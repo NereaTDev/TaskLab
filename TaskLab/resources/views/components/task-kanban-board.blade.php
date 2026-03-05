@@ -15,32 +15,32 @@
       'statuses' => ['in_progress'],
       'icon'     => 'bolt',
       'bg'       => 'bg-slate-900',
-      'header'   => 'bg-sky-900/50 border-sky-700',
-      'badge'    => 'bg-sky-800 text-sky-100',
+      'header'   => 'bg-tasklab-primary/10 border-tasklab-primary/40',
+      'badge'    => 'bg-tasklab-primary/20 text-tasklab-primary border border-tasklab-primary/60',
     ],
     'in_review' => [
       'label'    => 'En Revisión',
       'statuses' => ['blocked'],
       'icon'     => 'eye',
       'bg'       => 'bg-slate-900',
-      'header'   => 'bg-violet-900/40 border-violet-700',
-      'badge'    => 'bg-violet-800 text-violet-100',
+      'header'   => 'bg-violet-900/30 border-violet-600/70',
+      'badge'    => 'bg-violet-900/40 text-violet-100 border border-violet-700/70',
     ],
     'done' => [
       'label'    => 'Completada',
       'statuses' => ['done'],
       'icon'     => 'check',
       'bg'       => 'bg-slate-900',
-      'header'   => 'bg-emerald-900/40 border-emerald-700',
-      'badge'    => 'bg-emerald-800 text-emerald-100',
+      'header'   => 'bg-tasklab-success/15 border-tasklab-success/40',
+      'badge'    => 'bg-tasklab-success/20 text-tasklab-success border border-tasklab-success/60',
     ],
   ];
 
   $priorityColors = [
-    'critical' => 'bg-red-500 text-white',
-    'high'     => 'bg-orange-100 text-orange-800',
-    'medium'   => 'bg-slate-100 text-slate-700',
-    'low'      => 'bg-slate-100 text-slate-500',
+    'critical' => 'bg-tasklab-danger/20 text-tasklab-danger border border-tasklab-danger/60',
+    'high'     => 'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40',
+    'medium'   => 'bg-tasklab-primary/10 text-tasklab-primary border border-tasklab-primary/40',
+    'low'      => 'bg-tasklab-bg-muted text-tasklab-muted border border-slate-800',
   ];
 
   $typeLabels = [
@@ -74,7 +74,7 @@
         </div>
         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $col['badge'] }}">{{ $count }}</span>
         @if(in_array($key, ['pending', 'in_progress']))
-          <a href="{{ route('tasks.create') }}" class="p-1 rounded-md text-slate-500 hover:bg-white/60 hover:text-slate-700" title="Añadir tarea">
+          <a href="{{ route('tasks.create') }}" class="p-1 rounded-md text-tasklab-accent hover:bg-tasklab-accent/10 hover:text-tasklab-accent" title="Añadir tarea">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           </a>
         @endif
@@ -85,10 +85,10 @@
           <a href="{{ route('tasks.show', $task) }}" class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow">
             <h3 class="text-sm font-medium text-tasklab-text line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
             <div class="mt-2 flex flex-wrap gap-1">
-              <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
+              <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
                 {{ $task->priority === 'critical' ? 'Crítica' : ucfirst($task->priority) }}
               </span>
-              <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-sky-100 text-sky-800">
+              <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-tasklab-bg text-tasklab-muted border border-slate-800">
                 {{ $typeLabels[$task->type] ?? ucfirst($task->type) }}
               </span>
             </div>
@@ -108,13 +108,13 @@
             </div>
             <p class="mt-1 text-[10px] text-tasklab-muted">Admin Panel</p>
             <div class="mt-2 flex flex-wrap gap-1">
-              <span class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">#frontend</span>
-              <span class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">#backend</span>
-              <span class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">#database</span>
+              <span class="rounded-full border border-tasklab-accent/40 bg-tasklab-accent/10 px-1.5 py-0.5 text-[10px] text-tasklab-accent">#frontend</span>
+              <span class="rounded-full border border-tasklab-primary/40 bg-tasklab-primary/10 px-1.5 py-0.5 text-[10px] text-tasklab-primary">#backend</span>
+              <span class="rounded-full border border-tasklab-muted/40 bg-tasklab-bg-muted px-1.5 py-0.5 text-[10px] text-tasklab-muted">#database</span>
             </div>
           </a>
         @empty
-          <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+          <div class="flex flex-col items-center justify-center py-12 text-tasklab-muted">
             @if($col['icon'] === 'clock')
               <svg class="h-10 w-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             @elseif($col['icon'] === 'bolt')
@@ -124,7 +124,7 @@
             @else
               <svg class="h-10 w-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
             @endif
-            <p class="text-xs font-medium">Sin tareas</p>
+            <p class="text-label font-medium text-tasklab-muted">Sin tareas</p>
           </div>
         @endforelse
       </div>

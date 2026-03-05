@@ -31,16 +31,19 @@
 
                 @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                     <div>
-                        <p class="text-sm mt-2 text-tasklab-text">
+                        <p class="text-body mt-2 text-tasklab-text">
                             {{ __('Your email address is unverified.') }}
 
-                            <button form="send-verification" class="underline text-sm text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tasklab-primary">
+                            <button
+                                form="send-verification"
+                                class="underline text-body text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:ring-tasklab-primary"
+                            >
                                 {{ __('Click here to re-send the verification email.') }}
                             </button>
                         </p>
 
                         @if (session('status') === 'verification-link-sent')
-                            <p class="mt-2 font-medium text-sm text-tasklab-success">
+                            <p class="mt-2 font-medium text-body text-tasklab-success">
                                 {{ __('A new verification link has been sent to your email address.') }}
                             </p>
                         @endif
@@ -66,14 +69,22 @@
         <div>
             <label class="inline-flex items-center gap-2 text-label text-tasklab-muted">
                 <input type="hidden" name="is_admin" value="0" />
-                <input type="checkbox" name="is_admin" value="1" @checked(old('is_admin', $user->is_admin)) class="rounded border-slate-600 bg-tasklab-bg-muted text-tasklab-primary shadow-sm focus:ring-tasklab-primary">
+                <input
+                    type="checkbox"
+                    name="is_admin"
+                    value="1"
+                    @checked(old('is_admin', $user->is_admin))
+                    class="rounded border-slate-600 bg-tasklab-bg-muted text-tasklab-primary shadow-sm focus:ring-tasklab-primary"
+                >
                 <span>{{ __('Administrator') }}</span>
             </label>
-            <p class="mt-1 text-label text-tasklab-muted">{{ __('Admins can manage TaskLab configuration and team settings (future behavior).') }}</p>
+            <p class="mt-1 text-label text-tasklab-muted">
+                {{ __('Admins can manage TaskLab configuration and team settings (future behavior).') }}
+            </p>
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+            <x-primary-button class="text-body">{{ __('Save') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p
