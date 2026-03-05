@@ -35,7 +35,7 @@
                 <input
                     id="remember_me"
                     type="checkbox"
-                    class="rounded border-slate-700 bg-tasklab-bg text-tasklab-primary shadow-sm focus:ring-tasklab-primary"
+                    class="rounded border-slate-700 bg-tasklab-bg text-tasklab-primary shadow-sm focus:border-tasklab-accent focus:ring-tasklab-accent"
                     name="remember"
                 >
                 <span>{{ __('Remember me') }}</span>

@@ -20,7 +20,7 @@
             <select
                 id="developer_type"
                 name="developer[type]"
-                class="mt-1 block w-full rounded-md border border-slate-700 bg-tasklab-bg-muted text-body text-tasklab-text shadow-sm focus:border-tasklab-primary focus:ring-tasklab-primary"
+                class="mt-1 block w-full rounded-md border border-slate-700 bg-tasklab-bg-muted text-body text-tasklab-text shadow-sm focus:border-tasklab-primary focus:border-tasklab-accent focus:ring-tasklab-accent"
             >
                 <option value="">{{ __('Select type') }}</option>
                 <option value="frontend" @selected(old('developer.type', $dev->type) === 'frontend')>Frontend</option>
@@ -38,19 +38,19 @@
 
             <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-body text-tasklab-text">
                 <label class="inline-flex items-center gap-2">
-                    <input type="checkbox" name="developer[areas][]" value="web" @checked(in_array('web', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-text text-tasklab-primary shadow-sm focus:ring-tasklab-primary">
+                    <input type="checkbox" name="developer[areas][]" value="web" @checked(in_array('web', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted">
                     <span>Web</span>
                 </label>
                 <label class="inline-flex items-center gap-2">
-                    <input type="checkbox" name="developer[areas][]" value="plataforma" @checked(in_array('plataforma', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-text text-tasklab-primary shadow-sm focus:ring-tasklab-primary">
+                    <input type="checkbox" name="developer[areas][]" value="plataforma" @checked(in_array('plataforma', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted">
                     <span>Plataforma</span>
                 </label>
                 <label class="inline-flex items-center gap-2">
-                    <input type="checkbox" name="developer[areas][]" value="frontierz" @checked(in_array('frontierz', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-text text-tasklab-primary shadow-sm focus:ring-tasklab-primary">
+                    <input type="checkbox" name="developer[areas][]" value="frontierz" @checked(in_array('frontierz', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted">
                     <span>Frontierz</span>
                 </label>
                 <label class="inline-flex items-center gap-2">
-                    <input type="checkbox" name="developer[areas][]" value="dashboard_empresas" @checked(in_array('dashboard_empresas', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-text text-tasklab-primary shadow-sm focus:ring-tasklab-primary">
+                    <input type="checkbox" name="developer[areas][]" value="dashboard_empresas" @checked(in_array('dashboard_empresas', $areas ?? [])) class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted">
                     <span>Dashboard empresas</span>
                 </label>
             </div>
@@ -80,7 +80,7 @@
                         name="developer[active]"
                         value="1"
                         @checked(old('developer.active', $dev->active))
-                        class="rounded border-slate-700 bg-tasklab-bg text-tasklab-primary shadow-sm focus:ring-tasklab-primary"
+                        class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted"
                     >
                     <span>{{ __('Available for auto-assignment') }}</span>
                 </label>

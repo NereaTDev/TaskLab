@@ -25,7 +25,7 @@
 
             <button
                 type="submit"
-                class="underline text-body text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:ring-tasklab-primary"
+                class="underline text-body text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:border-tasklab-accent focus:ring-tasklab-accent"
             >
                 {{ __('Log Out') }}
             </button>

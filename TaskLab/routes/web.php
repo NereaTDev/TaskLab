@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Team management (admins only, enforced in controller for now)
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
+    Route::post('/team/reassign-department', [TeamController::class, 'reassignDepartment'])->name('team.reassign-department');
+
+    // Configuración (solo Super Admin, enforcement en controller)
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/departments', [SettingsController::class, 'storeDepartment'])->name('settings.departments.store');
+    Route::patch('/settings/departments/{department}', [SettingsController::class, 'updateDepartment'])->name('settings.departments.update');
+    Route::delete('/settings/departments/{department}', [SettingsController::class, 'destroyDepartment'])->name('settings.departments.destroy');
 });
 
 require __DIR__.'/auth.php';

@@ -36,7 +36,7 @@
 
                             <button
                                 form="send-verification"
-                                class="underline text-body text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:ring-tasklab-primary"
+                                class="underline text-body text-tasklab-muted hover:text-tasklab-text rounded-md focus:outline-none focus:ring-2 focus:border-tasklab-accent focus:ring-tasklab-accent"
                             >
                                 {{ __('Click here to re-send the verification email.') }}
                             </button>
@@ -66,22 +66,24 @@
             </div>
         </div>
 
-        <div>
-            <label class="inline-flex items-center gap-2 text-label text-tasklab-muted">
-                <input type="hidden" name="is_admin" value="0" />
-                <input
-                    type="checkbox"
-                    name="is_admin"
-                    value="1"
-                    @checked(old('is_admin', $user->is_admin))
-                    class="rounded border-slate-600 bg-tasklab-bg-muted text-tasklab-primary shadow-sm focus:ring-tasklab-primary"
-                >
-                <span>{{ __('Administrator') }}</span>
-            </label>
-            <p class="mt-1 text-label text-tasklab-muted">
-                {{ __('Admins can manage TaskLab configuration and team settings (future behavior).') }}
-            </p>
-        </div>
+        @if (! method_exists($user, 'isSuperAdmin') || ! $user->isSuperAdmin())
+            <div>
+                <label class="inline-flex items-center gap-2 text-label text-tasklab-muted">
+                    <input type="hidden" name="is_admin" value="0" />
+                    <input
+                        type="checkbox"
+                        name="is_admin"
+                        value="1"
+                        @checked(old('is_admin', $user->is_admin))
+                        class="rounded border-slate-700 bg-tasklab-bg text-tasklab-accent shadow-sm focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-tasklab-accent focus:bg-tasklab-bg-muted"
+                    >
+                    <span>{{ __('Administrator') }}</span>
+                </label>
+                <p class="mt-1 text-label text-tasklab-muted">
+                    {{ __('Admins can manage TaskLab configuration and team settings (future behavior).') }}
+                </p>
+            </div>
+        @endif
 
         <div class="flex items-center gap-4">
             <x-primary-button class="text-body">{{ __('Save') }}</x-primary-button>

@@ -27,7 +27,23 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'department' => ['nullable', 'string', 'max:255'],
             'position'   => ['nullable', 'string', 'max:255'],
+            // Solo usuarios no super admin pueden cambiar el flag is_admin
             'is_admin'   => ['nullable', 'boolean'],
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $user = $this->user();
+
+        if ($user && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            // Ignoramos cualquier intento de cambiar is_admin para el Super Admin
+            $this->merge([
+                'is_admin' => $user->is_admin,
+            ]);
+        }
     }
 }

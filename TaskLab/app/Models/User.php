@@ -48,11 +48,28 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
     }
 
     public function developerProfile()
     {
         return $this->hasOne(DeveloperProfile::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) ($this->is_super_admin ?? false);
+    }
+
+    public function isAreaAdmin(): bool
+    {
+        // Admin de área: tiene flag is_admin pero no es super admin
+        return ! $this->isSuperAdmin() && (bool) ($this->is_admin ?? false);
+    }
+
+    public function isStandardUser(): bool
+    {
+        return ! $this->isSuperAdmin() && ! $this->isAreaAdmin();
     }
 }
