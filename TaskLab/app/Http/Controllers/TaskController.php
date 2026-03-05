@@ -8,20 +8,29 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Listado paginado para la tabla principal
-        $tasks = Task::latest()->paginate(15);
+        $view = $request->get('view', 'dashboard');
 
-        // Stats sencillas para el dashboard (inspirado en DevTask)
+        // Listado paginado para la tabla principal
+        $tasks = Task::with(['reporter', 'assignee'])->latest()->paginate(15);
+
+        // Stats para el dashboard
         $stats = [
-            'total'       => Task::count(),
-            'pending'     => Task::where('status', 'new')->count(),
-            'in_progress' => Task::whereIn('status', ['in_refinement', 'ready_for_dev', 'in_progress'])->count(),
-            'done'        => Task::where('status', 'done')->count(),
+            'total'        => Task::count(),
+            'pending'      => Task::whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
+            'in_progress'  => Task::where('status', 'in_progress')->count(),
+            'in_review'    => Task::where('status', 'blocked')->count(),
+            'done'         => Task::where('status', 'done')->count(),
         ];
 
-        return view('tasks.index', compact('tasks', 'stats'));
+        // Para vista tablero: todas las tareas agrupadas por columna Kanban
+        $boardTasks = null;
+        if ($view === 'board') {
+            $boardTasks = Task::with(['reporter', 'assignee'])->get();
+        }
+
+        return view('tasks.index', compact('tasks', 'stats', 'view', 'boardTasks'));
     }
 
     public function create()

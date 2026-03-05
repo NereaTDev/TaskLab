@@ -40,10 +40,7 @@ COPY --from=frontend /app/public/build ./public/build
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
     && php artisan config:clear \
     && php artisan route:clear \
-    && php artisan view:clear \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+    && php artisan view:clear
 
 EXPOSE 10000
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
