@@ -330,26 +330,7 @@
                                     </div>
                                 @endforeach
                             @else
-                                @foreach(range(1, 3) as $idx)
-                                    <div class="flex items-center gap-3 rounded-xl border border-slate-800 bg-tasklab-bg p-3">
-                                        <div class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-meta font-semibold text-tasklab-text">
-                                            D{{ $idx }}
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <div>
-                                                    <p class="text-body font-medium text-tasklab-text">Developer {{ $idx }}</p>
-                                                    <p class="text-meta text-tasklab-muted">Sin datos aún</p>
-                                                </div>
-                                                <span class="inline-flex items-center rounded-full border border-tasklab-danger/50 bg-tasklab-danger/10 px-2 py-0.5 text-meta text-tasklab-danger">0/0</span>
-                                            </div>
-                                            <div class="mt-2 h-1.5 rounded-full bg-slate-900">
-                                                <div class="h-1.5 rounded-full bg-tasklab-danger w-0"></div>
-                                            </div>
-                                            <p class="mt-1 text-meta text-tasklab-muted">Carga de trabajo 0%</p>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                <p class="text-meta text-tasklab-muted">Aún no hay desarrolladores con perfil configurado.</p>
                             @endif
                         </div>
                     </div>
