@@ -33,26 +33,27 @@
               </div>
             </a>
 
-            {{-- Centro: toggle, notificaciones, configuración --}}
+            {{-- Centro reservado (vacío por ahora, controles se mueven a la derecha) --}}
             <div class="hidden md:flex items-center gap-4">
-              <div class="flex items-center gap-2">
-                <svg class="h-4 w-4 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                <span class="text-xs text-tasklab-muted">Auto-asignación</span>
-                <button type="button" role="switch" aria-checked="false" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-700 bg-slate-900 transition-colors">
-                  <span class="pointer-events-none inline-block h-4 w-4 translate-x-0.5 rounded-full bg-tasklab-primary shadow ring-0 transition translate-y-0.5"></span>
-                </button>
-              </div>
-              <button type="button" class="relative p-1.5 rounded-lg text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">9+</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              </button>
             </div>
 
-            {{-- Derecha: usuario --}}
-            <div class="flex items-center gap-3 ml-auto">
+            {{-- Derecha: controles + usuario --}}
+            <div class="flex items-center gap-4 ml-auto">
+              {{-- Controles pegados a la derecha --}}
+              <div class="hidden md:flex items-center gap-3 mr-2">
+                <div class="flex items-center gap-2">
+                  <svg class="h-4 w-4 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span class="text-xs text-tasklab-muted">Auto-asignación</span>
+                  <button type="button" role="switch" aria-checked="false" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-700 bg-slate-900 transition-colors">
+                    <span class="pointer-events-none inline-block h-4 w-4 translate-x-0.5 rounded-full bg-tasklab-primary shadow ring-0 transition translate-y-0.5"></span>
+                  </button>
+                </div>
+                <button type="button" class="relative p-1.5 rounded-lg text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                  <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">9+</span>
+                </button>
+              </div>
+
               @auth
                 <div class="hidden sm:flex items-center gap-2 text-left" x-data="{ open: false }" @click.outside="open = false">
                   <button type="button" class="inline-flex items-center gap-2" @click="open = !open">
@@ -73,6 +74,10 @@
                       <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Perfil
+                      </a>
+                      <a href="#" class="flex items-center gap-2 px-3 py-1.5 text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        Ajustes
                       </a>
                       <form method="POST" action="{{ route('logout') }}">
                         @csrf
