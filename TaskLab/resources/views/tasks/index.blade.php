@@ -12,10 +12,6 @@
                     >
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700">
-                        Crítica
-                        <button type="button" class="rounded p-0.5 hover:bg-slate-200 text-slate-500" aria-label="Quitar filtro">×</button>
-                    </span>
                     <button type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                         Tipo
@@ -23,7 +19,6 @@
                     <button type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Prioridad
-                        <span class="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px]">1</span>
                     </button>
                     <button type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -37,10 +32,6 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         Fecha
                     </button>
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Limpiar (1)
-                    </button>
                 </div>
             </div>
             <a href="{{ route('tasks.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
@@ -49,14 +40,8 @@
             </a>
         </div>
 
-        @if(session('status'))
-            <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
-                {{ session('status') }}
-            </div>
-        @endif
-
         @if($view === 'board')
-            {{-- Vista Tablero Kanban --}}
+            {{-- Tablero global de la empresa --}}
             <x-task-kanban-board :tasks="$boardTasks ?? collect()" />
         @elseif($view === 'analysis')
             {{-- Vista Análisis (placeholder) --}}
@@ -66,65 +51,8 @@
                 <p class="mt-2 text-sm text-slate-500">Gráficos y métricas de tareas (próximamente).</p>
             </div>
         @else
-            {{-- Vista Dashboard: stats + quick board + tabla --}}
-            <x-task-stats :stats="$stats ?? []" />
-
-            @if(!$tasks->isEmpty())
-                <div class="mt-6">
-                    <x-task-quick-board :tasks="$tasks->getCollection()" />
-                </div>
-            @endif
-
-            @if($tasks->isEmpty())
-                <p class="mt-6 text-sm text-slate-500">No hay tareas todavía.</p>
-            @else
-                <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-slate-50 text-slate-500">
-                            <tr>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium">Tarea</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium">Tipo / Prioridad</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium">Estado</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium">Responsable</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach($tasks as $task)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3 align-top">
-                                        <a href="{{ route('tasks.show', $task) }}" class="block">
-                                            <p class="font-medium text-slate-900 truncate">
-                                                {{ $task->title ?? 'Sin título #' . $task->id }}
-                                            </p>
-                                            <p class="mt-0.5 text-xs text-slate-500 line-clamp-2">
-                                                {{ Str::limit($task->description_raw, 140) }}
-                                            </p>
-                                        </a>
-                                    </td>
-                                    <td class="px-4 py-3 align-top">
-                                        <div class="flex flex-wrap gap-1 text-xs text-slate-600">
-                                            <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5">{{ ucfirst($task->type) }}</span>
-                                            <span class="inline-flex items-center rounded-full border border-slate-200 px-2 py-0.5">{{ ucfirst($task->priority) }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3 align-top">
-                                        <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">
-                                            {{ strtoupper($task->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 align-top text-xs text-slate-500">
-                                        {{ optional($task->assignee)->name ?? optional($task->reporter)->name ?? '—' }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-4">
-                    {{ $tasks->links() }}
-                </div>
-            @endif
+            {{-- Dashboard: tablero personal del usuario --}}
+            <x-task-kanban-board :tasks="$dashboardTasks ?? collect()" />
         @endif
     </div>
 </x-app-layout>

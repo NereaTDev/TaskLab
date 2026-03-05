@@ -13,10 +13,7 @@ class TaskController extends Controller
     {
         $view = $request->get('view', 'dashboard');
 
-        // Listado paginado para la tabla principal
-        $tasks = Task::with(['reporter', 'assignee'])->latest()->paginate(15);
-
-        // Stats para el dashboard
+        // Stats globales para tarjetas
         $stats = [
             'total'        => Task::count(),
             'pending'      => Task::whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
@@ -25,13 +22,20 @@ class TaskController extends Controller
             'done'         => Task::where('status', 'done')->count(),
         ];
 
-        // Para vista tablero: todas las tareas agrupadas por columna Kanban
-        $boardTasks = null;
+        $boardTasks = null;   // tablero global
+        $dashboardTasks = null; // tareas del usuario
+
         if ($view === 'board') {
+            // Tablero: todas las tareas de la empresa
             $boardTasks = Task::with(['reporter', 'assignee'])->get();
+        } else {
+            // Dashboard: tareas del usuario autenticado
+            $dashboardTasks = Task::with(['reporter', 'assignee'])
+                ->where('assignee_id', auth()->id())
+                ->get();
         }
 
-        return view('tasks.index', compact('tasks', 'stats', 'view', 'boardTasks'));
+        return view('tasks.index', compact('stats', 'view', 'boardTasks', 'dashboardTasks'));
     }
 
     public function create()
