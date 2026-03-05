@@ -1,3 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer utilities {
+    .text-heading { @apply text-lg; }
+    .text-title   { @apply text-base; }
+    .text-body    { @apply text-sm; }
+    .text-label   { @apply text-xs; }
+    .text-meta    { @apply text-[11px]; }
+}
