@@ -45,10 +45,10 @@
             <x-task-kanban-board :tasks="$boardTasks ?? collect()" />
         @elseif($view === 'analysis')
             {{-- Vista Análisis (placeholder) --}}
-            <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-                <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                <h2 class="mt-4 text-lg font-semibold text-slate-900">Análisis</h2>
-                <p class="mt-2 text-sm text-slate-500">Gráficos y métricas de tareas (próximamente).</p>
+            <div class="rounded-2xl border border-slate-800 bg-tasklab-bg-muted p-8 text-center shadow-card">
+                <svg class="mx-auto h-12 w-12 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <h2 class="mt-4 text-lg font-semibold text-tasklab-text">Análisis</h2>
+                <p class="mt-2 text-sm text-tasklab-muted">Gráficos y métricas de tareas (próximamente).</p>
             </div>
         @else
             {{-- Dashboard: tablero personal del usuario --}}
