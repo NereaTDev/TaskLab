@@ -41,6 +41,62 @@
         </div>
 
         @if($view === 'board')
+            {{-- Stats para tablero global --}}
+            <div class="mb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>Total tareas</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900 text-[11px] text-tasklab-text">TT</span>
+                    </div>
+                    <p class="text-heading font-semibold text-tasklab-text">{{ $stats['total'] ?? 0 }}</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>Pendientes</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-amber-900/50 text-[11px] text-amber-200">P</span>
+                    </div>
+                    <p class="text-heading font-semibold text-tasklab-text">{{ $stats['pending'] ?? 0 }}</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>En progreso</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-sky-900/50 text-[11px] text-sky-100">EP</span>
+                    </div>
+                    <p class="text-heading font-semibold text-tasklab-text">{{ $stats['in_progress'] ?? 0 }}</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>Completadas</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-900/40 text-[11px] text-emerald-100">C</span>
+                    </div>
+                    <p class="text-heading font-semibold text-tasklab-text">{{ $stats['done'] ?? 0 }}</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>Vencidas</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-red-900/40 text-[11px] text-red-100">V</span>
+                    </div>
+                    <p class="text-heading font-semibold text-tasklab-text">0</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-label text-tasklab-muted">
+                        <span>Tasa de éxito</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-tasklab-accent/20 text-[11px] text-tasklab-accent">%</span>
+                    </div>
+                    @php
+                        $total = $stats['total'] ?? 0;
+                        $done = $stats['done'] ?? 0;
+                        $successRate = $total > 0 ? round(($done / $total) * 100) : 0;
+                    @endphp
+                    <p class="text-heading font-semibold text-tasklab-text">{{ $successRate }}%</p>
+                </div>
+            </div>
+
             {{-- Tablero global de la empresa --}}
             <x-task-kanban-board :tasks="$boardTasks ?? collect()" />
         @elseif($view === 'analysis')
