@@ -24,7 +24,7 @@
                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 8a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zm8-8a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5a2 2 0 012-2h2z"/></svg>
               </span>
               <div>
-                <h1 class="text-lg font-bold tracking-tight text-slate-900">DevTask Manager</h1>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900">TaskLab Manager</h1>
                 <p class="text-xs text-slate-500">Gestión de tareas para equipos</p>
               </div>
             </a>

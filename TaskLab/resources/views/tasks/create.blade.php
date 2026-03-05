@@ -6,7 +6,7 @@
         <form method="POST" action="{{ route('tasks.store') }}" class="space-y-4">
             @csrf
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1">Type</label>
                     <select name="type" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
@@ -34,12 +34,38 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Page / URL (optional)</label>
-                    <input type="text" name="url" value="{{ old('url') }}" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" placeholder="https://...">
-                    @error('url')
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Area</label>
+                    <select name="area" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                        <option value="" {{ old('area') === null ? 'selected' : '' }}>Select area</option>
+                        <option value="web" {{ old('area') === 'web' ? 'selected' : '' }}>Web</option>
+                        <option value="plataforma" {{ old('area') === 'plataforma' ? 'selected' : '' }}>Plataforma</option>
+                        <option value="frontierz" {{ old('area') === 'frontierz' ? 'selected' : '' }}>Frontierz</option>
+                        <option value="dashboard_empresas" {{ old('area') === 'dashboard_empresas' ? 'selected' : '' }}>Dashboard empresas</option>
+                    </select>
+                    @error('area')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Effort</label>
+                    <select name="estimated_effort" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+                        <option value="low" {{ old('estimated_effort') === 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ old('estimated_effort', 'medium') === 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ old('estimated_effort') === 'high' ? 'selected' : '' }}>High</option>
+                    </select>
+                    @error('estimated_effort')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Page / URL (optional)</label>
+                <input type="text" name="url" value="{{ old('url') }}" class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" placeholder="https://...">
+                @error('url')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
