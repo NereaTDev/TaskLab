@@ -43,4 +43,10 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
     && php artisan view:clear
 
 EXPOSE 10000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
+
+# Use a small entrypoint script so that container startup can run migrations
+# and clear caches automatically in production (Render).
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+CMD ["/usr/local/bin/entrypoint.sh"]
