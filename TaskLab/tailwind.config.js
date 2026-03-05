@@ -23,7 +23,11 @@ export default {
                     muted: '#9ca3af',
                     primary: '#2563eb',
                     'primary-soft': '#1d4ed8',
-                    accent: '#38bdf8',
+
+                    // Orange accents
+                    accent: '#f97316',
+                    'accent-soft': '#fed7aa',
+
                     danger: '#ef4444',
                     warning: '#f59e0b',
                     success: '#22c55e',
