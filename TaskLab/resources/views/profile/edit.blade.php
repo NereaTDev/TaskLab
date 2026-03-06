@@ -13,29 +13,15 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 text-meta">
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-tasklab-bg px-3 py-1.5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-tasklab-primary"></span>
-                    <span class="text-tasklab-muted">Tipo de usuario</span>
-                    <span class="text-tasklab-text font-semibold">{{ ucfirst($user->user_type ?? 'requester') }}</span>
-                </div>
-
-                @if($user->is_admin)
+                @if($user->is_super_admin)
+                    <div class="inline-flex items-center gap-2 rounded-full border border-tasklab-accent/70 bg-tasklab-accent/10 px-3 py-1.5">
+                        <span class="h-1.5 w-1.5 rounded-full bg-tasklab-accent"></span>
+                        <span class="text-tasklab-text font-semibold">Super Admin</span>
+                    </div>
+                @elseif($user->is_admin)
                     <div class="inline-flex items-center gap-2 rounded-full border border-tasklab-success/70 bg-tasklab-success/10 px-3 py-1.5">
                         <span class="h-1.5 w-1.5 rounded-full bg-tasklab-success"></span>
                         <span class="text-tasklab-text font-semibold">Admin</span>
-                    </div>
-                @endif
-
-                @if($developerProfile)
-                    <div class="inline-flex items-center gap-2 rounded-full border border-tasklab-primary/70 bg-tasklab-primary/10 px-3 py-1.5">
-                        <span class="h-1.5 w-1.5 rounded-full bg-tasklab-primary"></span>
-                        <span class="text-tasklab-muted">Perfil dev</span>
-                        <span class="text-tasklab-text font-semibold">
-                            {{ $developerProfile->type ? ucfirst($developerProfile->type) : 'Sin tipo' }}
-                            @if($developerProfile->active)
-                                · Disponible
-                            @endif
-                        </span>
                     </div>
                 @endif
             </div>

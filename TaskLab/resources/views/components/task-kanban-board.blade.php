@@ -57,12 +57,14 @@
 
 <div
   class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-  x-data="taskBoard('{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER']) }}')"
+  x-data="taskBoard(
+    '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER']) }}',
+    @js($tasks->values())
+  )"
 >
   @foreach($columnConfig as $key => $col)
     @php
-      $colTasks = $tasks->whereIn('status', $col['statuses']);
-      $count = $colTasks->count();
+      $count = $tasks->whereIn('status', $col['statuses'])->count();
     @endphp
     <div
       class="rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]"
@@ -91,44 +93,37 @@
         @endif
       </div>
 
-      <div class="flex-1 p-2 space-y-2 overflow-y-auto">
-        @forelse($colTasks as $task)
+      <div class="flex-1 p-2 space-y-2 overflow-y-auto" data-column-body="{{ $col['target'] }}">
+        <template x-for="task in columnTasks(@js($col['statuses']))" :key="task.id">
           <div
             class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow cursor-move"
             draggable="true"
-            @dragstart="draggedTaskId = {{ $task->id }}"
+            :data-task-id="task.id"
+            @dragstart="draggedTaskId = task.id"
             @dragend="draggedTaskId = null"
-            @click.stop="openTaskModal(@js([
-                'id'               => $task->id,
-                'title'            => $task->title ?? 'Sin título #'.$task->id,
-                'status'           => $task->status,
-                'type'             => $task->type,
-                'priority'         => $task->priority,
-                'description_raw'  => $task->description_raw,
-                'description_ai'   => $task->description_ai,
-                'area'             => $task->area,
-                'estimated_effort' => $task->estimated_effort,
-                'source'           => $task->source,
-                'created_at'       => optional($task->created_at)->format('d/m/Y H:i'),
-                'reporter'         => $task->reporter ? [
-                    'id'    => $task->reporter->id,
-                    'name'  => $task->reporter->name,
-                    'email' => $task->reporter->email,
-                ] : null,
-                'assignee'         => $task->assignee ? [
-                    'id'    => $task->assignee->id,
-                    'name'  => $task->assignee->name,
-                    'email' => $task->assignee->email,
-                ] : null,
-            ]))"
+            @click.stop="openTaskModal(task)"
           >
-            <h3 class="text-sm font-medium text-tasklab-text line-clamp-2">{{ $task->title ?? 'Sin título #' . $task->id }}</h3>
+            <h3 class="text-sm font-medium text-tasklab-text line-clamp-2" x-text="task.title || ('Sin título #' + task.id)"></h3>
             <div class="mt-2 flex flex-wrap gap-1">
-              <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $priorityColors[$task->priority] ?? $priorityColors['medium'] }}">
-                {{ $task->priority === 'critical' ? 'Crítica' : ucfirst($task->priority) }}
+              <span
+                class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                :class="{
+                  'bg-tasklab-danger/20 text-tasklab-danger border border-tasklab-danger/60': task.priority === 'critical',
+                  'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40': task.priority === 'high',
+                  'bg-tasklab-primary/10 text-tasklab-primary border border-tasklab-primary/40': task.priority === 'medium',
+                  'bg-tasklab-bg-muted text-tasklab-muted border border-slate-800': !['critical','high','medium'].includes(task.priority),
+                }"
+              >
+                <span x-text="task.priority === 'critical' ? 'Crítica' : (task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Media')"></span>
               </span>
               <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-tasklab-bg text-tasklab-muted border border-slate-800">
-                {{ $typeLabels[$task->type] ?? ucfirst($task->type) }}
+                <span x-text="
+                  task.type === 'bug' ? 'Bug' :
+                  task.type === 'feature' ? 'Evolutiva' :
+                  task.type === 'improvement' ? 'Mejora' :
+                  task.type === 'question' ? 'Consulta' :
+                  (task.type ? task.type : '')
+                "></span>
               </span>
             </div>
             <div class="mt-2 flex items-center gap-3 text-[11px] text-tasklab-muted">
@@ -138,12 +133,12 @@
               </span>
               <span class="flex items-center gap-1">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                {{ $task->created_at->format('d M') }}
+                <span x-text="task.created_at || ''"></span>
               </span>
             </div>
             <div class="mt-1.5 flex items-center gap-1 text-[11px] text-tasklab-muted">
               <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              {{ $task->assignee ? $task->assignee->name : 'Sin asignar' }}
+              <span x-text="task.assignee && task.assignee.name ? task.assignee.name : 'Sin asignar'"></span>
             </div>
             <p class="mt-1 text-[10px] text-tasklab-muted">Admin Panel</p>
             <div class="mt-2 flex flex-wrap gap-1">
@@ -152,7 +147,9 @@
               <span class="rounded-full border border-tasklab-muted/40 bg-tasklab-bg-muted px-1.5 py-0.5 text-[10px] text-tasklab-muted">#database</span>
             </div>
           </div>
-        @empty
+        </template>
+
+        <template x-if="columnTasks(@js($col['statuses'])).length === 0">
           <div class="flex flex-col items-center justify-center py-12 text-tasklab-muted">
             @if($col['icon'] === 'clock')
               <svg class="h-10 w-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -165,7 +162,7 @@
             @endif
             <p class="text-label font-medium text-tasklab-muted">Sin tareas</p>
           </div>
-        @endforelse
+        </template>
       </div>
     </div>
   @endforeach
