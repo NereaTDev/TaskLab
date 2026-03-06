@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CategoryValue;
 
 class Task extends Model
 {
     use HasFactory;
+
+    public function categoryValues()
+    {
+        return $this->belongsToMany(CategoryValue::class, 'task_category_values');
+    }
 
     protected $fillable = [
         'title',

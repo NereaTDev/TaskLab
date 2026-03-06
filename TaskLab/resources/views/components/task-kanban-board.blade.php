@@ -1,4 +1,4 @@
-@props(['tasks'])
+@props(['tasks', 'categoryTypes' => collect(), 'users' => collect()])
 
 @php
   $columnConfig = [
@@ -59,7 +59,18 @@
   class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
   x-data="taskBoard(
     '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER']) }}',
-    @js($tasks->values())
+    @js($tasks->values()),
+    @js($categoryTypes->map(fn($t) => [
+        'id'     => $t->id,
+        'name'   => $t->name,
+        'slug'   => $t->slug,
+        'values' => $t->values->map(fn($v) => [
+            'id'               => $v->id,
+            'name'             => $v->name,
+            'parent_id'        => $v->parent_id,
+            'category_type_id' => $v->category_type_id,
+        ]),
+    ]))
   )"
 >
   @foreach($columnConfig as $key => $col)
@@ -167,81 +178,297 @@
     </div>
   @endforeach
 
-  {{-- Modal detalle de tarea --}}
+  {{-- Modal detalle / edición de tarea --}}
   <div
     x-cloak
     x-show="isTaskModalOpen"
     class="fixed inset-0 z-40 flex items-center justify-center bg-black/60"
     @keydown.escape.window="closeTaskModal()"
   >
-    <div
-      class="w-full max-w-xl rounded-2xl border border-slate-800 bg-tasklab-bg shadow-card p-6"
-      @click.outside="closeTaskModal()"
-    >
-      <div class="flex items-start justify-between gap-4 mb-4">
-        <div class="flex items-start gap-3">
-          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text">
-            <span x-text="modalTask && modalTask.title ? modalTask.title.substring(0,2).toUpperCase() : 'TS'"></span>
-          </span>
-          <div>
-            <p class="text-body font-semibold text-tasklab-text" x-text="modalTask ? modalTask.title : ''"></p>
-            <p class="text-meta text-tasklab-muted mt-0.5">
-              <span x-text="modalTask ? modalTask.type : ''"></span>
-              ·
-              Prioridad: <span x-text="modalTask ? modalTask.priority : ''"></span>
-            </p>
+    <template x-if="modalTask">
+      <div
+        class="w-full max-w-4xl rounded-2xl border border-slate-800 bg-tasklab-bg shadow-2xl flex flex-col overflow-hidden"
+        @click.outside="closeTaskModal()"
+      >
+        <form
+          method="POST"
+          :action="'{{ route('tasks.update', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', modalTask.id)"
+        >
+        @csrf
+        @method('PATCH')
+
+        {{-- Cabecera: título + metadatos clave --}}
+        <div class="border-b border-slate-800 bg-tasklab-bg-muted px-6 py-4 flex flex-col gap-3">
+          <div class="flex items-start gap-3">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text border border-slate-700">
+              <span x-text="modalTask && modalTask.title ? modalTask.title.substring(0,2).toUpperCase() : 'TS'"></span>
+            </span>
+            <div class="flex-1 min-w-0">
+              <input
+                type="text"
+                name="title"
+                class="w-full bg-transparent border-none text-body font-semibold text-tasklab-text focus:ring-0 focus:outline-none p-0"
+                placeholder="Título de la tarea"
+                x-model="modalTask.title"
+              />
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-meta text-tasklab-muted">
+                <span class="inline-flex items-center rounded-full bg-tasklab-bg px-2 py-0.5 text-[11px] border border-slate-700">
+                  <span class="mr-1">Tipo:</span>
+                  <span x-text="modalTask ? modalTask.type : ''"></span>
+                </span>
+                <span class="inline-flex items-center rounded-full bg-tasklab-bg px-2 py-0.5 text-[11px] border border-slate-700">
+                  <span class="mr-1">ID:</span>
+                  <span x-text="modalTask ? modalTask.id : ''"></span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
+        {{-- Cuerpo en dos columnas: descripciones + metadatos --}}
+        <div class="px-6 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 h-[70vh] overflow-hidden items-stretch">
+          {{-- Columna izquierda: descripciones --}}
+          <div class="lg:col-span-2 space-y-3 overflow-y-auto pr-2 min-h-0">
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
+              <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción refinada (solo lectura)</h3>
+              <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_ai ? modalTask.description_ai : 'Refinamiento pendiente o no disponible.'"></p>
+            </section>
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
+              <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción original (editable)</h3>
+              <textarea
+                name="description_raw"
+                rows="6"
+                class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-3 py-2 text-sm resize-y"
+                x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"
+              ></textarea>
+            </section>
+            {{-- Comments (solo maquetación básica) --}}
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
+              <h3 class="text-label font-semibold text-tasklab-text">Comentarios</h3>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[10px] font-semibold text-tasklab-text border border-slate-700">
+                  N
+                </span>
+                <input
+                  type="text"
+                  class="flex-1 rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-3 py-1.5 text-sm"
+                  placeholder="Añadir un comentario..."
+                />
+              </div>
+            </section>
+          </div>
+
+          {{-- Columna derecha: panel de propiedades estilo Shortcut --}}
+          <div class="space-y-3 overflow-y-auto pl-2 min-h-0">
+            {{-- Task ID + Permalink --}}
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2 text-label text-tasklab-muted">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-meta uppercase tracking-wide text-tasklab-muted/80">Task ID</span>
+                <span class="text-body font-semibold text-tasklab-text" x-text="modalTask ? modalTask.id : ''"></span>
+              </div>
+              <div class="mt-2">
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Permalink</p>
+                <input
+                  type="text"
+                  readonly
+                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-[11px] text-tasklab-text px-2 py-1"
+                  :value="modalTask ? '{{ url('/tasks') }}/' + modalTask.id : ''"
+                />
+              </div>
+            </section>
+
+            {{-- Sección grande de filtros: tipos dinámicos + estado/tipo/prioridad --}}
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3 text-label text-tasklab-muted">
+              {{-- Tipos dinámicos (CategoryTypes) --}}
+              @foreach ($categoryTypes as $type)
+                <div class="space-y-2">
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">
+                    {{ $type->name }}
+                  </p>
+                  <select
+                    class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                    x-model="categorySelections['{{ $type->slug }}'].value_id"
+                    @change="onCategoryRootChange('{{ $type->slug }}')"
+                  >
+                    <option value="">Sin asignar</option>
+                    @foreach($type->values->whereNull('parent_id') as $value)
+                      <option value="{{ $value->id }}">{{ $value->name }}</option>
+                    @endforeach
+                  </select>
+                  <template
+                    x-if="categorySelections['{{ $type->slug }}'].children && categorySelections['{{ $type->slug }}'].children.length"
+                  >
+                    <select
+                      class="mt-1 w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                      x-model="categorySelections['{{ $type->slug }}'].child_value_id"
+                    >
+                      <option value="">Sin subcategoría</option>
+                      <template
+                        x-for="child in categorySelections['{{ $type->slug }}'].children"
+                        :key="child.id"
+                      >
+                        <option :value="child.id" x-text="child.name"></option>
+                      </template>
+                    </select>
+                  </template>
+                </div>
+              @endforeach
+
+              <div class="border-t border-slate-800 pt-3 space-y-3">
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Estado</p>
+                  <select
+                    name="status"
+                    class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                    x-model="modalTask.status"
+                  >
+                    <option value="new">Nueva</option>
+                    <option value="in_refinement">En refinamiento</option>
+                    <option value="ready_for_dev">Lista para dev</option>
+                    <option value="in_progress">En progreso</option>
+                    <option value="blocked">Bloqueada</option>
+                    <option value="done">Completada</option>
+                  </select>
+                </div>
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Tipo</p>
+                  <select
+                    name="type"
+                    class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                    x-model="modalTask.type"
+                  >
+                    <option value="bug">Bug</option>
+                    <option value="feature">Evolutiva</option>
+                    <option value="improvement">Mejora</option>
+                    <option value="question">Consulta</option>
+                  </select>
+                </div>
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Prioridad</p>
+                  <select
+                    name="priority"
+                    class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                    x-model="modalTask.priority"
+                  >
+                    <option value="critical">Crítica</option>
+                    <option value="high">Alta</option>
+                    <option value="medium">Media</option>
+                    <option value="low">Baja</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            {{-- Requester / Asignado (selectores de usuarios) --}}
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3 text-label text-tasklab-muted">
+              <div>
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Requester</p>
+                <select
+                  name="reporter_id"
+                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                >
+                  @foreach($users as $userOption)
+                    <option
+                      value="{{ $userOption->id }}"
+                      x-bind:selected="modalTask && modalTask.reporter && modalTask.reporter.id === {{ $userOption->id }}"
+                    >
+                      {{ $userOption->name }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+              <div>
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Asignado a</p>
+                <select
+                  name="assignee_id"
+                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                >
+                  @foreach($users as $userOption)
+                    <option
+                      value="{{ $userOption->id }}"
+                      x-bind:selected="modalTask && modalTask.assignee && modalTask.assignee.id === {{ $userOption->id }}"
+                    >
+                      {{ $userOption->name }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+            </section>
+
+            {{-- Estimación / Fechas --}}
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3 text-label text-tasklab-muted">
+              <div>
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Estimación (puntos)</p>
+                <input
+                  type="number"
+                  name="points"
+                  min="0"
+                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                  :value="modalTask && modalTask.points ? modalTask.points : ''"
+                />
+              </div>
+              <div>
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Esfuerzo estimado</p>
+                <select
+                  name="estimated_effort"
+                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                  x-model="modalTask.estimated_effort"
+                >
+                  <option value="">Sin especificar</option>
+                  <option value="low">Bajo</option>
+                  <option value="medium">Medio</option>
+                  <option value="high">Alto</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-1 gap-2">
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha de creación</p>
+                  <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.created_at ? modalTask.created_at : '—'"></p>
+                </div>
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha límite</p>
+                  <input
+                    type="date"
+                    name="due_date"
+                    class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                  />
+                </div>
+              </div>
+            </section>
+
+
           </div>
         </div>
 
-        <button
-          type="button"
-          class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-slate-700 bg-tasklab-bg text-tasklab-muted hover:text-tasklab-accent hover:border-tasklab-accent"
-          @click="closeTaskModal()"
-          aria-label="Cerrar"
-        >
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+        <div class="px-6 py-3 flex justify-end gap-2 border-t border-slate-800 bg-slate-900/80">
+          {{-- IDs de categorías seleccionadas (raíz + subcategoría) --}}
+          <template
+            x-for="id in Object.values(categorySelections)
+              .flatMap(sel => [sel.value_id, sel.child_value_id])
+              .filter(id => id)"
+            :key="id"
+          >
+            <input type="hidden" name="category_values[]" :value="id">
+          </template>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-label text-tasklab-muted">
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Estado</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask ? modalTask.status : ''"></p>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
+            @click.prevent="closeTaskModal()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+          >
+            Guardar cambios
+          </button>
         </div>
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha de creación</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.created_at ? modalTask.created_at : '—'"></p>
-        </div>
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Asignado a</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.assignee ? modalTask.assignee.name : 'Sin asignar'"></p>
-        </div>
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Reportado por</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.reporter ? modalTask.reporter.name : '—'"></p>
-        </div>
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Área</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.area ? modalTask.area : '—'"></p>
-        </div>
-        <div>
-          <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Esfuerzo estimado</p>
-          <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.estimated_effort ? modalTask.estimated_effort : '—'"></p>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
-          <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción refinada</h3>
-          <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_ai ? modalTask.description_ai : 'Refinamiento pendiente o no disponible.'"></p>
-        </section>
-        <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
-          <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción original</h3>
-          <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"></p>
-        </section>
-      </div>
+      </form>
     </div>
+  </template>
   </div>
 </div>

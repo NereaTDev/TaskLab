@@ -4,13 +4,17 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
+Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryTypes = []) => ({
     draggedTaskId: null,
     isUpdating: false,
     updateUrlTemplate: updateUrlTemplate || '',
 
     // Estado en memoria del tablero
     tasks: initialTasks,
+
+    // Tipos de categoría genéricos
+    categoryTypes: initialCategoryTypes,
+    categorySelections: {},
 
     // Modal de detalle de tarea
     isTaskModalOpen: false,
@@ -19,11 +23,41 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
     openTaskModal(task) {
         this.modalTask = task;
         this.isTaskModalOpen = true;
+
+        // Inicializar selección de categorías por tipo
+        this.categorySelections = {};
+        this.categoryTypes.forEach((type) => {
+            this.categorySelections[type.slug] = {
+                value_id: '',
+                child_value_id: '',
+                children: [],
+            };
+        });
+
+        // TODO: en el futuro, precargar desde task.category_values si se exponen en el JSON
     },
 
     closeTaskModal() {
         this.isTaskModalOpen = false;
         this.modalTask = null;
+        this.categorySelections = {};
+    },
+
+    onCategoryRootChange(typeSlug) {
+        const selection = this.categorySelections[typeSlug];
+        const typeData = this.categoryTypes.find(t => t.slug === typeSlug);
+        if (!selection || !typeData) return;
+
+        const rootId = Number(selection.value_id) || null;
+        if (!rootId) {
+            selection.children = [];
+            selection.child_value_id = '';
+            return;
+        }
+
+        const allValues = typeData.values || [];
+        selection.children = allValues.filter(v => v.parent_id === rootId);
+        selection.child_value_id = '';
     },
 
     // Devuelve las tareas cuya columna contenga alguno de los estados indicados

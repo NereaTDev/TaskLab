@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\RefineTaskWithAi;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\CategoryType;
 use App\Services\TaskAssignmentService;
 use Illuminate\Http\Request;
 
@@ -207,13 +208,22 @@ class TaskController extends Controller
 
         if ($view === 'board') {
             // Tablero: todas las tareas de la empresa (solo para admins / super admins)
-            $boardTasks = Task::with(['reporter', 'assignee'])->get();
+            $boardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])->get();
         } else {
             // Dashboard: tareas del usuario autenticado
-            $dashboardTasks = Task::with(['reporter', 'assignee'])
+            $dashboardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])
                 ->where('assignee_id', optional($user)->id)
                 ->get();
         }
+
+        // Tipos de categoría genéricos (definidos por el superadmin)
+        $categoryTypes = CategoryType::with(['values.children'])
+            ->orderBy('name')
+            ->get();
+
+        // Usuarios disponibles para selects de requester/owner.
+        // TODO: filtrar por rol y categorías (departamentos/áreas/equipos).
+        $selectableUsers = User::orderBy('name')->get();
 
         return view('tasks.index', compact(
             'stats',
@@ -224,6 +234,8 @@ class TaskController extends Controller
             'analysisPriorityStats',
             'analysisDeveloperStats',
             'analysisTeamMembers',
+            'categoryTypes',
+            'selectableUsers',
         ));
     }
 
@@ -281,6 +293,49 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         return view('tasks.show', compact('task'));
+    }
+
+    public function update(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'title'           => ['nullable', 'string', 'max:255'],
+            'description_raw' => ['nullable', 'string'],
+            'priority'        => ['required', 'in:low,medium,high,critical'],
+            'area'            => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
+            'status'          => ['required', 'in:new,in_refinement,ready_for_dev,in_progress,done,blocked'],
+            'type'            => ['required', 'in:bug,feature,improvement,question'],
+            'estimated_effort'=> ['nullable', 'in:low,medium,high'],
+            'points'          => ['nullable', 'integer', 'min:0'],
+            'category_values'   => ['array'],
+            'category_values.*' => ['integer', 'exists:category_values,id'],
+            'reporter_id'       => ['nullable', 'exists:users,id'],
+            'assignee_id'       => ['nullable', 'exists:users,id'],
+        ]);
+
+        $task->title           = $validated['title'] ?? $task->title;
+        $task->description_raw = $validated['description_raw'] ?? $task->description_raw;
+        $task->priority        = $validated['priority'];
+        $task->area            = $validated['area'] ?? null;
+        $task->status          = $validated['status'];
+        $task->type            = $validated['type'];
+        $task->estimated_effort = $validated['estimated_effort'] ?? $task->estimated_effort;
+        $task->reporter_id     = $validated['reporter_id'] ?? $task->reporter_id;
+        $task->assignee_id     = $validated['assignee_id'] ?? $task->assignee_id;
+
+        // Campo opcional 'points': requiere columna en la tabla tasks.
+        // De momento lo ignoramos para no romper hasta crear la migración.
+        // if (array_key_exists('points', $validated)) {
+        //     $task->points = $validated['points'];
+        // }
+
+        $task->save();
+
+        // Sincronizar categorías dinámicas
+        $task->categoryValues()->sync($validated['category_values'] ?? []);
+
+        return redirect()
+            ->route('tasks.index', ['view' => 'board'])
+            ->with('status', 'Task updated.');
     }
 
     public function updateStatus(Request $request, Task $task)

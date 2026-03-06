@@ -103,7 +103,7 @@
 
         @if($view === 'board')
             {{-- Tablero global de la empresa --}}
-            <x-task-kanban-board :tasks="$boardTasks ?? collect()" />
+            <x-task-kanban-board :tasks="$boardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" />
         @elseif($view === 'analysis')
             {{-- Vista Análisis: layout inspirado en DevTask, adaptado a TaskLab (dark) --}}
             <div class="space-y-6">

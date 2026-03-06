@@ -9,3 +9,29 @@
     .text-label   { @apply text-xs; }
     .text-meta    { @apply text-[11px]; }
 }
+
+/* Scrollbar global - fino, gris, sin fondo pesado */
+* {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #4b5563 transparent; /* thumb / track */
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent; /* sin fondo */
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: #4b5563; /* gray-600 */
+    border-radius: 9999px; /* super redondeado */
+    border: 2px solid transparent; /* lo hace visualmente más fino */
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af; /* gray-400 */
+}
