@@ -139,23 +139,13 @@
             </div>
             <div class="mt-2 flex items-center gap-3 text-[11px] text-tasklab-muted">
               <span class="flex items-center gap-1">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                —
-              </span>
-              <span class="flex items-center gap-1">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span x-text="task.created_at || ''"></span>
+                <span x-text="task.created_at ? new Date(task.created_at).toLocaleDateString('es-ES') : ''"></span>
               </span>
             </div>
             <div class="mt-1.5 flex items-center gap-1 text-[11px] text-tasklab-muted">
               <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
               <span x-text="task.assignee && task.assignee.name ? task.assignee.name : 'Sin asignar'"></span>
-            </div>
-            <p class="mt-1 text-[10px] text-tasklab-muted">Admin Panel</p>
-            <div class="mt-2 flex flex-wrap gap-1">
-              <span class="rounded-full border border-tasklab-accent/40 bg-tasklab-accent/10 px-1.5 py-0.5 text-[10px] text-tasklab-accent">#frontend</span>
-              <span class="rounded-full border border-tasklab-primary/40 bg-tasklab-primary/10 px-1.5 py-0.5 text-[10px] text-tasklab-primary">#backend</span>
-              <span class="rounded-full border border-tasklab-muted/40 bg-tasklab-bg-muted px-1.5 py-0.5 text-[10px] text-tasklab-muted">#database</span>
             </div>
           </div>
         </template>
@@ -425,7 +415,7 @@
               <div class="grid grid-cols-1 gap-2">
                 <div>
                   <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha de creación</p>
-                  <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.created_at ? modalTask.created_at : '—'"></p>
+                  <p class="mt-0.5 text-body text-tasklab-text" x-text="modalTask && modalTask.created_at ? new Date(modalTask.created_at).toLocaleDateString('es-ES') : '—'"></p>
                 </div>
                 <div>
                   <p class="text-meta uppercase tracking-wide text-tasklab-muted/80">Fecha límite</p>
