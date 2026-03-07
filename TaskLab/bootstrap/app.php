@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Excluir rutas de integraciones externas de la protección CSRF
+        $middleware->validateCsrfTokens(except: [
+            'integrations/teams/messages',
+            'integrations/discord/messages',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
