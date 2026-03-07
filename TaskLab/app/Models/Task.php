@@ -30,11 +30,16 @@ class Task extends Model
         'source',
         'area',
         'estimated_effort',
+        'external_message_id',
+        'external_channel',
+        'external_user_id',
+        'external_payload',
     ];
 
     protected $casts = [
         'requirements'      => 'array',
         'test_cases'        => 'array',
+        'external_payload'  => 'array',
     ];
 
     public function reporter()

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'teams' => [
+        'token' => env('SERVICES_TEAMS_TOKEN'),
+    ],
+
 ];
