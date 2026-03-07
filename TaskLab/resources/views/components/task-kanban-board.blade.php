@@ -58,7 +58,7 @@
 <div
   class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
   x-data="taskBoard(
-    '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER']) }}',
+    '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}',
     @js($tasks->values()),
     @js($categoryTypes->map(fn($t) => [
         'id'     => $t->id,
