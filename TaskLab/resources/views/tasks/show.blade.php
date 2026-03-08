@@ -23,7 +23,7 @@
                     name="status"
                     class="rounded-full border border-slate-700 bg-tasklab-bg-muted px-3 py-1.5 text-label text-tasklab-text focus:border-tasklab-primary focus:border-tasklab-accent focus:ring-tasklab-accent"
                 >
-                    @foreach(['new','in_refinement','ready_for_dev','in_progress','done','blocked'] as $status)
+                    @foreach(['new','ready_for_dev','in_progress','done','blocked','archived'] as $status)
                         <option value="{{ $status }}" {{ $task->status === $status ? 'selected' : '' }}>
                             {{ strtoupper($status) }}
                         </option>

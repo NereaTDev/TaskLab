@@ -23,7 +23,7 @@
     @foreach($columns as $key => $meta)
       @php
         $statusMap = [
-          'backlog'     => ['new', 'in_refinement'],
+          'backlog'     => ['new'],
           'pending'     => ['ready_for_dev'],
           'in_progress' => ['in_progress'],
           'in_review'   => ['blocked'],

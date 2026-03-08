@@ -1,10 +1,23 @@
-@props(['tasks', 'categoryTypes' => collect(), 'users' => collect(), 'openTaskId' => null])
+@props(['tasks', 'categoryTypes' => collect(), 'users' => collect(), 'openTaskId' => null, 'archivedView' => false, 'activeStatus' => 'all'])
 
 @php
-  $columnConfig = [
+  if ($archivedView) {
+    $columnConfig = [
+      'archived' => [
+        'label'    => 'Archivadas',
+        'statuses' => ['new', 'ready_for_dev', 'in_progress', 'blocked', 'done', 'archived'],
+        'target'   => 'archived',
+        'icon'     => 'archive',
+        'bg'       => 'bg-slate-900',
+        'header'   => 'bg-slate-800 border-slate-700',
+        'badge'    => 'bg-slate-800 text-tasklab-muted border border-slate-600',
+      ],
+    ];
+  } else {
+    $columnConfig = [
     'backlog' => [
       'label'    => 'Backlog',
-      'statuses' => ['new', 'in_refinement'],
+      'statuses' => ['new'],
       'target'   => 'new',
       'icon'     => 'inbox',
       'bg'       => 'bg-slate-900',
@@ -48,6 +61,24 @@
       'badge'    => 'bg-tasklab-success/20 text-tasklab-success border border-tasklab-success/60',
     ],
   ];
+  }
+
+  // Si hay un estado activo concreto (y no estamos en archivadas), reducimos a la columna correspondiente
+  $filteredColumnKey = null;
+  if (! $archivedView && $activeStatus && $activeStatus !== 'all') {
+      $statusToColumn = [
+          'new'           => 'backlog',
+          'ready_for_dev' => 'pending',
+          'in_progress'   => 'in_progress',
+          'blocked'       => 'in_review',
+          'done'          => 'done',
+      ];
+
+      if (isset($statusToColumn[$activeStatus])) {
+          $filteredColumnKey = $statusToColumn[$activeStatus];
+          $columnConfig = array_intersect_key($columnConfig, [$filteredColumnKey => true]);
+      }
+  }
 
   $priorityColors = [
     'critical' => 'bg-tasklab-danger/20 text-tasklab-danger border border-tasklab-danger/60',
@@ -65,7 +96,7 @@
 @endphp
 
 <div
-  class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4"
+  class="grid grid-cols-1 {{ ($archivedView || $filteredColumnKey) ? '' : 'md:grid-cols-3 lg:grid-cols-5' }} gap-4"
   x-data="taskBoard(
     '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}',
     @js($tasks->values()),
@@ -103,6 +134,8 @@
             <svg class="h-4 w-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           @elseif($col['icon'] === 'eye')
             <svg class="h-4 w-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          @elseif($col['icon'] === 'archive')
+            <svg class="h-4 w-4 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7V5a2 2 0 012-2h10a2 2 0 012 2v2M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7"/></svg>
           @else
             <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           @endif
@@ -228,6 +261,15 @@
                   <span class="mr-1">ID:</span>
                   <span x-text="modalTask ? modalTask.id : ''"></span>
                 </span>
+                <template x-if="modalTask && modalTask.reporter">
+                  <span class="inline-flex items-center rounded-full bg-tasklab-bg px-2 py-0.5 text-[11px] border border-slate-700">
+                    <span class="mr-1">Requester:</span>
+                    <span x-text="modalTask.reporter.name"></span>
+                    <template x-if="modalTask.reporter.email">
+                      <span class="ml-1 text-tasklab-muted/80" x-text="'<' + modalTask.reporter.email + '>'"></span>
+                    </template>
+                  </span>
+                </template>
               </div>
             </div>
           </div>
@@ -337,6 +379,7 @@
                     <option value="in_progress">En progreso</option>
                     <option value="blocked">En revisión</option>
                     <option value="done">Completada</option>
+                    <option value="archived">Archivada</option>
                   </select>
                 </div>
                 <div>

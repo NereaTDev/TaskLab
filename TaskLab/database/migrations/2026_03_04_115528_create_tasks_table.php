@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('test_cases')->nullable();
 
             $table->enum('type', ['bug', 'feature', 'improvement', 'question'])->default('bug');
-            $table->enum('status', ['new', 'in_refinement', 'ready_for_dev', 'in_progress', 'done', 'blocked'])->default('new');
+            $table->enum('status', ['new', 'ready_for_dev', 'in_progress', 'done', 'blocked'])->default('new');
             $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium');
 
             $table->foreignId('reporter_id')->nullable()->constrained('users')->nullOnDelete();

@@ -15,7 +15,7 @@ class TaskAssignmentService
      * - Filter devs whose areas include the task area (if set)
      * - Filter devs whose type matches the task type, or are fullstack
      * - Optionally respect max_parallel_tasks if set
-     * - Choose the dev with the fewest active tasks (status in [new, in_refinement, ready_for_dev, in_progress])
+     * - Choose the dev with the fewest active tasks (status in [new, ready_for_dev, in_progress])
      */
     public function assign(Task $task): ?Task
     {
@@ -49,7 +49,7 @@ class TaskAssignmentService
 
             $activeCount = Task::query()
                 ->where('assignee_id', $user->id)
-                ->whereIn('status', ['new', 'in_refinement', 'ready_for_dev', 'in_progress'])
+                ->whereIn('status', ['new', 'ready_for_dev', 'in_progress'])
                 ->count();
 
             // Respect max_parallel_tasks if set

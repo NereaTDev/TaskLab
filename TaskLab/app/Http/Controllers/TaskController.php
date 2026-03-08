@@ -26,13 +26,32 @@ class TaskController extends Controller
             $view = in_array($view, ['dashboard', 'board', 'analysis'], true) ? $view : 'dashboard';
         }
 
-        // Stats globales para tarjetas (por ahora no filtramos por usuario)
+        $status = $request->get('status');
+        $archived = $status === 'archived';
+
+        $viewMode = $request->get('view_mode', 'board');
+        if (! in_array($viewMode, ['board', 'list'], true)) {
+            $viewMode = 'board';
+        }
+
+        // Stats globales para tarjetas (por ahora no filtramos por usuario más allá del estado/archivado)
+        $statsBaseQuery = Task::query();
+        if (! $archived) {
+            $statsBaseQuery->whereNull('archived_at');
+        } else {
+            $statsBaseQuery->whereNotNull('archived_at');
+        }
+
+        if ($status && $status !== 'archived' && $status !== 'all') {
+            $statsBaseQuery->where('status', $status);
+        }
+
         $stats = [
-            'total'        => Task::whereNull('archived_at')->count(),
-            'pending'      => Task::whereNull('archived_at')->whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
-            'in_progress'  => Task::whereNull('archived_at')->where('status', 'in_progress')->count(),
-            'in_review'    => Task::whereNull('archived_at')->where('status', 'blocked')->count(),
-            'done'         => Task::whereNull('archived_at')->where('status', 'done')->count(),
+            'total'        => (clone $statsBaseQuery)->count(),
+            'pending'      => (clone $statsBaseQuery)->whereIn('status', ['new', 'ready_for_dev'])->count(),
+            'in_progress'  => (clone $statsBaseQuery)->where('status', 'in_progress')->count(),
+            'in_review'    => (clone $statsBaseQuery)->where('status', 'blocked')->count(),
+            'done'         => (clone $statsBaseQuery)->where('status', 'done')->count(),
         ];
 
         // Datos adicionales para la vista de análisis
@@ -212,15 +231,34 @@ class TaskController extends Controller
 
         if ($view === 'board') {
             // Tablero: todas las tareas de la empresa (solo para admins / super admins)
-            $boardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])
-                ->whereNull('archived_at')
-                ->get();
+            $boardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues']);
+            if ($archived) {
+                $boardTasksQuery->whereNotNull('archived_at');
+            } else {
+                $boardTasksQuery->whereNull('archived_at');
+            }
+
+            if ($status && $status !== 'archived' && $status !== 'all') {
+                $boardTasksQuery->where('status', $status);
+            }
+
+            $boardTasks = $boardTasksQuery->get();
         } else {
             // Dashboard: tareas del usuario autenticado
-            $dashboardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])
-                ->whereNull('archived_at')
-                ->where('assignee_id', optional($user)->id)
-                ->get();
+            $dashboardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues'])
+                ->where('assignee_id', optional($user)->id);
+
+            if ($archived) {
+                $dashboardTasksQuery->whereNotNull('archived_at');
+            } else {
+                $dashboardTasksQuery->whereNull('archived_at');
+            }
+
+            if ($status && $status !== 'archived' && $status !== 'all') {
+                $dashboardTasksQuery->where('status', $status);
+            }
+
+            $dashboardTasks = $dashboardTasksQuery->get();
         }
 
         // Tipos de categoría genéricos (definidos por el superadmin)
@@ -246,6 +284,9 @@ class TaskController extends Controller
             'categoryTypes',
             'selectableUsers',
             'openTaskId',
+            'archived',
+            'status',
+            'viewMode',
         ));
     }
 
@@ -310,7 +351,7 @@ class TaskController extends Controller
             'title'           => ['nullable', 'string', 'max:255'],
             'description_raw' => ['nullable', 'string'],
             'priority'        => ['required', 'in:low,medium,high,critical'],
-            'status'          => ['required', 'in:new,in_refinement,ready_for_dev,in_progress,done,blocked'],
+            'status'          => ['required', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
             'type'            => ['required', 'in:bug,feature,improvement,question'],
             'points'          => ['nullable', 'numeric', 'in:0.5,1,2,4,6,8,10,12,16'],
             'category_values'   => ['array'],
@@ -334,7 +375,9 @@ class TaskController extends Controller
             $task->points = $validated['points'];
         }
 
-        if ($archive) {
+        // Si el usuario marca la tarea como archivada (estado especial) o pulsa el botón de archivar,
+        // fijamos archived_at. De momento no soportamos "desarchivar" desde aquí.
+        if ($archive || $validated['status'] === 'archived') {
             $task->archived_at = now();
         }
 
@@ -351,10 +394,15 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task)
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:new,in_refinement,ready_for_dev,in_progress,done,blocked'],
+            'status' => ['required', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
         ]);
 
         $task->update(['status' => $validated['status']]);
+
+        if ($validated['status'] === 'archived' && is_null($task->archived_at)) {
+            $task->archived_at = now();
+            $task->save();
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

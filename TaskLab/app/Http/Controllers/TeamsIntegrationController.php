@@ -22,16 +22,27 @@ class TeamsIntegrationController extends Controller
 
         // Validar el payload básico que esperamos desde Teams / Power Automate
         $data = $request->validate([
-            'message_id'    => ['required', 'string'],
-            'message_text'  => ['required', 'string'],
-            'message_url'   => ['nullable', 'string'],
-            'channel_id'    => ['nullable', 'string'],
-            'channel_name'  => ['nullable', 'string'],
-            'team_id'       => ['nullable', 'string'],
-            'team_name'     => ['nullable', 'string'],
-            'from_email'    => ['nullable', 'email'],
-            'from_name'     => ['nullable', 'string'],
-            'from_teams_id' => ['nullable', 'string'],
+            'message_id'      => ['required', 'string'],
+            'message_text'    => ['required', 'string'],
+            'message_url'     => ['nullable', 'string'],
+            'channel_id'      => ['nullable', 'string'],
+            'channel_name'    => ['nullable', 'string'],
+            'team_id'         => ['nullable', 'string'],
+            'team_name'       => ['nullable', 'string'],
+            'from_email'      => ['nullable', 'email'],
+            'from_name'       => ['nullable', 'string'],
+            'from_teams_id'   => ['nullable', 'string'],
+            // Adjuntos opcionales normalizados desde Teams / Power Automate
+            // Estructura esperada:
+            //   attachments: [ { "url": "https://...", "label": "screenshot.png", "type": "image" }, ... ]
+            'attachments'     => ['nullable', 'array'],
+            'attachments.*'   => ['array'],
+            'attachments.*.url'   => ['nullable', 'string'],
+            'attachments.*.label' => ['nullable', 'string'],
+            'attachments.*.type'  => ['nullable', 'string'],
+            // Alternativa simple: lista plana de URLs de imagen
+            'image_urls'      => ['nullable', 'array'],
+            'image_urls.*'    => ['string'],
         ]);
 
         // Idempotencia: si ya tenemos ese mensaje de Teams no creamos otra task
@@ -59,7 +70,7 @@ class TeamsIntegrationController extends Controller
             );
         }
 
-        // Construir la descripción bruta con algo de contexto del mensaje de Teams
+        // Construir la descripción bruta con contexto del mensaje de Teams
         $descriptionRaw = $data['message_text'];
 
         if (! empty($data['message_url'])) {
@@ -72,17 +83,51 @@ class TeamsIntegrationController extends Controller
                 ($data['channel_name'] ?? 'Canal desconocido');
         }
 
+        // Normalizar adjuntos/imágenes para que la IA los vea en description_raw
+        $attachments = [];
+        $imageUrls = $data['image_urls'] ?? [];
+
+        if (! empty($data['attachments']) && is_array($data['attachments'])) {
+            foreach ($data['attachments'] as $att) {
+                if (! is_array($att)) {
+                    continue;
+                }
+                $url = $att['url'] ?? null;
+                $label = $att['label'] ?? null;
+                $type = $att['type'] ?? null;
+
+                if ($url) {
+                    $attachments[] = [
+                        'url'   => $url,
+                        'label' => $label,
+                        'type'  => $type,
+                    ];
+
+                    // También lo añadimos como URL de imagen para que la IA lo tenga en texto
+                    $imageUrls[] = $url;
+                }
+            }
+        }
+
+        if (! empty($imageUrls)) {
+            $uniqueImageUrls = array_values(array_unique($imageUrls));
+            $descriptionRaw .= "\n\nImágenes adjuntas:";
+            foreach ($uniqueImageUrls as $imgUrl) {
+                $descriptionRaw .= "\n- " . $imgUrl;
+            }
+        }
+
         // Extraer URLs del texto del mensaje para primary_url / additional_urls
         $primaryUrl = null;
         $additionalUrls = [];
-        if (! empty($data['message_text'])) {
-            if (preg_match_all('~https?://\S+~i', $data['message_text'], $matches)) {
-                $urls = $matches[0] ?? [];
-                if (! empty($urls)) {
-                    $primaryUrl = $urls[0];
-                    if (count($urls) > 1) {
-                        $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
-                    }
+        $textForUrlExtraction = $data['message_text'] . "\n" . ($data['message_url'] ?? '');
+
+        if (preg_match_all('~https?://\S+~i', $textForUrlExtraction, $matches)) {
+            $urls = $matches[0] ?? [];
+            if (! empty($urls)) {
+                $primaryUrl = $urls[0];
+                if (count($urls) > 1) {
+                    $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
                 }
             }
         }
@@ -103,6 +148,7 @@ class TeamsIntegrationController extends Controller
             'external_channel'    => $data['channel_id'] ?? $data['channel_name'] ?? null,
             'external_user_id'    => $data['from_teams_id'] ?? null,
             'external_payload'    => $request->all(),
+            'attachments'         => $attachments,
         ]);
 
         // Lanzar el job de refinamiento con "IA" y la asignación automática

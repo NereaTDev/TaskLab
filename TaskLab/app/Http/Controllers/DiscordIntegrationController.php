@@ -32,6 +32,15 @@ class DiscordIntegrationController extends Controller
             'from_email'    => ['nullable', 'email'],
             'from_name'     => ['nullable', 'string'],
             'from_teams_id' => ['nullable', 'string'], // aquí guardamos el user id de Discord
+            // Adjuntos opcionales normalizados desde Discord / Pipedream
+            // attachments: [ { "url": "https://...", "label": "screenshot.png", "type": "image" }, ... ]
+            'attachments'   => ['nullable', 'array'],
+            'attachments.*' => ['array'],
+            'attachments.*.url'   => ['nullable', 'string'],
+            'attachments.*.label' => ['nullable', 'string'],
+            'attachments.*.type'  => ['nullable', 'string'],
+            'image_urls'    => ['nullable', 'array'],
+            'image_urls.*'  => ['string'],
         ]);
 
         // Idempotencia: no duplicar mensajes
@@ -72,17 +81,50 @@ class DiscordIntegrationController extends Controller
                 ($data['channel_name'] ?? 'Canal desconocido');
         }
 
+        // Normalizar adjuntos/imágenes para que la IA los vea en description_raw
+        $attachments = [];
+        $imageUrls = $data['image_urls'] ?? [];
+
+        if (! empty($data['attachments']) && is_array($data['attachments'])) {
+            foreach ($data['attachments'] as $att) {
+                if (! is_array($att)) {
+                    continue;
+                }
+                $url = $att['url'] ?? null;
+                $label = $att['label'] ?? null;
+                $type = $att['type'] ?? null;
+
+                if ($url) {
+                    $attachments[] = [
+                        'url'   => $url,
+                        'label' => $label,
+                        'type'  => $type,
+                    ];
+
+                    $imageUrls[] = $url;
+                }
+            }
+        }
+
+        if (! empty($imageUrls)) {
+            $uniqueImageUrls = array_values(array_unique($imageUrls));
+            $descriptionRaw .= "\n\nImágenes adjuntas:";
+            foreach ($uniqueImageUrls as $imgUrl) {
+                $descriptionRaw .= "\n- " . $imgUrl;
+            }
+        }
+
         // Extraer URLs del texto del mensaje para primary_url / additional_urls
         $primaryUrl = null;
         $additionalUrls = [];
-        if (! empty($data['message_text'])) {
-            if (preg_match_all('~https?://\S+~i', $data['message_text'], $matches)) {
-                $urls = $matches[0] ?? [];
-                if (! empty($urls)) {
-                    $primaryUrl = $urls[0];
-                    if (count($urls) > 1) {
-                        $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
-                    }
+        $textForUrlExtraction = $data['message_text'] . "\n" . ($data['message_url'] ?? '');
+
+        if (preg_match_all('~https?://\S+~i', $textForUrlExtraction, $matches)) {
+            $urls = $matches[0] ?? [];
+            if (! empty($urls)) {
+                $primaryUrl = $urls[0];
+                if (count($urls) > 1) {
+                    $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
                 }
             }
         }
@@ -103,6 +145,7 @@ class DiscordIntegrationController extends Controller
             'external_channel'    => $data['channel_id'] ?? $data['channel_name'] ?? null,
             'external_user_id'    => $data['from_teams_id'] ?? null,
             'external_payload'    => $request->all(),
+            'attachments'         => $attachments,
         ]);
 
         // Lanzar refinamiento + asignación automática

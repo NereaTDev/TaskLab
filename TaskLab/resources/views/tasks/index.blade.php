@@ -12,18 +12,12 @@
                     >
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                        Tipo
-                    </button>
+                    <x-task-view-filter />
                     <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Prioridad
                     </button>
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        Estado
-                    </button>
+                    <x-task-status-filter :current="$status ?? 'all'" :view="$view" />
                     <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         Asignado
@@ -102,8 +96,13 @@
         @endif
 
         @if($view === 'board')
-            {{-- Tablero global de la empresa --}}
-            <x-task-kanban-board :tasks="$boardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" :open-task-id="$openTaskId ?? null" />
+            @if($viewMode === 'board')
+                {{-- Tablero global de la empresa --}}
+                <x-task-kanban-board :tasks="$boardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" :open-task-id="$openTaskId ?? null" :archived-view="($status ?? null) === 'archived'" :active-status="$status ?? 'all'" />
+            @else
+                {{-- Vista lista global de la empresa --}}
+                <x-task-list-view :tasks="$boardTasks ?? collect()" />
+            @endif
         @elseif($view === 'analysis')
             {{-- Vista Análisis: layout inspirado en DevTask, adaptado a TaskLab (dark) --}}
             <div class="space-y-6">
@@ -373,7 +372,11 @@
             </div>
         @else
             {{-- Dashboard: tablero personal del usuario --}}
-            <x-task-kanban-board :tasks="$dashboardTasks ?? collect()" />
+            @if($viewMode === 'board')
+                <x-task-kanban-board :tasks="$dashboardTasks ?? collect()" :archived-view="($status ?? null) === 'archived'" :active-status="$status ?? 'all'" />
+            @else
+                <x-task-list-view :tasks="$dashboardTasks ?? collect()" />
+            @endif
         @endif
     </div>
 </x-app-layout>
