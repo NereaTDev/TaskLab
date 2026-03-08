@@ -39,4 +39,10 @@ return [
         'token' => env('SERVICES_TEAMS_TOKEN'),
     ],
 
+    'openai' => [
+        'api_key'      => env('OPENAI_API_KEY'),
+        // Modelo por defecto para el refinamiento de tareas. Puedes sobreescribirlo en .env
+        'tasklab_model'=> env('OPENAI_TASKLAB_MODEL', 'gpt-4.1-mini'),
+    ],
+
 ];

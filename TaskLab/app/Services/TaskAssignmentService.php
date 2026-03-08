@@ -19,23 +19,21 @@ class TaskAssignmentService
      */
     public function assign(Task $task): ?Task
     {
-        if (! $task->area || ! $task->type) {
-            // Without area or type we can't make a smart decision.
+        if (! $task->type) {
+            // Sin tipo no podemos tomar una decisión mínimamente razonable.
             return $task;
         }
 
         $devs = DeveloperProfile::query()
             ->where('active', true)
             ->where(function ($q) use ($task) {
-                // Type compatibility: same type or fullstack
+                // Compatibilidad de tipo: mismo tipo o fullstack
                 $q->where('type', $task->type)
                   ->orWhere('type', 'fullstack');
             })
-            ->where(function ($q) use ($task) {
-                // Areas contains task area (areas is json array)
-                $q->whereJsonContains('areas', $task->area)
-                  ->orWhereNull('areas'); // if areas is null, assume can work anywhere
-            })
+            // De momento NO filtramos por área fija de la tarea, porque ahora las áreas
+            // son dinámicas vía CategoryType/CategoryValue. Más adelante podremos
+            // usar esas categorías para un filtrado más fino.
             ->with(['user' => function ($q) {
                 $q->select('id', 'name', 'email');
             }])

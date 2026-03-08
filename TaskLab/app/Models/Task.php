@@ -25,21 +25,28 @@ class Task extends Model
         'type',
         'status',
         'priority',
+        'points',
         'reporter_id',
         'assignee_id',
         'source',
-        'area',
-        'estimated_effort',
+        'primary_url',
+        'additional_urls',
+        'impact',
         'external_message_id',
         'external_channel',
         'external_user_id',
         'external_payload',
+        'attachments',
     ];
 
     protected $casts = [
         'requirements'      => 'array',
         'test_cases'        => 'array',
         'external_payload'  => 'array',
+        'additional_urls'   => 'array',
+        'attachments'       => 'array',
+        'points'            => 'float',
+        'archived_at'       => 'datetime',
     ];
 
     public function reporter()

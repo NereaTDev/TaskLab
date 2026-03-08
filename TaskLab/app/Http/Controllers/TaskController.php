@@ -28,11 +28,11 @@ class TaskController extends Controller
 
         // Stats globales para tarjetas (por ahora no filtramos por usuario)
         $stats = [
-            'total'        => Task::count(),
-            'pending'      => Task::whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
-            'in_progress'  => Task::where('status', 'in_progress')->count(),
-            'in_review'    => Task::where('status', 'blocked')->count(),
-            'done'         => Task::where('status', 'done')->count(),
+            'total'        => Task::whereNull('archived_at')->count(),
+            'pending'      => Task::whereNull('archived_at')->whereIn('status', ['new', 'in_refinement', 'ready_for_dev'])->count(),
+            'in_progress'  => Task::whereNull('archived_at')->where('status', 'in_progress')->count(),
+            'in_review'    => Task::whereNull('archived_at')->where('status', 'blocked')->count(),
+            'done'         => Task::whereNull('archived_at')->where('status', 'done')->count(),
         ];
 
         // Datos adicionales para la vista de análisis
@@ -44,6 +44,7 @@ class TaskController extends Controller
         if ($view === 'analysis') {
             // Tareas por tipo (mapeadas a categorías de negocio)
             $typeCounts = Task::selectRaw('type, count(*) as count')
+                ->whereNull('archived_at')
                 ->groupBy('type')
                 ->pluck('count', 'type');
 
@@ -79,6 +80,7 @@ class TaskController extends Controller
 
             // Tareas por prioridad
             $priorityCounts = Task::selectRaw('priority, count(*) as count')
+                ->whereNull('archived_at')
                 ->groupBy('priority')
                 ->pluck('count', 'priority');
 
@@ -114,6 +116,7 @@ class TaskController extends Controller
 
             // Tareas por desarrollador (top 4 por nº de tareas asignadas)
             $developerAggregates = Task::selectRaw('assignee_id, count(*) as task_count')
+                ->whereNull('archived_at')
                 ->whereNotNull('assignee_id')
                 ->groupBy('assignee_id')
                 ->orderByDesc('task_count')
@@ -149,6 +152,7 @@ class TaskController extends Controller
                 ->get();
 
             $taskStatusAggregates = Task::selectRaw('assignee_id, status, count(*) as task_count')
+                ->whereNull('archived_at')
                 ->whereNotNull('assignee_id')
                 ->groupBy('assignee_id', 'status')
                 ->get()
@@ -159,7 +163,7 @@ class TaskController extends Controller
 
                 $totalTasks = $statusRows->sum('task_count');
                 $activeTasks = $statusRows
-                    ->whereIn('status', ['new', 'in_refinement', 'ready_for_dev', 'in_progress'])
+                    ->whereIn('status', ['backlog', 'pending', 'in_progress', 'in_review'])
                     ->sum('task_count');
                 $doneTasks = $statusRows
                     ->firstWhere('status', 'done')['task_count'] ?? 0;
@@ -208,10 +212,13 @@ class TaskController extends Controller
 
         if ($view === 'board') {
             // Tablero: todas las tareas de la empresa (solo para admins / super admins)
-            $boardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])->get();
+            $boardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])
+                ->whereNull('archived_at')
+                ->get();
         } else {
             // Dashboard: tareas del usuario autenticado
             $dashboardTasks = Task::with(['reporter', 'assignee', 'categoryValues'])
+                ->whereNull('archived_at')
                 ->where('assignee_id', optional($user)->id)
                 ->get();
         }
@@ -225,6 +232,8 @@ class TaskController extends Controller
         // TODO: filtrar por rol y categorías (departamentos/áreas/equipos).
         $selectableUsers = User::orderBy('name')->get();
 
+        $openTaskId = $request->get('task');
+
         return view('tasks.index', compact(
             'stats',
             'view',
@@ -236,6 +245,7 @@ class TaskController extends Controller
             'analysisTeamMembers',
             'categoryTypes',
             'selectableUsers',
+            'openTaskId',
         ));
     }
 
@@ -251,8 +261,6 @@ class TaskController extends Controller
             'url'             => ['nullable', 'string', 'max:255'],
             'priority'        => ['required', 'in:low,medium,high,critical'],
             'description'     => ['required', 'string'],
-            'area'            => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
-            'estimated_effort'=> ['nullable', 'in:low,medium,high'],
         ]);
 
         $user = $request->user();
@@ -263,15 +271,14 @@ class TaskController extends Controller
         }
 
         $task = Task::create([
-            'title'            => null,
-            'description_raw'  => $descriptionRaw,
-            'type'             => $validated['type'],
-            'status'           => 'new',
-            'priority'         => $validated['priority'],
-            'reporter_id'      => optional($user)->id,
-            'source'           => 'web_form',
-            'area'             => $validated['area'] ?? null,
-            'estimated_effort' => $validated['estimated_effort'] ?? 'medium',
+            'title'           => null,
+            'description_raw' => $descriptionRaw,
+            'type'            => $validated['type'],
+            'status'          => 'new',
+            'priority'        => $validated['priority'],
+            'reporter_id'     => optional($user)->id,
+            'source'          => 'web_form',
+            'primary_url'     => $validated['url'] ?? null,
         ]);
 
         // Lanzamos la IA de refinamiento
@@ -292,7 +299,9 @@ class TaskController extends Controller
 
     public function show(Task $task)
     {
-        return view('tasks.show', compact('task'));
+        // En lugar de una vista separada, reutilizamos el tablero
+        // y abrimos el modal de la tarea usando el parámetro ?task=
+        return redirect()->route('tasks.index', ['view' => 'board', 'task' => $task->id]);
     }
 
     public function update(Request $request, Task $task)
@@ -301,32 +310,33 @@ class TaskController extends Controller
             'title'           => ['nullable', 'string', 'max:255'],
             'description_raw' => ['nullable', 'string'],
             'priority'        => ['required', 'in:low,medium,high,critical'],
-            'area'            => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
             'status'          => ['required', 'in:new,in_refinement,ready_for_dev,in_progress,done,blocked'],
             'type'            => ['required', 'in:bug,feature,improvement,question'],
-            'estimated_effort'=> ['nullable', 'in:low,medium,high'],
-            'points'          => ['nullable', 'integer', 'min:0'],
+            'points'          => ['nullable', 'numeric', 'in:0.5,1,2,4,6,8,10,12,16'],
             'category_values'   => ['array'],
             'category_values.*' => ['integer', 'exists:category_values,id'],
             'reporter_id'       => ['nullable', 'exists:users,id'],
             'assignee_id'       => ['nullable', 'exists:users,id'],
+            'archive'           => ['nullable'],
         ]);
+
+        $archive = $request->boolean('archive');
 
         $task->title           = $validated['title'] ?? $task->title;
         $task->description_raw = $validated['description_raw'] ?? $task->description_raw;
-        $task->priority        = $validated['priority'];
-        $task->area            = $validated['area'] ?? null;
-        $task->status          = $validated['status'];
-        $task->type            = $validated['type'];
-        $task->estimated_effort = $validated['estimated_effort'] ?? $task->estimated_effort;
-        $task->reporter_id     = $validated['reporter_id'] ?? $task->reporter_id;
-        $task->assignee_id     = $validated['assignee_id'] ?? $task->assignee_id;
+        $task->priority    = $validated['priority'];
+        $task->status      = $validated['status'];
+        $task->type        = $validated['type'];
+        $task->reporter_id = $validated['reporter_id'] ?? $task->reporter_id;
+        $task->assignee_id = $validated['assignee_id'] ?? $task->assignee_id;
 
-        // Campo opcional 'points': requiere columna en la tabla tasks.
-        // De momento lo ignoramos para no romper hasta crear la migración.
-        // if (array_key_exists('points', $validated)) {
-        //     $task->points = $validated['points'];
-        // }
+        if (array_key_exists('points', $validated)) {
+            $task->points = $validated['points'];
+        }
+
+        if ($archive) {
+            $task->archived_at = now();
+        }
 
         $task->save();
 

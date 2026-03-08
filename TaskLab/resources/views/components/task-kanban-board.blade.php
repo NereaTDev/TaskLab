@@ -1,11 +1,20 @@
-@props(['tasks', 'categoryTypes' => collect(), 'users' => collect()])
+@props(['tasks', 'categoryTypes' => collect(), 'users' => collect(), 'openTaskId' => null])
 
 @php
   $columnConfig = [
+    'backlog' => [
+      'label'    => 'Backlog',
+      'statuses' => ['new', 'in_refinement'],
+      'target'   => 'new',
+      'icon'     => 'inbox',
+      'bg'       => 'bg-slate-900',
+      'header'   => 'bg-slate-800 border-slate-700',
+      'badge'    => 'bg-slate-800 text-tasklab-muted border border-slate-600',
+    ],
     'pending' => [
       'label'    => 'Pendiente',
-      'statuses' => ['new', 'in_refinement', 'ready_for_dev'],
-      'target'   => 'new',
+      'statuses' => ['ready_for_dev'],
+      'target'   => 'ready_for_dev',
       'icon'     => 'clock',
       'bg'       => 'bg-slate-900',
       'header'   => 'bg-slate-800 border-slate-700',
@@ -56,7 +65,7 @@
 @endphp
 
 <div
-  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+  class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4"
   x-data="taskBoard(
     '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}',
     @js($tasks->values()),
@@ -72,6 +81,9 @@
         ]),
     ]))
   )"
+  @if($openTaskId)
+    x-init="(() => { const id = {{ (int) $openTaskId }}; const t = tasks.find(task => Number(task.id) === id); if (t) { openTaskModal(t); } })()"
+  @endif
 >
   @foreach($columnConfig as $key => $col)
     @php
@@ -135,6 +147,12 @@
                   task.type === 'question' ? 'Consulta' :
                   (task.type ? task.type : '')
                 "></span>
+              </span>
+              <span
+                x-show="task.points"
+                class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-slate-900 text-tasklab-muted border border-slate-700"
+              >
+                ⏱ <span class="ml-0.5" x-text="task.points + ' h'"></span>
               </span>
             </div>
             <div class="mt-2 flex items-center gap-3 text-[11px] text-tasklab-muted">
@@ -314,11 +332,10 @@
                     class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                     x-model="modalTask.status"
                   >
-                    <option value="new">Nueva</option>
-                    <option value="in_refinement">En refinamiento</option>
-                    <option value="ready_for_dev">Lista para dev</option>
+                    <option value="new">Backlog</option>
+                    <option value="ready_for_dev">Pendiente</option>
                     <option value="in_progress">En progreso</option>
-                    <option value="blocked">Bloqueada</option>
+                    <option value="blocked">En revisión</option>
                     <option value="done">Completada</option>
                   </select>
                 </div>
@@ -390,26 +407,15 @@
             {{-- Estimación / Fechas --}}
             <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3 text-label text-tasklab-muted">
               <div>
-                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Estimación (puntos)</p>
-                <input
-                  type="number"
-                  name="points"
-                  min="0"
-                  class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
-                  :value="modalTask && modalTask.points ? modalTask.points : ''"
-                />
-              </div>
-              <div>
-                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Esfuerzo estimado</p>
+                <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Estimación (horas)</p>
                 <select
-                  name="estimated_effort"
+                  name="points"
                   class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
-                  x-model="modalTask.estimated_effort"
                 >
-                  <option value="">Sin especificar</option>
-                  <option value="low">Bajo</option>
-                  <option value="medium">Medio</option>
-                  <option value="high">Alto</option>
+                  <option value="">Sin estimación</option>
+                  <template x-for="value in [0.5,1,2,4,6,8,10,12,16]" :key="value">
+                    <option :value="value" x-text="value + ' h'" :selected="modalTask && Number(modalTask.points) === value"></option>
+                  </template>
                 </select>
               </div>
               <div class="grid grid-cols-1 gap-2">
@@ -432,7 +438,7 @@
           </div>
         </div>
 
-        <div class="px-6 py-3 flex justify-end gap-2 border-t border-slate-800 bg-slate-900/80">
+        <div class="px-6 py-3 flex justify-between gap-2 border-t border-slate-800 bg-slate-900/80">
           {{-- IDs de categorías seleccionadas (raíz + subcategoría) --}}
           <template
             x-for="id in Object.values(categorySelections)
@@ -443,19 +449,32 @@
             <input type="hidden" name="category_values[]" :value="id">
           </template>
 
-          <button
-            type="button"
-            class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
-            @click.prevent="closeTaskModal()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
-          >
-            Guardar cambios
-          </button>
+          <div class="flex items-center gap-2">
+            <input type="hidden" name="archive" x-ref="archiveField" value="">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-red-800 bg-transparent px-4 py-1.5 text-body text-red-400 hover:bg-red-900/40 hover:border-red-500"
+              @click.prevent="$refs.archiveField.value = '1'; $el.closest('form').submit()"
+            >
+              Archivar tarea
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
+              @click.prevent="closeTaskModal()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+            >
+              Guardar cambios
+            </button>
+          </div>
         </div>
       </form>
     </div>

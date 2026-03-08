@@ -22,18 +22,16 @@ class TeamsIntegrationController extends Controller
 
         // Validar el payload básico que esperamos desde Teams / Power Automate
         $data = $request->validate([
-            'message_id'       => ['required', 'string'],
-            'message_text'     => ['required', 'string'],
-            'message_url'      => ['nullable', 'string'],
-            'channel_id'       => ['nullable', 'string'],
-            'channel_name'     => ['nullable', 'string'],
-            'team_id'          => ['nullable', 'string'],
-            'team_name'        => ['nullable', 'string'],
-            'from_email'       => ['nullable', 'email'],
-            'from_name'        => ['nullable', 'string'],
-            'from_teams_id'    => ['nullable', 'string'],
-            'area'             => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
-            'estimated_effort' => ['nullable', 'in:low,medium,high'],
+            'message_id'    => ['required', 'string'],
+            'message_text'  => ['required', 'string'],
+            'message_url'   => ['nullable', 'string'],
+            'channel_id'    => ['nullable', 'string'],
+            'channel_name'  => ['nullable', 'string'],
+            'team_id'       => ['nullable', 'string'],
+            'team_name'     => ['nullable', 'string'],
+            'from_email'    => ['nullable', 'email'],
+            'from_name'     => ['nullable', 'string'],
+            'from_teams_id' => ['nullable', 'string'],
         ]);
 
         // Idempotencia: si ya tenemos ese mensaje de Teams no creamos otra task
@@ -74,6 +72,21 @@ class TeamsIntegrationController extends Controller
                 ($data['channel_name'] ?? 'Canal desconocido');
         }
 
+        // Extraer URLs del texto del mensaje para primary_url / additional_urls
+        $primaryUrl = null;
+        $additionalUrls = [];
+        if (! empty($data['message_text'])) {
+            if (preg_match_all('~https?://\S+~i', $data['message_text'], $matches)) {
+                $urls = $matches[0] ?? [];
+                if (! empty($urls)) {
+                    $primaryUrl = $urls[0];
+                    if (count($urls) > 1) {
+                        $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
+                    }
+                }
+            }
+        }
+
         // Crear la Task base, reutilizando el mismo esquema que el formulario web
         $task = Task::create([
             'title'               => null,
@@ -84,8 +97,8 @@ class TeamsIntegrationController extends Controller
             'reporter_id'         => $reporter?->id,
             'assignee_id'         => null,
             'source'              => 'teams',
-            'area'                => $data['area'] ?? null,
-            'estimated_effort'    => $data['estimated_effort'] ?? 'medium',
+            'primary_url'         => $primaryUrl,
+            'additional_urls'     => $additionalUrls,
             'external_message_id' => $data['message_id'],
             'external_channel'    => $data['channel_id'] ?? $data['channel_name'] ?? null,
             'external_user_id'    => $data['from_teams_id'] ?? null,

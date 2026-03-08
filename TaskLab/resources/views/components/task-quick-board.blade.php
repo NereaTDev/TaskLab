@@ -2,11 +2,11 @@
 
 @php
   $columns = [
-    'new'            => ['label' => 'Pendiente',     'color' => 'border-tasklab-warning/40 bg-tasklab-warning/10'],
-    'in_refinement'  => ['label' => 'Refinando',     'color' => 'border-tasklab-primary-soft/40 bg-tasklab-primary-soft/10'],
-    'ready_for_dev'  => ['label' => 'Ready for dev', 'color' => 'border-tasklab-primary/40 bg-tasklab-primary/10'],
-    'in_progress'    => ['label' => 'En progreso',   'color' => 'border-tasklab-primary/40 bg-tasklab-primary/10'],
-    'done'           => ['label' => 'Completada',    'color' => 'border-tasklab-success/40 bg-tasklab-success/10'],
+    'backlog'      => ['label' => 'Backlog',     'color' => 'border-tasklab-warning/40 bg-tasklab-warning/10'],
+    'pending'      => ['label' => 'Pendiente',   'color' => 'border-tasklab-primary-soft/40 bg-tasklab-primary-soft/10'],
+    'in_progress'  => ['label' => 'En progreso', 'color' => 'border-tasklab-primary/40 bg-tasklab-primary/10'],
+    'in_review'    => ['label' => 'En revisión', 'color' => 'border-violet-600/70 bg-violet-900/40'],
+    'done'         => ['label' => 'Completada',  'color' => 'border-tasklab-success/40 bg-tasklab-success/10'],
   ];
 @endphp
 
@@ -21,7 +21,16 @@
 
   <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
     @foreach($columns as $key => $meta)
-      @php $colTasks = $tasks->where('status', $key); @endphp
+      @php
+        $statusMap = [
+          'backlog'     => ['new', 'in_refinement'],
+          'pending'     => ['ready_for_dev'],
+          'in_progress' => ['in_progress'],
+          'in_review'   => ['blocked'],
+          'done'        => ['done'],
+        ];
+        $colTasks = $tasks->whereIn('status', $statusMap[$key] ?? []);
+      @endphp
 
       <div class="rounded-xl border {{ $meta['color'] }} p-2 flex flex-col min-h-[140px] bg-tasklab-bg">
         <p class="text-label font-semibold flex items-center justify-between mb-1 text-tasklab-text">

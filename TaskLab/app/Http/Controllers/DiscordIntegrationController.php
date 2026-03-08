@@ -22,18 +22,16 @@ class DiscordIntegrationController extends Controller
 
         // Payload normalizado desde el conector de Discord (Pipedream, n8n, bot propio...)
         $data = $request->validate([
-            'message_id'       => ['required', 'string'],
-            'message_text'     => ['required', 'string'],
-            'message_url'      => ['nullable', 'string'],
-            'channel_id'       => ['nullable', 'string'],
-            'channel_name'     => ['nullable', 'string'],
-            'team_id'          => ['nullable', 'string'],
-            'team_name'        => ['nullable', 'string'],
-            'from_email'       => ['nullable', 'email'],
-            'from_name'        => ['nullable', 'string'],
-            'from_teams_id'    => ['nullable', 'string'], // aquí guardamos el user id de Discord
-            'area'             => ['nullable', 'in:web,plataforma,frontierz,dashboard_empresas'],
-            'estimated_effort' => ['nullable', 'in:low,medium,high'],
+            'message_id'    => ['required', 'string'],
+            'message_text'  => ['required', 'string'],
+            'message_url'   => ['nullable', 'string'],
+            'channel_id'    => ['nullable', 'string'],
+            'channel_name'  => ['nullable', 'string'],
+            'team_id'       => ['nullable', 'string'],
+            'team_name'     => ['nullable', 'string'],
+            'from_email'    => ['nullable', 'email'],
+            'from_name'     => ['nullable', 'string'],
+            'from_teams_id' => ['nullable', 'string'], // aquí guardamos el user id de Discord
         ]);
 
         // Idempotencia: no duplicar mensajes
@@ -74,6 +72,21 @@ class DiscordIntegrationController extends Controller
                 ($data['channel_name'] ?? 'Canal desconocido');
         }
 
+        // Extraer URLs del texto del mensaje para primary_url / additional_urls
+        $primaryUrl = null;
+        $additionalUrls = [];
+        if (! empty($data['message_text'])) {
+            if (preg_match_all('~https?://\S+~i', $data['message_text'], $matches)) {
+                $urls = $matches[0] ?? [];
+                if (! empty($urls)) {
+                    $primaryUrl = $urls[0];
+                    if (count($urls) > 1) {
+                        $additionalUrls = array_values(array_unique(array_slice($urls, 1)));
+                    }
+                }
+            }
+        }
+
         // Crear la Task base con source=discord
         $task = Task::create([
             'title'               => null,
@@ -84,8 +97,8 @@ class DiscordIntegrationController extends Controller
             'reporter_id'         => $reporter?->id,
             'assignee_id'         => null,
             'source'              => 'discord',
-            'area'                => $data['area'] ?? null,
-            'estimated_effort'    => $data['estimated_effort'] ?? 'medium',
+            'primary_url'         => $primaryUrl,
+            'additional_urls'     => $additionalUrls,
             'external_message_id' => $data['message_id'],
             'external_channel'    => $data['channel_id'] ?? $data['channel_name'] ?? null,
             'external_user_id'    => $data['from_teams_id'] ?? null,
