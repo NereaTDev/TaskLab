@@ -29,12 +29,28 @@ class TaskController extends Controller
         $status = $request->get('status');
         $archived = $status === 'archived';
 
+        $priority = $request->get('priority');
+        $assigneeId = $request->get('assignee_id');
+
         $viewMode = $request->get('view_mode', 'board');
         if (! in_array($viewMode, ['board', 'list'], true)) {
             $viewMode = 'board';
         }
 
-        // Stats globales para tarjetas (por ahora no filtramos por usuario más allá del estado/archivado)
+        // Filtros comunes reutilizables (prioridad y asignado)
+        $applyCommonFilters = static function ($query) use ($priority, $assigneeId) {
+            if ($priority && $priority !== 'all') {
+                $query->where('priority', $priority);
+            }
+
+            if ($assigneeId === 'unassigned') {
+                $query->whereNull('assignee_id');
+            } elseif ($assigneeId && $assigneeId !== 'all') {
+                $query->where('assignee_id', $assigneeId);
+            }
+        };
+
+        // Stats globales para tarjetas (filtradas por los parámetros comunes)
         $statsBaseQuery = Task::query();
         if (! $archived) {
             $statsBaseQuery->whereNull('archived_at');
@@ -45,6 +61,8 @@ class TaskController extends Controller
         if ($status && $status !== 'archived' && $status !== 'all') {
             $statsBaseQuery->where('status', $status);
         }
+
+        $applyCommonFilters($statsBaseQuery);
 
         $stats = [
             'total'        => (clone $statsBaseQuery)->count(),
@@ -62,8 +80,12 @@ class TaskController extends Controller
 
         if ($view === 'analysis') {
             // Tareas por tipo (mapeadas a categorías de negocio)
-            $typeCounts = Task::selectRaw('type, count(*) as count')
-                ->whereNull('archived_at')
+            $typeCountsQuery = Task::selectRaw('type, count(*) as count')
+                ->whereNull('archived_at');
+
+            $applyCommonFilters($typeCountsQuery);
+
+            $typeCounts = $typeCountsQuery
                 ->groupBy('type')
                 ->pluck('count', 'type');
 
@@ -98,8 +120,12 @@ class TaskController extends Controller
             }
 
             // Tareas por prioridad
-            $priorityCounts = Task::selectRaw('priority, count(*) as count')
-                ->whereNull('archived_at')
+            $priorityCountsQuery = Task::selectRaw('priority, count(*) as count')
+                ->whereNull('archived_at');
+
+            $applyCommonFilters($priorityCountsQuery);
+
+            $priorityCounts = $priorityCountsQuery
                 ->groupBy('priority')
                 ->pluck('count', 'priority');
 
@@ -134,9 +160,13 @@ class TaskController extends Controller
             }
 
             // Tareas por desarrollador (top 4 por nº de tareas asignadas)
-            $developerAggregates = Task::selectRaw('assignee_id, count(*) as task_count')
+            $developerAggregatesQuery = Task::selectRaw('assignee_id, count(*) as task_count')
                 ->whereNull('archived_at')
-                ->whereNotNull('assignee_id')
+                ->whereNotNull('assignee_id');
+
+            $applyCommonFilters($developerAggregatesQuery);
+
+            $developerAggregates = $developerAggregatesQuery
                 ->groupBy('assignee_id')
                 ->orderByDesc('task_count')
                 ->take(4)
@@ -170,9 +200,13 @@ class TaskController extends Controller
                 ->whereHas('developerProfile')
                 ->get();
 
-            $taskStatusAggregates = Task::selectRaw('assignee_id, status, count(*) as task_count')
+            $taskStatusAggregatesQuery = Task::selectRaw('assignee_id, status, count(*) as task_count')
                 ->whereNull('archived_at')
-                ->whereNotNull('assignee_id')
+                ->whereNotNull('assignee_id');
+
+            $applyCommonFilters($taskStatusAggregatesQuery);
+
+            $taskStatusAggregates = $taskStatusAggregatesQuery
                 ->groupBy('assignee_id', 'status')
                 ->get()
                 ->groupBy('assignee_id');
@@ -242,6 +276,8 @@ class TaskController extends Controller
                 $boardTasksQuery->where('status', $status);
             }
 
+            $applyCommonFilters($boardTasksQuery);
+
             $boardTasks = $boardTasksQuery->get();
         } else {
             // Dashboard: tareas del usuario autenticado
@@ -256,6 +292,18 @@ class TaskController extends Controller
 
             if ($status && $status !== 'archived' && $status !== 'all') {
                 $dashboardTasksQuery->where('status', $status);
+            }
+
+            // Para el dashboard personal, sólo permitimos sobreescribir el asignado
+            // si el filtro explícitamente pide "sin asignar" o un usuario concreto.
+            if ($assigneeId === 'unassigned') {
+                $dashboardTasksQuery->whereNull('assignee_id');
+            } elseif ($assigneeId && $assigneeId !== 'all') {
+                $dashboardTasksQuery->where('assignee_id', $assigneeId);
+            }
+
+            if ($priority && $priority !== 'all') {
+                $dashboardTasksQuery->where('priority', $priority);
             }
 
             $dashboardTasks = $dashboardTasksQuery->get();
@@ -286,6 +334,8 @@ class TaskController extends Controller
             'openTaskId',
             'archived',
             'status',
+            'priority',
+            'assigneeId',
             'viewMode',
         ));
     }

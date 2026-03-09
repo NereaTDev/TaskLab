@@ -11,21 +11,27 @@
                         class="w-full bg-transparent border-none text-body text-tasklab-text placeholder:text-tasklab-muted focus:outline-none focus:ring-0 p-1"
                     >
                 </div>
+                @php
+                    $hasActiveFilters = ($status ?? 'all') !== 'all'
+                        || ($priority ?? 'all') !== 'all'
+                        || (($assigneeId ?? 'all') !== 'all');
+                @endphp
+
                 <div class="flex flex-wrap items-center gap-1.5">
                     <x-task-view-filter />
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Prioridad
-                    </button>
+                    <x-task-priority-filter :current="$priority ?? 'all'" />
                     <x-task-status-filter :current="$status ?? 'all'" :view="$view" />
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        Asignado
-                    </button>
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-accent hover:text-tasklab-accent transition-colors">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        Fecha
-                    </button>
+                    <x-task-assignee-filter :current="$assigneeId ?? 'all'" :users="$selectableUsers ?? collect()" />
+
+                    @if($hasActiveFilters)
+                        <a
+                            href="{{ route('tasks.index', ['view' => $view, 'view_mode' => $viewMode]) }}"
+                            class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-danger hover:text-tasklab-danger transition-colors"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Limpiar filtros
+                        </a>
+                    @endif
                 </div>
             </div>
             <a href="{{ route('tasks.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-full bg-tasklab-accent px-4 py-2 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft">
