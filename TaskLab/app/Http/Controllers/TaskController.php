@@ -388,11 +388,17 @@ class TaskController extends Controller
             ->with('status', 'Task created. AI refinement in progress and auto-assignment attempted.');
     }
 
-    public function show(Task $task)
+    public function show(Request $request, Task $task)
     {
-        // En lugar de una vista separada, reutilizamos el tablero
-        // y abrimos el modal de la tarea usando el parámetro ?task=
-        return redirect()->route('tasks.index', ['view' => 'board', 'task' => $task->id]);
+        // Reutilizamos el índice abriendo el modal con ?task=, preservando view y view_mode
+        $view = $request->get('view', 'board');
+        $viewMode = $request->get('view_mode', 'board');
+
+        return redirect()->route('tasks.index', [
+            'view'      => $view,
+            'view_mode' => $viewMode,
+            'task'      => $task->id,
+        ]);
     }
 
     public function update(Request $request, Task $task)

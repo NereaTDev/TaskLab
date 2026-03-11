@@ -107,7 +107,7 @@
                 <x-task-kanban-board :tasks="$boardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" :open-task-id="$openTaskId ?? null" :archived-view="($status ?? null) === 'archived'" :active-status="$status ?? 'all'" />
             @else
                 {{-- Vista lista global de la empresa --}}
-                <x-task-list-view :tasks="$boardTasks ?? collect()" />
+                <x-task-list-view :tasks="$boardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" :open-task-id="$openTaskId ?? null" />
             @endif
         @elseif($view === 'analysis')
             {{-- Vista Análisis: layout inspirado en DevTask, adaptado a TaskLab (dark) --}}
@@ -381,7 +381,7 @@
             @if($viewMode === 'board')
                 <x-task-kanban-board :tasks="$dashboardTasks ?? collect()" :archived-view="($status ?? null) === 'archived'" :active-status="$status ?? 'all'" />
             @else
-                <x-task-list-view :tasks="$dashboardTasks ?? collect()" />
+                <x-task-list-view :tasks="$dashboardTasks ?? collect()" :categoryTypes="$categoryTypes ?? collect()" :users="$selectableUsers ?? collect()" :open-task-id="$openTaskId ?? null" />
             @endif
         @endif
     </div>

@@ -1,11 +1,31 @@
-@props(['tasks'])
+@props(['tasks', 'categoryTypes' => collect(), 'users' => collect(), 'openTaskId' => null])
 
 @php
     $statusFilter = request()->get('status');
 @endphp
 
-@if($statusFilter === 'archived')
-    {{-- Vista lista específica de archivadas: una tabla con todas las tareas archivadas --}}
+<div
+  x-data="taskBoard(
+    '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}',
+    @js($tasks->values()),
+    @js($categoryTypes->map(fn($t) => [
+        'id'     => $t->id,
+        'name'   => $t->name,
+        'slug'   => $t->slug,
+        'values' => $t->values->map(fn($v) => [
+            'id'               => $v->id,
+            'name'             => $v->name,
+            'parent_id'        => $v->parent_id,
+            'category_type_id' => $v->category_type_id,
+        ]),
+    ]))
+  )"
+  @if($openTaskId)
+    x-init="(() => { const id = {{ (int) $openTaskId }}; const t = tasks.find(task => Number(task.id) === id); if (t) { openTaskModal(t); } })()"
+  @endif
+>
+  @if($statusFilter === 'archived')
+    {{-- Vista lista específica de archivadas --}}
     <div class="mt-4 rounded-2xl border border-slate-800 bg-tasklab-bg-muted shadow-card overflow-hidden">
       <div class="px-4 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
         <h3 class="text-label font-semibold text-tasklab-text">Archivadas</h3>
@@ -26,7 +46,7 @@
           @forelse($tasks as $task)
             <tr
               class="hover:bg-slate-900/60 cursor-pointer"
-              onclick="window.location='{{ route('tasks.show', $task) }}'"
+              @click.stop="openTaskModal(tasks.find(t => Number(t.id) === {{ $task->id }}))"
             >
               <td class="px-4 py-2 text-meta text-tasklab-muted">#{{ $task->id }}</td>
               <td class="px-4 py-2 text-body text-tasklab-text">
@@ -50,7 +70,7 @@
         </tbody>
       </table>
     </div>
-@else
+  @else
     @php
         $groups = [
             'new'           => 'Backlog',
@@ -89,7 +109,7 @@
                 @foreach($groupTasks as $task)
                   <tr
                     class="hover:bg-slate-900/60 cursor-pointer"
-                    onclick="window.location='{{ route('tasks.show', $task) }}'"
+                    @click.stop="openTaskModal(tasks.find(t => Number(t.id) === {{ $task->id }}))"
                   >
                     <td class="px-4 py-2 text-meta text-tasklab-muted">#{{ $task->id }}</td>
                     <td class="px-4 py-2 text-body text-tasklab-text">
@@ -118,4 +138,7 @@
         </div>
       @endunless
     </div>
-@endif
+  @endif
+
+  <x-task-detail-modal :categoryTypes="$categoryTypes" :users="$users" />
+</div>
