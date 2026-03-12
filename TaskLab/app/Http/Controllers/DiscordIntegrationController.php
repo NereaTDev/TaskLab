@@ -16,69 +16,75 @@ class DiscordIntegrationController extends Controller
             abort(403, 'Invalid token');
         }
 
-        $data = $request->validate([
-            'message_id'    => ['required', 'string'],
-            'message_text'  => ['nullable', 'string'],
-            'message_url'   => ['nullable', 'string'],
-            'channel_id'    => ['nullable', 'string'],
-            'channel_name'  => ['nullable', 'string'],
-            'team_id'       => ['nullable', 'string'],
-            'team_name'     => ['nullable', 'string'],
-            'from_email'    => ['nullable', 'email'],
-            'from_name'     => ['nullable', 'string'],
-            'from_teams_id' => ['nullable', 'string'],
-            'attachments'   => ['nullable', 'array'],
-            'attachments.*' => ['array'],
-            'attachments.*.url'   => ['nullable', 'string'],
-            'attachments.*.label' => ['nullable', 'string'],
-            'attachments.*.type'  => ['nullable', 'string'],
-            'image_urls'    => ['nullable', 'array'],
-            'image_urls.*'  => ['string'],
-        ]);
+        // Normalizar campos: aceptamos tanto nombres propios (message_id, message_text...)
+        // como los nativos del payload de Discord (id, content, author...) directamente desde Pipedream.
+        $raw = $request->all();
 
-        // Idempotencia: si el mensaje ya está en el buffer, ignorar
-        if (DiscordMessageBuffer::where('message_id', $data['message_id'])->exists()) {
+        $messageId   = $raw['message_id']    ?? $raw['id']                            ?? null;
+        $messageText = $raw['message_text']  ?? $raw['content']                       ?? '';
+        $messageUrl  = $raw['message_url']   ?? $raw['jump_url']                      ?? null;
+        $channelId   = $raw['channel_id']                                             ?? null;
+        $channelName = $raw['channel_name']                                           ?? null;
+        $teamName    = $raw['team_name']     ?? $raw['guild']['name']                 ?? null;
+        $fromEmail   = $raw['from_email']                                             ?? null;
+        $fromName    = $raw['from_name']     ?? $raw['author']['username']            ?? null;
+        $fromUserId  = $raw['from_teams_id'] ?? $raw['author']['id']                 ?? null;
+
+        if (empty($messageId)) {
+            return response()->json(['error' => 'message_id is required'], 422);
+        }
+
+        // Idempotencia
+        if (DiscordMessageBuffer::where('message_id', $messageId)->exists()) {
             return response()->json(['status' => 'already_buffered']);
         }
 
-        // Normalizar adjuntos e imágenes
-        $attachments  = [];
-        $imageUrls    = $data['image_urls'] ?? [];
+        // Normalizar adjuntos — acepta tanto nuestro formato {url,label,type}
+        // como el formato nativo de Discord {url, filename, content_type}
+        $attachments = [];
+        $imageUrls   = is_array($raw['image_urls'] ?? null) ? $raw['image_urls'] : [];
 
-        foreach ($data['attachments'] ?? [] as $att) {
+        foreach ($raw['attachments'] ?? [] as $att) {
             if (! is_array($att) || empty($att['url'])) {
                 continue;
             }
+
+            $contentType = $att['content_type'] ?? $att['type'] ?? '';
+            $isImage     = str_starts_with($contentType, 'image/')
+                || preg_match('/\.(png|jpe?g|gif|webp)$/i', $att['url']);
+
             $attachments[] = [
                 'url'   => $att['url'],
-                'label' => $att['label'] ?? null,
-                'type'  => $att['type'] ?? null,
+                'label' => $att['label'] ?? $att['filename'] ?? null,
+                'type'  => $isImage ? 'image' : ($contentType ?: 'file'),
             ];
-            $imageUrls[] = $att['url'];
+
+            if ($isImage) {
+                $imageUrls[] = $att['url'];
+            }
         }
 
         $uniqueImageUrls = array_values(array_unique(array_filter($imageUrls)));
 
-        // Guardar en el buffer
-        $discordUserId = $data['from_teams_id'] ?? $data['from_email'] ?? 'unknown';
-        $channelId     = $data['channel_id'] ?? $data['channel_name'] ?? 'unknown';
+        $discordUserId = $fromUserId ?? $fromEmail ?? 'unknown';
+        $resolvedChannelId = $channelId ?? $channelName ?? 'unknown';
 
         DiscordMessageBuffer::create([
             'discord_user_id' => $discordUserId,
-            'channel_id'      => $channelId,
-            'message_id'      => $data['message_id'],
-            'message_text'    => $data['message_text'] ?? '',
-            'message_url'     => $data['message_url'] ?? null,
-            'from_name'       => $data['from_name'] ?? null,
-            'from_email'      => $data['from_email'] ?? null,
-            'team_name'       => $data['team_name'] ?? null,
-            'channel_name'    => $data['channel_name'] ?? null,
+            'channel_id'      => $resolvedChannelId,
+            'message_id'      => $messageId,
+            'message_text'    => $messageText,
+            'message_url'     => $messageUrl,
+            'from_name'       => $fromName,
+            'from_email'      => $fromEmail,
+            'team_name'       => $teamName,
+            'channel_name'    => $channelName,
             'attachments'     => $attachments ?: null,
             'image_urls'      => $uniqueImageUrls ?: null,
         ]);
 
-        // Lanzar job con 30 segundos de retraso (ventana deslizante)
-        ProcessDiscordMessageBatch::dispatch($discordUserId, $channelId)->delay(now()->addSeconds(30));
+        ProcessDiscordMessageBatch::dispatch($discordUserId, $resolvedChannelId)
+            ->delay(now()->addSeconds(30));
 
         return response()->json(['status' => 'buffered']);
     }
