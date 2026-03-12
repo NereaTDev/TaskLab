@@ -103,13 +103,21 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         }
 
         // Validar que el AI no ha devuelto acciones sin contenido real
-        $validActions = array_filter($actions, function ($action) {
+        $validActions = array_filter($actions, function ($action) use ($messages) {
             $type = $action['type'] ?? '';
             if (! in_array($type, ['create', 'modify', 'delete', 'ignore'])) {
                 return false;
             }
-            if ($type === 'create' && empty($action['data']['description_raw'])) {
-                return false;
+            if ($type === 'create') {
+                $hasText   = ! empty($action['data']['description_raw']);
+                // Permitir create sin texto si los mensajes cubiertos tienen imágenes
+                $hasImages = collect($action['message_indices'] ?? [])
+                    ->map(fn ($i) => $messages->values()->get($i))
+                    ->filter()
+                    ->some(fn ($m) => ! empty($m->image_urls));
+                if (! $hasText && ! $hasImages) {
+                    return false;
+                }
             }
             if (in_array($type, ['modify', 'delete']) && empty($action['task_id'])) {
                 return false;
@@ -162,8 +170,14 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         switch ($type) {
             case 'create':
                 $data = $action['data'] ?? [];
+
+                // Si no hay texto pero sí imágenes, generamos una descripción mínima
                 if (empty($data['description_raw'])) {
-                    return;
+                    if (empty($allImageUrls)) {
+                        return;
+                    }
+                    $data['description_raw'] = '[Mensaje con imagen desde Discord — sin texto adjunto]';
+                    $data['title']           = $data['title'] ?? 'Imagen recibida desde Discord';
                 }
 
                 $task = Task::create([

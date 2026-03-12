@@ -98,8 +98,14 @@ REGLAS ESTRICTAS — LEE CON ATENCIÓN:
    - AGRUPACIÓN: solo agrupa mensajes en una sola tarea si son claramente parte del mismo problema o petición (el usuario está añadiendo detalles sobre lo mismo).
    - Para decidir si son temas distintos: pregúntate si un desarrollador necesitaría contexto diferente o trabajaría en sitios distintos del código para cada uno. Si sí → tareas separadas.
 
-5. SOBRE "ignore":
-   - Saludos, respuestas a otros, mensajes sin petición concreta ("ok", "gracias", "entendido").
+5. SOBRE MENSAJES CON SOLO IMAGEN (sin texto o texto vacío):
+   - Si un mensaje tiene imágenes adjuntas pero no tiene texto, SIEMPRE usa "create".
+   - Describe en description_raw que se recibió una imagen sin contexto adicional.
+   - Pon priority "medium" y type "bug" por defecto.
+   - NUNCA uses "ignore" solo porque el texto sea vacío si hay imágenes.
+
+6. SOBRE "ignore":
+   - Saludos, respuestas a otros, mensajes sin petición concreta ("ok", "gracias", "entendido") Y sin imágenes.
    - Preguntas sobre el estado de una tarea ya existente (no crean tarea nueva).
 
 FORMATO DE RESPUESTA — devuelve SOLO este JSON:
@@ -130,12 +136,17 @@ PROMPT;
     private function buildUserPrompt(Collection $messages, Collection $recentTasks): string
     {
         $messagesText = $messages->values()->map(function ($msg, $i) {
-            $text = "[Mensaje {$i}] {$msg->message_text}";
+            $messageText = trim($msg->message_text ?? '');
+            $body        = $messageText !== '' ? $messageText : '[sin texto]';
+            $text        = "[Mensaje {$i}] {$body}";
+
             if (! empty($msg->image_urls)) {
-                $text .= "\n  → Imágenes adjuntas: " . count($msg->image_urls);
+                $count = count($msg->image_urls);
+                $text .= "\n  → {$count} imagen(es) adjunta(s)";
             }
             if (! empty($msg->attachments)) {
-                $text .= "\n  → Adjuntos: " . count($msg->attachments);
+                $count = count($msg->attachments);
+                $text .= "\n  → {$count} archivo(s) adjunto(s)";
             }
             return $text;
         })->implode("\n\n");

@@ -18,7 +18,7 @@ class DiscordIntegrationController extends Controller
 
         $data = $request->validate([
             'message_id'    => ['required', 'string'],
-            'message_text'  => ['required', 'string'],
+            'message_text'  => ['nullable', 'string'],
             'message_url'   => ['nullable', 'string'],
             'channel_id'    => ['nullable', 'string'],
             'channel_name'  => ['nullable', 'string'],
@@ -67,7 +67,7 @@ class DiscordIntegrationController extends Controller
             'discord_user_id' => $discordUserId,
             'channel_id'      => $channelId,
             'message_id'      => $data['message_id'],
-            'message_text'    => $data['message_text'],
+            'message_text'    => $data['message_text'] ?? '',
             'message_url'     => $data['message_url'] ?? null,
             'from_name'       => $data['from_name'] ?? null,
             'from_email'      => $data['from_email'] ?? null,
