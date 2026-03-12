@@ -3,7 +3,11 @@
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
+
+// Limpieza diaria de imágenes de tareas completadas hace más de 30 días
+Schedule::command('tasklab:cleanup-task-images')->daily();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

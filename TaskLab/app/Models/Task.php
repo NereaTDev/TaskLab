@@ -37,6 +37,7 @@ class Task extends Model
         'external_user_id',
         'external_payload',
         'attachments',
+        'done_at',
     ];
 
     protected $casts = [
@@ -47,6 +48,7 @@ class Task extends Model
         'attachments'       => 'array',
         'points'            => 'float',
         'archived_at'       => 'datetime',
+        'done_at'           => 'datetime',
     ];
 
     public function reporter()
@@ -57,5 +59,10 @@ class Task extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    public function taskImages()
+    {
+        return $this->hasMany(\App\Models\TaskImage::class);
     }
 }

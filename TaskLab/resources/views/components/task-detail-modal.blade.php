@@ -73,6 +73,126 @@
               x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"
             ></textarea>
           </section>
+          {{-- Imágenes subidas directamente a la tarea --}}
+          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
+            <h3 class="text-label font-semibold text-tasklab-text">Imágenes</h3>
+
+            {{-- Zona de pegado / subida --}}
+            <div
+              class="relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 bg-tasklab-bg px-4 py-5 text-center hover:border-tasklab-accent transition-colors cursor-pointer"
+              @click="$refs.imageFileInput.click()"
+              @paste.window="if (isTaskModalOpen) handleImagePaste($event)"
+              @dragover.prevent="$event.currentTarget.classList.add('border-tasklab-accent')"
+              @dragleave="$event.currentTarget.classList.remove('border-tasklab-accent')"
+              @drop.prevent="$event.currentTarget.classList.remove('border-tasklab-accent'); handleImageDrop($event)"
+              x-show="modalTask"
+            >
+              <svg class="h-6 w-6 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <p class="text-label text-tasklab-muted">Pega con <kbd class="rounded border border-slate-700 bg-slate-900 px-1 text-[11px]">Ctrl+V</kbd>, arrastra o <span class="text-tasklab-accent">haz click</span></p>
+              <input type="file" accept="image/*" multiple class="hidden" x-ref="imageFileInput" @change="handleImageFileInput($event)" />
+            </div>
+
+            {{-- Indicador de subida --}}
+            <template x-if="uploadingImages">
+              <p class="text-meta text-tasklab-muted text-center">Subiendo imagen...</p>
+            </template>
+
+            {{-- Previews de imágenes subidas --}}
+            <template x-if="taskImages && taskImages.length">
+              <div class="flex flex-wrap gap-2">
+                <template x-for="img in taskImages" :key="img.id">
+                  <div class="relative group">
+                    <a :href="img.url" target="_blank" rel="noopener noreferrer">
+                      <img :src="img.url" :alt="img.original_name" class="h-20 w-auto max-w-[140px] rounded-lg border border-slate-700 object-cover group-hover:border-tasklab-accent transition-colors" />
+                    </a>
+                    <button
+                      type="button"
+                      class="absolute -top-1.5 -right-1.5 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white text-[10px] hover:bg-red-500"
+                      @click.prevent="deleteTaskImage(img.id)"
+                    >✕</button>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </section>
+
+          {{-- Adjuntos externos (Discord/Teams), imágenes y URLs --}}
+          <template x-if="modalTask && (modalTask.primary_url || (modalTask.additional_urls && modalTask.additional_urls.length) || (modalTask.attachments && modalTask.attachments.length))">
+            <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
+              <h3 class="text-label font-semibold text-tasklab-text">Adjuntos y URLs</h3>
+
+              {{-- URL principal --}}
+              <template x-if="modalTask.primary_url">
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">URL principal</p>
+                  <a
+                    :href="modalTask.primary_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-1.5 text-body text-tasklab-accent hover:underline break-all"
+                    x-text="modalTask.primary_url"
+                  ></a>
+                </div>
+              </template>
+
+              {{-- URLs adicionales --}}
+              <template x-if="modalTask.additional_urls && modalTask.additional_urls.length">
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">URLs adicionales</p>
+                  <ul class="space-y-1">
+                    <template x-for="(url, i) in modalTask.additional_urls" :key="i">
+                      <li>
+                        <a
+                          :href="url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="flex items-center gap-1.5 text-body text-tasklab-accent hover:underline break-all"
+                          x-text="url"
+                        ></a>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </template>
+
+              {{-- Adjuntos / imágenes --}}
+              <template x-if="modalTask.attachments && modalTask.attachments.length">
+                <div>
+                  <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-2">Archivos adjuntos</p>
+                  <div class="flex flex-wrap gap-2">
+                    <template x-for="(att, i) in modalTask.attachments" :key="i">
+                      <div>
+                        {{-- Imagen: mostrar miniatura --}}
+                        <template x-if="att.type === 'image' || /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(att.url || '')">
+                          <a :href="att.url" target="_blank" rel="noopener noreferrer" class="block group">
+                            <img
+                              :src="att.url"
+                              :alt="att.label || 'Adjunto'"
+                              class="h-24 w-auto max-w-[180px] rounded-lg border border-slate-700 object-cover group-hover:border-tasklab-accent transition-colors"
+                            />
+                            <span class="mt-1 block text-meta text-tasklab-muted truncate max-w-[180px]" x-text="att.label || 'imagen'"></span>
+                          </a>
+                        </template>
+                        {{-- Otros archivos: enlace con icono --}}
+                        <template x-if="!(att.type === 'image' || /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(att.url || ''))">
+                          <a
+                            :href="att.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="flex items-center gap-2 rounded-lg border border-slate-700 bg-tasklab-bg px-3 py-2 text-body text-tasklab-text hover:border-tasklab-accent transition-colors"
+                          >
+                            <svg class="h-4 w-4 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                            <span class="truncate max-w-[160px]" x-text="att.label || att.url"></span>
+                          </a>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </section>
+          </template>
+
           {{-- Comments (solo maquetación básica) --}}
           <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
             <h3 class="text-label font-semibold text-tasklab-text">Comentarios</h3>
@@ -104,6 +224,16 @@
                 readonly
                 class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-[11px] text-tasklab-text px-2 py-1"
                 :value="modalTask ? '{{ url('/tasks') }}/' + modalTask.id : ''"
+              />
+            </div>
+            <div class="mt-2">
+              <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">URL principal</p>
+              <input
+                type="url"
+                name="primary_url"
+                placeholder="https://..."
+                class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-[11px] text-tasklab-text px-2 py-1 focus:border-tasklab-accent focus:outline-none"
+                x-model="modalTask.primary_url"
               />
             </div>
           </section>

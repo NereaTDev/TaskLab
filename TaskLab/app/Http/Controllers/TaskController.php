@@ -265,7 +265,7 @@ class TaskController extends Controller
 
         if ($view === 'board') {
             // Tablero: todas las tareas de la empresa (solo para admins / super admins)
-            $boardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues']);
+            $boardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages']);
             if ($archived) {
                 $boardTasksQuery->whereNotNull('archived_at');
             } else {
@@ -281,7 +281,7 @@ class TaskController extends Controller
             $boardTasks = $boardTasksQuery->get();
         } else {
             // Dashboard: tareas del usuario autenticado
-            $dashboardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues'])
+            $dashboardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages'])
                 ->where('assignee_id', optional($user)->id);
 
             if ($archived) {
@@ -410,6 +410,7 @@ class TaskController extends Controller
             'status'          => ['required', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
             'type'            => ['required', 'in:bug,feature,improvement,question'],
             'points'          => ['nullable', 'numeric', 'in:0.5,1,2,4,6,8,10,12,16'],
+            'primary_url'       => ['nullable', 'string', 'max:2048'],
             'category_values'   => ['array'],
             'category_values.*' => ['integer', 'exists:category_values,id'],
             'reporter_id'       => ['nullable', 'exists:users,id'],
@@ -421,14 +422,22 @@ class TaskController extends Controller
 
         $task->title           = $validated['title'] ?? $task->title;
         $task->description_raw = $validated['description_raw'] ?? $task->description_raw;
-        $task->priority    = $validated['priority'];
-        $task->status      = $validated['status'];
-        $task->type        = $validated['type'];
-        $task->reporter_id = $validated['reporter_id'] ?? $task->reporter_id;
-        $task->assignee_id = $validated['assignee_id'] ?? $task->assignee_id;
+        $task->priority        = $validated['priority'];
+        $task->status          = $validated['status'];
+        $task->type            = $validated['type'];
+        $task->primary_url     = $validated['primary_url'] ?? $task->primary_url;
+        $task->reporter_id     = $validated['reporter_id'] ?? $task->reporter_id;
+        $task->assignee_id     = $validated['assignee_id'] ?? $task->assignee_id;
 
         if (array_key_exists('points', $validated)) {
             $task->points = $validated['points'];
+        }
+
+        // Gestión de done_at: se activa al marcar done, se borra si se reabre
+        if ($validated['status'] === 'done' && is_null($task->done_at)) {
+            $task->done_at = now();
+        } elseif ($validated['status'] !== 'done') {
+            $task->done_at = null;
         }
 
         // Si el usuario marca la tarea como archivada (estado especial) o pulsa el botón de archivar,
