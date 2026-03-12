@@ -102,7 +102,28 @@ class ProcessDiscordMessageBatch implements ShouldQueue
             );
         }
 
-        foreach ($actions as $action) {
+        // Validar que el AI no ha devuelto acciones sin contenido real
+        $validActions = array_filter($actions, function ($action) {
+            $type = $action['type'] ?? '';
+            if (! in_array($type, ['create', 'modify', 'delete', 'ignore'])) {
+                return false;
+            }
+            if ($type === 'create' && empty($action['data']['description_raw'])) {
+                return false;
+            }
+            if (in_array($type, ['modify', 'delete']) && empty($action['task_id'])) {
+                return false;
+            }
+            return true;
+        });
+
+        Log::info("ProcessDiscordMessageBatch: {$messages->count()} mensaje(s) → " . count($validActions) . " acción(es)", [
+            'user'    => $this->discordUserId,
+            'channel' => $this->channelId,
+            'actions' => array_column(array_values($validActions), 'type'),
+        ]);
+
+        foreach ($validActions as $action) {
             try {
                 $this->executeAction($action, $messages, $recentTasks, $reporter, $assignmentService);
             } catch (\Throwable $e) {

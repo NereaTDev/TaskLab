@@ -94,8 +94,9 @@ REGLAS ESTRICTAS — LEE CON ATENCIÓN:
 
 4. SOBRE "create":
    - Úsalo cuando hay una petición nueva que no encaja claramente con ninguna tarea reciente.
-   - Si un usuario envía múltiples mensajes sobre temas distintos, crea una tarea por cada tema.
-   - Si el usuario envía múltiples mensajes sobre el mismo tema, agrúpalos en una sola tarea.
+   - MÚLTIPLES TAREAS: si los mensajes tratan temas funcionalmente distintos (diferente página, diferente módulo, diferente problema), DEBES crear una acción "create" separada por cada tema. No los agrupes en una sola tarea si son cosas distintas.
+   - AGRUPACIÓN: solo agrupa mensajes en una sola tarea si son claramente parte del mismo problema o petición (el usuario está añadiendo detalles sobre lo mismo).
+   - Para decidir si son temas distintos: pregúntate si un desarrollador necesitaría contexto diferente o trabajaría en sitios distintos del código para cada uno. Si sí → tareas separadas.
 
 5. SOBRE "ignore":
    - Saludos, respuestas a otros, mensajes sin petición concreta ("ok", "gracias", "entendido").
