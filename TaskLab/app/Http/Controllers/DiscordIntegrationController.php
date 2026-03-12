@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DownloadTaskAttachments;
 use App\Jobs\RefineTaskWithAi;
 use App\Models\Task;
 use App\Models\User;
@@ -129,6 +130,11 @@ class DiscordIntegrationController extends Controller
             }
         }
 
+        // Si no hay primary_url del texto pero hay adjuntos, usar la URL del primer adjunto
+        if (! $primaryUrl && ! empty($attachments)) {
+            $primaryUrl = $attachments[0]['url'] ?? null;
+        }
+
         // Crear la Task base con source=discord
         $task = Task::create([
             'title'               => null,
@@ -151,6 +157,12 @@ class DiscordIntegrationController extends Controller
         // Lanzar refinamiento + asignación automática
         RefineTaskWithAi::dispatch($task);
         $assignmentService->assign($task);
+
+        // Descargar y guardar las imágenes del mensaje de Discord
+        $allImageUrls = array_values(array_unique(array_filter($uniqueImageUrls ?? [])));
+        if (! empty($allImageUrls)) {
+            DownloadTaskAttachments::dispatch($task, $allImageUrls);
+        }
 
         return response()->json([
             'status'  => 'ok',
