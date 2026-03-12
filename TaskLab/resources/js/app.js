@@ -59,7 +59,10 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
             const formData = new FormData();
             formData.append('image', file);
 
-            const url = '{{ route('tasks.images.store', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', this.modalTask.id);
+            const url = `{{ route('tasks.images.store', ['task' => 'TASK_ID_PLACEHOLDER']) }}`.replace(
+                'TASK_ID_PLACEHOLDER',
+                this.modalTask.id,
+            );
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
@@ -82,7 +85,7 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrf = csrfMeta ? csrfMeta.getAttribute('content') : null;
 
-        const url = '{{ route('tasks.images.destroy', ['task' => 'TASK_ID_PLACEHOLDER', 'image' => 'IMG_ID_PLACEHOLDER']) }}'
+        const url = `{{ route('tasks.images.destroy', ['task' => 'TASK_ID_PLACEHOLDER', 'image' => 'IMG_ID_PLACEHOLDER']) }}`
             .replace('TASK_ID_PLACEHOLDER', this.modalTask.id)
             .replace('IMG_ID_PLACEHOLDER', imageId);
 
