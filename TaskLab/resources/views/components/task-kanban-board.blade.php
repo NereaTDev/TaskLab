@@ -112,6 +112,7 @@
         ]),
     ]))
   )"
+  x-on:open-create-task.window="openCreateTaskModal()"
   @if($openTaskId)
     x-init="(() => { const id = {{ (int) $openTaskId }}; const t = tasks.find(task => Number(task.id) === id); if (t) { openTaskModal(t); } })()"
   @endif
@@ -142,12 +143,12 @@
           <span class="text-sm font-semibold text-tasklab-text">{{ $col['label'] }}</span>
         </div>
         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $col['badge'] }}">{{ $count }}</span>
-        @if(in_array($key, ['pending', 'in_progress']))
+        @if(in_array($key, ['backlog', 'pending', 'in_progress']))
           <button
             type="button"
             class="p-1 rounded-md text-tasklab-accent hover:bg-tasklab-accent/10 hover:text-tasklab-accent"
             title="Añadir tarea"
-            @click.stop="openCreateTaskModal()"
+            @click.stop="openCreateTaskModal({ status: '{{ $col['target'] }}' })"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           </button>

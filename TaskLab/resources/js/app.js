@@ -43,7 +43,7 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
             source: 'web_form',
             type: 'bug',
             priority: 'medium',
-            status: 'new',
+            status: defaults.status || 'new',
             title: '',
             description_raw: '',
             description_ai: null,
@@ -76,6 +76,39 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
     cancelEditMode() {
         if (!this.modalTask || this.modalMode !== 'edit') return;
         this.modalMode = 'view';
+    },
+
+    async createTaskFromModal() {
+        if (!this.modalTask) return;
+
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrf = csrfMeta ? csrfMeta.getAttribute('content') : null;
+
+        const formData = new FormData();
+        formData.append('type', this.modalTask.type || 'bug');
+        formData.append('priority', this.modalTask.priority || 'medium');
+        formData.append('url', this.modalTask.primary_url || '');
+        formData.append('description', this.modalTask.description_raw || '');
+
+        try {
+            const res = await fetch("{{ route('tasks.store') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            });
+
+            if (res.ok) {
+                // Recargamos para que el tablero refleje la nueva tarea
+                window.location.reload();
+            } else {
+                console.error('Error creating task from modal', res.status);
+            }
+        } catch (e) {
+            console.error('Error creating task from modal', e);
+        }
     },
 
     closeTaskModal() {

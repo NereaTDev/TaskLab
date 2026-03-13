@@ -14,7 +14,9 @@
     >
       <form
         method="POST"
-        :action="'{{ route('tasks.update', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', modalTask.id)"
+        :action="'{{ route('tasks.update', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', modalTask?.id ?? '')"
+        x-ref="taskForm"
+        x-on:submit.prevent="modalMode === 'create' ? createTaskFromModal() : $refs.taskForm.submit()"
       >
       @csrf
       @method('PATCH')
@@ -32,6 +34,7 @@
               class="w-full bg-transparent border-none text-body font-semibold text-tasklab-text focus:ring-0 focus:outline-none p-0"
               placeholder="Título de la tarea"
               x-model="modalTask.title"
+              :disabled="modalMode === 'view'"
             />
             <div class="mt-2 flex flex-wrap items-center gap-2 text-meta text-tasklab-muted">
               <span class="inline-flex items-center rounded-full bg-tasklab-bg px-2 py-0.5 text-[11px] border border-slate-700">
@@ -112,7 +115,8 @@
               name="description_raw"
               rows="6"
               class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-3 py-2 text-sm resize-y"
-              x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"
+              x-model="modalTask.description_raw"
+              :disabled="modalMode === 'view'"
             ></textarea>
           </section>
 
@@ -234,6 +238,7 @@
                 placeholder="https://..."
                 class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-[11px] text-tasklab-text px-2 py-1 focus:border-tasklab-accent focus:outline-none"
                 x-model="modalTask.primary_url"
+                :disabled="modalMode === 'view'"
               />
             </div>
           </section>
@@ -250,6 +255,7 @@
                   class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                   x-model="categorySelections['{{ $type->slug }}'].value_id"
                   @change="onCategoryRootChange('{{ $type->slug }}')"
+                  :disabled="modalMode === 'view'"
                 >
                   <option value="">Sin asignar</option>
                   @foreach($type->values->whereNull('parent_id') as $value)
@@ -262,6 +268,7 @@
                   <select
                     class="mt-1 w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                     x-model="categorySelections['{{ $type->slug }}'].child_value_id"
+                    :disabled="modalMode === 'view'"
                   >
                     <option value="">Sin subcategoría</option>
                     <template
@@ -282,6 +289,7 @@
                   name="status"
                   class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                   x-model="modalTask.status"
+                  :disabled="modalMode === 'view'"
                 >
                   <option value="new">Backlog</option>
                   <option value="ready_for_dev">Pendiente</option>
@@ -297,6 +305,7 @@
                   name="type"
                   class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                   x-model="modalTask.type"
+                  :disabled="modalMode === 'view'"
                 >
                   <option value="bug">Bug</option>
                   <option value="feature">Evolutiva</option>
@@ -310,6 +319,7 @@
                   name="priority"
                   class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
                   x-model="modalTask.priority"
+                  :disabled="modalMode === 'view'"
                 >
                   <option value="critical">Crítica</option>
                   <option value="high">Alta</option>
@@ -327,6 +337,7 @@
               <select
                 name="reporter_id"
                 class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                :disabled="modalMode === 'view'"
               >
                 @foreach($users as $userOption)
                   <option
@@ -343,6 +354,7 @@
               <select
                 name="assignee_id"
                 class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                :disabled="modalMode === 'view'"
               >
                 @foreach($users as $userOption)
                   <option
@@ -363,6 +375,7 @@
               <select
                 name="points"
                 class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm"
+                :disabled="modalMode === 'view'"
               >
                 <option value="">Sin estimación</option>
                 <template x-for="value in [0.5,1,2,4,6,8,10,12,16]" :key="value">
@@ -399,7 +412,7 @@
           <input type="hidden" name="category_values[]" :value="id">
         </template>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" x-show="modalMode !== 'create'">
           <input type="hidden" name="archive" x-ref="archiveField" value="">
           <button
             type="button"
@@ -411,19 +424,64 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
-            @click.prevent="closeTaskModal()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
-          >
-            Guardar cambios
-          </button>
+          {{-- Modo crear --}}
+          <template x-if="modalMode === 'create'">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
+                @click.prevent="closeTaskModal()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+                @click.prevent="createTaskFromModal()"
+              >
+                Crear tarea
+              </button>
+            </div>
+          </template>
+
+          {{-- Modo ver --}}
+          <template x-if="modalMode === 'view'">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
+                @click.prevent="closeTaskModal()"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+                @click.prevent="enterEditMode()"
+              >
+                Editar
+              </button>
+            </div>
+          </template>
+
+          {{-- Modo editar --}}
+          <template x-if="modalMode === 'edit'">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-tasklab-bg px-4 py-1.5 text-body text-tasklab-muted hover:text-tasklab-text hover:border-tasklab-accent"
+                @click.prevent="cancelEditMode()"
+              >
+                Cancelar edición
+              </button>
+              <button
+                type="submit"
+                class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </form>
