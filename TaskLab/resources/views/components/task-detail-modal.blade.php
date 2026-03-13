@@ -60,10 +60,38 @@
       <div class="px-6 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 h-[70vh] overflow-hidden items-stretch">
         {{-- Columna izquierda: descripciones --}}
         <div class="lg:col-span-2 space-y-3 overflow-y-auto pr-2 min-h-0">
-          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
-            <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción refinada (solo lectura)</h3>
-            <p class="text-body text-tasklab-muted whitespace-pre-wrap" x-text="modalTask && modalTask.description_ai ? modalTask.description_ai : 'Refinamiento pendiente o no disponible.'"></p>
+          {{-- Descripción principal de la tarea (IA) --}}
+          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2">
+            <h3 class="text-label font-semibold text-tasklab-text">Descripción de la tarea</h3>
+            <p
+              class="text-body text-tasklab-muted whitespace-pre-wrap"
+              x-text="modalTask && modalTask.description_ai
+                ? modalTask.description_ai
+                : 'Refinamiento pendiente o no disponible. Revisa la descripción original y completa los detalles necesarios.'"
+            ></p>
           </section>
+
+          {{-- Criterios de aceptación --}}
+          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2">
+            <h3 class="text-label font-semibold text-tasklab-text">Criterios de aceptación</h3>
+            <template x-if="modalTask && modalTask.requirements && modalTask.requirements.length">
+              <ul class="space-y-2">
+                <template x-for="(req, idx) in modalTask.requirements" :key="idx">
+                  <li class="rounded-lg border border-slate-800 bg-tasklab-bg px-3 py-2">
+                    <p class="text-body text-tasklab-text" x-text="req"></p>
+                  </li>
+                </template>
+              </ul>
+            </template>
+            <template x-if="!modalTask || !modalTask.requirements || !modalTask.requirements.length">
+              <p class="text-body text-tasklab-muted">
+                La IA todavía no ha definido criterios de aceptación. Asegúrate de que la tarea tenga un resultado claro y comprobable
+                antes de marcarla como lista.
+              </p>
+            </template>
+          </section>
+
+          {{-- Descripción original (editable) --}}
           <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
             <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción original (editable)</h3>
             <textarea
@@ -73,6 +101,7 @@
               x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"
             ></textarea>
           </section>
+
           {{-- Imágenes subidas directamente a la tarea --}}
           <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
             <h3 class="text-label font-semibold text-tasklab-text">Imágenes</h3>

@@ -44,7 +44,12 @@ SIEMPRE devuelves SOLO un objeto JSON válido, sin texto adicional, con esta est
     "raw_prioridad": string,
     "raw_resultado_esperado": string,
     "raw_resultado_actual": string
-  }
+  },
+  "categories": [
+    {
+      "path": ["Tipo", "Categoria", "Subcategoria"]
+    }
+  ]
 }
 
 Instrucciones clave:
@@ -61,6 +66,11 @@ Instrucciones clave:
 - requirements debe listar criterios de aceptación claros.
 - behavior debe tener dos bloques: comportamiento actual y comportamiento esperado.
 - test_cases debe listar escenarios de prueba.
+- categories es una lista opcional de rutas de clasificación. Cada ruta es un array de strings con este formato:
+  ["Tipo", "Categoria", "Subcategoria"]. Estos textos deben corresponderse, en la medida de lo posible, con los nombres visibles
+  de los tipos/categorías/subcategorías configurados en TaskLab. Si no ves una correspondencia clara, deja "categories": [].
+  Ejemplos de rutas válidas podrían ser:
+  ["Área funcional", "Campus", "Home"], ["Producto", "Dashboard", "Empresas"].
 PROMPT;
 
             $userPrompt = "Descripción bruta de la petición (texto tal cual del usuario):\n\n" . $rawDescription;
@@ -127,6 +137,7 @@ PROMPT;
                 'primary_url'     => $decoded['primary_url']     ?? null,
                 'additional_urls' => $decoded['additional_urls'] ?? [],
                 'impact'          => $decoded['impact']          ?? null,
+                'categories'      => $decoded['categories']      ?? [],
             ];
         } catch (\Throwable $e) {
             \Log::warning('AiTaskRefiner OpenAI exception', [
