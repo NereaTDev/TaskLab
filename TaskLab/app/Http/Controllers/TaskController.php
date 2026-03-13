@@ -18,13 +18,9 @@ class TaskController extends Controller
         // Vista solicitada: dashboard | board | analysis (por defecto dashboard)
         $view = $request->get('view', 'dashboard');
 
-        // Usuarios estándar: siempre dashboard personal
-        if ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser()) {
-            $view = 'dashboard';
-        } else {
-            // Admin / Super Admin: solo vistas conocidas
-            $view = in_array($view, ['dashboard', 'board', 'analysis'], true) ? $view : 'dashboard';
-        }
+        // Todos los usuarios autenticados pueden usar estas vistas; cualquier otra cae a dashboard
+        $allowedViews = ['dashboard', 'board', 'analysis'];
+        $view = in_array($view, $allowedViews, true) ? $view : 'dashboard';
 
         $status = $request->get('status');
         $archived = $status === 'archived';
@@ -340,10 +336,6 @@ class TaskController extends Controller
         ));
     }
 
-    public function create()
-    {
-        return view('tasks.create');
-    }
 
     public function store(Request $request, TaskAssignmentService $assignmentService)
     {

@@ -60,8 +60,13 @@
       <div class="px-6 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 h-[70vh] overflow-hidden items-stretch">
         {{-- Columna izquierda: descripciones --}}
         <div class="lg:col-span-2 space-y-3 overflow-y-auto pr-2 min-h-0">
-          {{-- Descripción principal de la tarea (IA) --}}
-          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2">
+          {{-- Descripción principal de la tarea (IA)
+               Solo se muestra por defecto para tareas que NO vienen del formulario web (por ejemplo, Discord/Teams).
+          --}}
+          <section
+            class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2"
+            x-show="modalTask && modalTask.source !== 'web_form'"
+          >
             <h3 class="text-label font-semibold text-tasklab-text">Descripción de la tarea</h3>
             <p
               class="text-body text-tasklab-muted whitespace-pre-wrap"
@@ -71,8 +76,11 @@
             ></p>
           </section>
 
-          {{-- Criterios de aceptación --}}
-          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2">
+          {{-- Criterios de aceptación (sólo tiene sentido cuando usamos la descripción de IA) --}}
+          <section
+            class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2"
+            x-show="modalTask && modalTask.source !== 'web_form'"
+          >
             <h3 class="text-label font-semibold text-tasklab-text">Criterios de aceptación</h3>
             <template x-if="modalTask && modalTask.requirements && modalTask.requirements.length">
               <ul class="space-y-2">
@@ -91,58 +99,21 @@
             </template>
           </section>
 
-          {{-- Descripción original (editable) --}}
-          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3">
-            <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción original (editable)</h3>
+          {{-- Descripción original (editable)
+               Para tareas creadas desde TaskLab (source = web_form) queremos trabajar con la descripción manual,
+               sin mostrar el bloque de IA.
+          --}}
+          <section
+            class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3"
+            x-show="modalTask && modalTask.source === 'web_form'"
+          >
+            <h3 class="text-label font-semibold text-tasklab-text mb-1">Descripción</h3>
             <textarea
               name="description_raw"
               rows="6"
               class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-3 py-2 text-sm resize-y"
               x-text="modalTask && modalTask.description_raw ? modalTask.description_raw : ''"
             ></textarea>
-          </section>
-
-          {{-- Imágenes subidas directamente a la tarea --}}
-          <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
-            <h3 class="text-label font-semibold text-tasklab-text">Imágenes</h3>
-
-            {{-- Zona de pegado / subida --}}
-            <div
-              class="relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 bg-tasklab-bg px-4 py-5 text-center hover:border-tasklab-accent transition-colors cursor-pointer"
-              @click="$refs.imageFileInput.click()"
-              @paste.window="if (isTaskModalOpen) handleImagePaste($event)"
-              @dragover.prevent="$event.currentTarget.classList.add('border-tasklab-accent')"
-              @dragleave="$event.currentTarget.classList.remove('border-tasklab-accent')"
-              @drop.prevent="$event.currentTarget.classList.remove('border-tasklab-accent'); handleImageDrop($event)"
-              x-show="modalTask"
-            >
-              <svg class="h-6 w-6 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <p class="text-label text-tasklab-muted">Pega con <kbd class="rounded border border-slate-700 bg-slate-900 px-1 text-[11px]">Ctrl+V</kbd>, arrastra o <span class="text-tasklab-accent">haz click</span></p>
-              <input type="file" accept="image/*" multiple class="hidden" x-ref="imageFileInput" @change="handleImageFileInput($event)" />
-            </div>
-
-            {{-- Indicador de subida --}}
-            <template x-if="uploadingImages">
-              <p class="text-meta text-tasklab-muted text-center">Subiendo imagen...</p>
-            </template>
-
-            {{-- Previews de imágenes subidas --}}
-            <template x-if="taskImages && taskImages.length">
-              <div class="flex flex-wrap gap-2">
-                <template x-for="img in taskImages" :key="img.id">
-                  <div class="relative group">
-                    <a :href="img.url" target="_blank" rel="noopener noreferrer">
-                      <img :src="img.url" :alt="img.original_name" class="h-20 w-auto max-w-[140px] rounded-lg border border-slate-700 object-cover group-hover:border-tasklab-accent transition-colors" />
-                    </a>
-                    <button
-                      type="button"
-                      class="absolute -top-1.5 -right-1.5 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white text-[10px] hover:bg-red-500"
-                      @click.prevent="deleteTaskImage(img.id)"
-                    >✕</button>
-                  </div>
-                </template>
-              </div>
-            </template>
           </section>
 
           {{-- Adjuntos externos (Discord/Teams), imágenes y URLs --}}

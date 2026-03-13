@@ -34,10 +34,14 @@
                     @endif
                 </div>
             </div>
-            <a href="{{ route('tasks.create') }}" class="shrink-0 inline-flex items-center gap-2 rounded-full bg-tasklab-accent px-4 py-2 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft">
+            <button
+                type="button"
+                class="shrink-0 inline-flex items-center gap-2 rounded-full bg-tasklab-accent px-4 py-2 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+                @click="openCreateTaskModal()"
+            >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Nueva Tarea
-            </a>
+            </button>
         </div>
 
         @php
