@@ -1,0 +1,15 @@
+services:
+  # Web service — cambia 'name' para que coincida con el nombre exacto de tu servicio en Render
+  - type: web
+    name: tasklab
+    env: docker
+    dockerfilePath: ./Dockerfile
+
+  # Queue worker — procesa los jobs en background:
+  # ProcessDiscordMessageBatch, RefineTaskWithAi, DownloadTaskAttachments
+  - type: worker
+    name: tasklab-queue
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: php artisan queue:work --tries=3 --timeout=120 --sleep=3
+    numInstances: 1
