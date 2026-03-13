@@ -188,6 +188,9 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                     'priority'            => $data['priority'] ?? 'medium',
                     'reporter_id'         => $reporter?->id,
                     'source'              => 'discord',
+                    // Valores por defecto coherentes con la especificación y el pipeline
+                    'area'                => $data['area'] ?? 'web',
+                    'estimated_effort'    => $data['estimated_effort'] ?? 'medium',
                     'external_user_id'    => $this->discordUserId,
                     'external_channel'    => $firstMessage?->channel_id ?? $this->channelId,
                     'external_message_id' => $coveredMessages->pluck('message_id')->implode(','),

@@ -29,6 +29,8 @@ class Task extends Model
         'reporter_id',
         'assignee_id',
         'source',
+        'area',
+        'estimated_effort',
         'primary_url',
         'additional_urls',
         'impact',

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DeveloperProfile;
 use App\Models\Task;
+use App\Models\User;
 
 class TaskAssignmentService
 {
@@ -40,6 +41,9 @@ class TaskAssignmentService
             ->get();
 
         if ($devs->isEmpty()) {
+            // Fallback: si no hay ningún developer activo compatible, intentamos
+            // asignar la tarea al superadmin configurado, para que no quede huérfana.
+            $this->assignToSuperAdmin($task);
             return $task;
         }
 
@@ -67,6 +71,9 @@ class TaskAssignmentService
         $availableDevs = $devWithLoad->filter(fn ($data) => $data['active_count'] < PHP_INT_MAX);
 
         if ($availableDevs->isEmpty()) {
+            // Todos los devs están por encima de su capacidad. Mismo fallback que
+            // cuando no hay devs: asignamos al superadmin si existe.
+            $this->assignToSuperAdmin($task);
             return $task;
         }
 
@@ -78,5 +85,34 @@ class TaskAssignmentService
         $task->save();
 
         return $task;
+    }
+
+    /**
+     * Fallback de asignación: si no hay developers elegibles, intentamos
+     * asignar la tarea al superadmin configurado (por email) o al primer
+     * usuario con flag is_super_admin.
+     */
+    protected function assignToSuperAdmin(Task $task): void
+    {
+        $superAdmin = null;
+
+        // Primero intentamos por email de entorno (TASKLAB_SUPERADMIN_EMAIL)
+        $email = env('TASKLAB_SUPERADMIN_EMAIL');
+        if ($email) {
+            $superAdmin = User::where('email', $email)->first();
+        }
+
+        // Si no hay email configurado o no existe el usuario, buscamos por flag
+        if (! $superAdmin) {
+            $superAdmin = User::where('is_super_admin', true)->first();
+        }
+
+        if (! $superAdmin) {
+            return; // No hay nadie a quien asignar por defecto
+        }
+
+        $task->assignee_id = $superAdmin->id;
+        $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
+        $task->save();
     }
 }
