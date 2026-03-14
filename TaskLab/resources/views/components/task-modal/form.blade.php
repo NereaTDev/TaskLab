@@ -289,6 +289,7 @@
       <div>
         <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Requester</p>
         <select name="reporter_id" class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm" :disabled="modalMode === 'view'">
+          <option value="">— Sin asignar —</option>
           @foreach($users as $userOption)
             <option value="{{ $userOption->id }}" x-bind:selected="modalTask && modalTask.reporter && modalTask.reporter.id === {{ $userOption->id }}">{{ $userOption->name }}</option>
           @endforeach
@@ -297,6 +298,7 @@
       <div>
         <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-1">Asignado a</p>
         <select name="assignee_id" class="w-full rounded-lg border border-slate-700 bg-tasklab-bg text-body text-tasklab-text px-2 py-1.5 text-sm" :disabled="modalMode === 'view'">
+          <option value="">— Sin asignar —</option>
           @foreach($users as $userOption)
             <option value="{{ $userOption->id }}" x-bind:selected="modalTask && modalTask.assignee && modalTask.assignee.id === {{ $userOption->id }}">{{ $userOption->name }}</option>
           @endforeach

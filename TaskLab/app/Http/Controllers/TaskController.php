@@ -368,6 +368,10 @@ class TaskController extends Controller
 
         $status = $validated['status'] ?? 'new';
 
+        // Para tareas web_form: si no se elige assignee, se asigna al propio creador
+        // para que aparezca inmediatamente en su dashboard.
+        $assigneeId = $validated['assignee_id'] ?? optional($user)->id;
+
         $task = Task::create([
             'title'           => $validated['title'] ?? null,
             'description_raw' => $descriptionRaw,
@@ -376,7 +380,7 @@ class TaskController extends Controller
             'priority'        => $validated['priority'],
             'points'          => $validated['points'] ?? null,
             'reporter_id'     => $validated['reporter_id'] ?? optional($user)->id,
-            'assignee_id'     => $validated['assignee_id'] ?? null,
+            'assignee_id'     => $assigneeId,
             'source'          => 'web_form',
             'primary_url'     => $url,
         ]);
@@ -388,11 +392,6 @@ class TaskController extends Controller
 
         // Lanzamos la IA de refinamiento
         RefineTaskWithAi::dispatch($task);
-
-        // Intentamos asignación automática solo si no se ha asignado manualmente
-        if (empty($validated['assignee_id'])) {
-            $assignmentService->assign($task);
-        }
 
         // Redirección según rol: usuarios estándar al dashboard, admins/SA al tablero
         $targetView = ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser())
