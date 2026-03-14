@@ -4,37 +4,32 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryTypes = []) => ({
-    draggedTaskId: null,
-    isUpdating: false,
-    updateUrlTemplate: updateUrlTemplate || '',
-
-    // Estado en memoria del tablero
-    tasks: initialTasks,
-
-    // Tipos de categoría genéricos
-    categoryTypes: initialCategoryTypes,
-    categorySelections: {},
-
-    // Modal de detalle de tarea
+// ---------------------------------------------------------------------------
+// taskModal — global component, mounted in the layout
+// Listens to window events so any view can open create/view/edit modals
+// ---------------------------------------------------------------------------
+Alpine.data('taskModal', (initialCategoryTypes = []) => ({
     isTaskModalOpen: false,
     modalTask: null,
     modalMode: 'view', // 'view' | 'edit' | 'create'
+
+    categoryTypes: initialCategoryTypes,
+    categorySelections: {},
+
+    init() {
+        window.addEventListener('open-task-modal', (e) => {
+            this.openTaskModal(e.detail);
+        });
+        window.addEventListener('open-create-task', (e) => {
+            this.openCreateTaskModal(e.detail || {});
+        });
+    },
 
     openTaskModal(task) {
         this.modalTask = task;
         this.modalMode = 'view';
         this.isTaskModalOpen = true;
-
-        // Inicializar selección de categorías por tipo
-        this.categorySelections = {};
-        this.categoryTypes.forEach((type) => {
-            this.categorySelections[type.slug] = {
-                value_id: '',
-                child_value_id: '',
-                children: [],
-            };
-        });
+        this._initCategorySelections();
     },
 
     openCreateTaskModal(defaults = {}) {
@@ -57,15 +52,7 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
 
         this.modalMode = 'create';
         this.isTaskModalOpen = true;
-
-        this.categorySelections = {};
-        this.categoryTypes.forEach((type) => {
-            this.categorySelections[type.slug] = {
-                value_id: '',
-                child_value_id: '',
-                children: [],
-            };
-        });
+        this._initCategorySelections();
     },
 
     enterEditMode() {
@@ -76,39 +63,6 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
     cancelEditMode() {
         if (!this.modalTask || this.modalMode !== 'edit') return;
         this.modalMode = 'view';
-    },
-
-    async createTaskFromModal() {
-        if (!this.modalTask) return;
-
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        const csrf = csrfMeta ? csrfMeta.getAttribute('content') : null;
-
-        const formData = new FormData();
-        formData.append('type', this.modalTask.type || 'bug');
-        formData.append('priority', this.modalTask.priority || 'medium');
-        formData.append('url', this.modalTask.primary_url || '');
-        formData.append('description', this.modalTask.description_raw || '');
-
-        try {
-            const res = await fetch("{{ route('tasks.store') }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json',
-                },
-                body: formData,
-            });
-
-            if (res.ok) {
-                // Recargamos para que el tablero refleje la nueva tarea
-                window.location.reload();
-            } else {
-                console.error('Error creating task from modal', res.status);
-            }
-        } catch (e) {
-            console.error('Error creating task from modal', e);
-        }
     },
 
     closeTaskModal() {
@@ -134,7 +88,36 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
         selection.child_value_id = '';
     },
 
-    // Devuelve las tareas cuya columna contenga alguno de los estados indicados
+    _initCategorySelections() {
+        this.categorySelections = {};
+        this.categoryTypes.forEach((type) => {
+            this.categorySelections[type.slug] = {
+                value_id: '',
+                child_value_id: '',
+                children: [],
+            };
+        });
+    },
+}));
+
+// ---------------------------------------------------------------------------
+// taskBoard — kanban / list board logic (drag-drop + task list state)
+// Modal is now global; this component dispatches window events to open it
+// ---------------------------------------------------------------------------
+Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
+    draggedTaskId: null,
+    isUpdating: false,
+    updateUrlTemplate: updateUrlTemplate || '',
+    tasks: initialTasks,
+
+    openTaskModal(task) {
+        window.dispatchEvent(new CustomEvent('open-task-modal', { detail: task }));
+    },
+
+    openCreateTaskModal(defaults = {}) {
+        window.dispatchEvent(new CustomEvent('open-create-task', { detail: defaults }));
+    },
+
     columnTasks(statuses) {
         return this.tasks.filter(t => statuses.includes(t.status));
     },
@@ -168,14 +151,12 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
                 return;
             }
 
-            // Actualizamos el estado local (versión fluida)
             const taskIdNum = Number(currentTaskId);
             const idx = this.tasks.findIndex(t => Number(t.id) === taskIdNum);
             if (idx !== -1) {
                 this.tasks[idx].status = newStatus;
             }
 
-            // Fallback defensivo: mover también la card en el DOM
             try {
                 const cardSelector = `[data-task-id="${currentTaskId}"]`;
                 const targetColumnSelector = `[data-column-body="${newStatus}"]`;
@@ -185,7 +166,7 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = [], initialCategoryT
                     targetColumnBody.appendChild(cardEl);
                 }
             } catch (_) {
-                // Silenciamos errores de DOM fallback
+                // silenciar errores de DOM fallback
             }
         } catch (e) {
             console.error('Error updating task status', e);

@@ -14,12 +14,14 @@
     >
       <form
         method="POST"
-        :action="'{{ route('tasks.update', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', modalTask?.id ?? '')"
-        x-ref="taskForm"
-        x-on:submit.prevent="modalMode === 'create' ? createTaskFromModal() : $refs.taskForm.submit()"
+        :action="modalMode === 'create'
+          ? '{{ route('tasks.store') }}'
+          : '{{ route('tasks.update', ['task' => 'TASK_ID_PLACEHOLDER']) }}'.replace('TASK_ID_PLACEHOLDER', modalTask?.id ?? '')"
       >
       @csrf
-      @method('PATCH')
+      <template x-if="modalMode !== 'create'">
+        @method('PATCH')
+      </template>
 
       {{-- Cabecera: título + metadatos clave --}}
       <div class="border-b border-slate-800 bg-tasklab-bg-muted px-6 py-4 flex flex-col gap-3">
@@ -435,9 +437,8 @@
                 Cancelar
               </button>
               <button
-                type="button"
+                type="submit"
                 class="inline-flex items-center justify-center rounded-full bg-tasklab-accent px-4 py-1.5 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
-                @click.prevent="createTaskFromModal()"
               >
                 Crear tarea
               </button>

@@ -97,25 +97,15 @@
 
 <div
   class="grid grid-cols-1 {{ ($archivedView || $filteredColumnKey) ? '' : 'md:grid-cols-3 lg:grid-cols-5' }} gap-4"
-  x-data="taskBoard(
-    '{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}',
-    @js($tasks->values()),
-    @js($categoryTypes->map(fn($t) => [
-        'id'     => $t->id,
-        'name'   => $t->name,
-        'slug'   => $t->slug,
-        'values' => $t->values->map(fn($v) => [
-            'id'               => $v->id,
-            'name'             => $v->name,
-            'parent_id'        => $v->parent_id,
-            'category_type_id' => $v->category_type_id,
-        ]),
-    ]))
-  )"
-  x-on:open-create-task.window="openCreateTaskModal()"
-  @if($openTaskId)
-    x-init="(() => { const id = {{ (int) $openTaskId }}; const t = tasks.find(task => Number(task.id) === id); if (t) { openTaskModal(t); } })()"
-  @endif
+  x-data="taskBoard('{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}', @js($tasks->values()))"
+  x-init="
+    @if($openTaskId)
+      (() => { const id = {{ (int) $openTaskId }}; const t = tasks.find(task => Number(task.id) === id); if (t) { openTaskModal(t); } })();
+    @endif
+    @if(request()->get('new'))
+      openCreateTaskModal();
+    @endif
+  "
 >
   @foreach($columnConfig as $key => $col)
     @php
@@ -225,5 +215,4 @@
     </div>
   @endforeach
 
-  <x-task-detail-modal :categoryTypes="$categoryTypes" :users="$users" />
 </div>

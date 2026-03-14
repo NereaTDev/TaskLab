@@ -340,35 +340,59 @@ class TaskController extends Controller
     public function store(Request $request, TaskAssignmentService $assignmentService)
     {
         $validated = $request->validate([
-            'type'            => ['required', 'in:bug,feature,improvement,question'],
-            'url'             => ['nullable', 'string', 'max:255'],
-            'priority'        => ['required', 'in:low,medium,high,critical'],
-            'description'     => ['required', 'string'],
+            'title'            => ['nullable', 'string', 'max:255'],
+            'description'      => ['nullable', 'string'],
+            'description_raw'  => ['nullable', 'string'],
+            'type'             => ['required', 'in:bug,feature,improvement,question'],
+            'status'           => ['nullable', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
+            'priority'         => ['required', 'in:low,medium,high,critical'],
+            'points'           => ['nullable', 'numeric', 'in:0.5,1,2,4,6,8,10,12,16'],
+            'primary_url'      => ['nullable', 'string', 'max:2048'],
+            'url'              => ['nullable', 'string', 'max:255'], // compat heredada
+            'category_values'   => ['array'],
+            'category_values.*' => ['integer', 'exists:category_values,id'],
+            'reporter_id'       => ['nullable', 'exists:users,id'],
+            'assignee_id'       => ['nullable', 'exists:users,id'],
         ]);
 
         $user = $request->user();
 
-        $descriptionRaw = $validated['description'];
-        if (!empty($validated['url'])) {
-            $descriptionRaw .= "\n\nURL: " . $validated['url'];
+        // Elegimos la descripción "cruda" a partir de los campos disponibles
+        $descriptionRaw = $validated['description_raw'] ?? $validated['description'] ?? '';
+
+        // Compatibilidad: si viene url/primary_url y no está ya en la descripción, la añadimos abajo
+        $url = $validated['primary_url'] ?? $validated['url'] ?? null;
+        if (! empty($url) && ! str_contains($descriptionRaw, $url)) {
+            $descriptionRaw = trim($descriptionRaw . "\n\nURL: " . $url);
         }
 
+        $status = $validated['status'] ?? 'new';
+
         $task = Task::create([
-            'title'           => null,
+            'title'           => $validated['title'] ?? null,
             'description_raw' => $descriptionRaw,
             'type'            => $validated['type'],
-            'status'          => 'new',
+            'status'          => $status,
             'priority'        => $validated['priority'],
-            'reporter_id'     => optional($user)->id,
+            'points'          => $validated['points'] ?? null,
+            'reporter_id'     => $validated['reporter_id'] ?? optional($user)->id,
+            'assignee_id'     => $validated['assignee_id'] ?? null,
             'source'          => 'web_form',
-            'primary_url'     => $validated['url'] ?? null,
+            'primary_url'     => $url,
         ]);
+
+        // Sincronizar categorías dinámicas (si se han enviado)
+        if (! empty($validated['category_values'] ?? [])) {
+            $task->categoryValues()->sync($validated['category_values']);
+        }
 
         // Lanzamos la IA de refinamiento
         RefineTaskWithAi::dispatch($task);
 
-        // Intentamos asignación automática (no falla si no encuentra dev)
-        $assignmentService->assign($task);
+        // Intentamos asignación automática solo si no se ha asignado manualmente
+        if (empty($validated['assignee_id'])) {
+            $assignmentService->assign($task);
+        }
 
         // Redirección según rol: usuarios estándar al dashboard, admins/SA al tablero
         $targetView = ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser())

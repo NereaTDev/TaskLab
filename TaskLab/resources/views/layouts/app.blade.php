@@ -13,6 +13,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
   <body class="min-h-screen bg-tasklab-bg text-tasklab-text antialiased">
+    @auth
+      <x-task-modal />
+    @endauth
     <div class="min-h-screen flex flex-col">
       {{-- Global toast notifications --}}
       <x-toast :message="session('success') ?? session('status')" type="success" />
