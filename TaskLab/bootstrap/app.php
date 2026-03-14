@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Confiar en el proxy de Render (TLS termination en el load balancer)
+        $middleware->trustProxies(at: '*');
+
         // Excluir rutas de integraciones externas de la protección CSRF
         $middleware->validateCsrfTokens(except: [
             'integrations/teams/messages',
