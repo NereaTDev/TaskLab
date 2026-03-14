@@ -11,6 +11,15 @@
   @method('PATCH')
 </template>
 
+{{--
+  Hidden fallbacks para status/type/priority.
+  Siempre se envían, incluso cuando los <select> están disabled (modo vista).
+  Como van ANTES de los selects, en modo edición el select (que va después) sobreescribe el valor.
+--}}
+<input type="hidden" name="status"   :value="modalTask ? modalTask.status   : 'new'">
+<input type="hidden" name="type"     :value="modalTask ? modalTask.type     : 'bug'">
+<input type="hidden" name="priority" :value="modalTask ? modalTask.priority : 'medium'">
+
 {{-- Cabecera: título + metadatos clave --}}
 <div class="border-b border-slate-800 bg-tasklab-bg-muted px-6 py-4 flex flex-col gap-3">
   <div class="flex items-start gap-3">

@@ -15,8 +15,13 @@ class TaskController extends Controller
     {
         $user = $request->user();
 
-        // Vista solicitada: dashboard | board | analysis (por defecto dashboard)
-        $view = $request->get('view', 'dashboard');
+        // Vista por defecto: board para admins/superadmins, dashboard para usuarios estándar
+        $isPrivileged = $user && (
+            (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) ||
+            (method_exists($user, 'isAreaAdmin')  && $user->isAreaAdmin())
+        );
+        $defaultView = $isPrivileged ? 'board' : 'dashboard';
+        $view = $request->get('view', $defaultView);
 
         // Todos los usuarios autenticados pueden usar estas vistas; cualquier otra cae a dashboard
         $allowedViews = ['dashboard', 'board', 'analysis'];

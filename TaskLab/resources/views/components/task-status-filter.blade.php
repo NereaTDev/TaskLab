@@ -24,7 +24,7 @@
 <form
     method="GET"
     action="{{ route('tasks.index') }}"
-    class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-1.5"
+    class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3"
 >
     @foreach($baseQuery as $name => $value)
         @if(!is_null($value) && $value !== '')
