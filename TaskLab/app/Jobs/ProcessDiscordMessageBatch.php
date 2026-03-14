@@ -88,7 +88,8 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         // Analizar con IA
         $actions = $analyzer->analyze($messages, $recentTasks);
 
-        // Resolver reporter (buscamos en el primer mensaje que tenga email)
+        // Resolver reporter
+        // 1) Si algún mensaje tiene email, lo usamos como requester (modo Teams/email clásico)
         $reporter = null;
         $firstWithEmail = $messages->first(fn ($m) => ! empty($m->from_email));
         if ($firstWithEmail) {
@@ -96,6 +97,34 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                 ['email' => $firstWithEmail->from_email],
                 [
                     'name'      => $firstWithEmail->from_name ?? $firstWithEmail->from_email,
+                    'password'  => Str::random(32),
+                    'user_type' => 'requester',
+                ]
+            );
+        }
+
+        // 2) Si no hay email (caso típico Discord), usamos el usuario de Discord como requester lógico
+        if (! $reporter) {
+            $first = $messages->first();
+            $displayName = $first?->from_name ?: ('Discord user ' . $this->discordUserId);
+            $syntheticEmail = 'discord+' . $this->discordUserId . '@tasklab.local';
+
+            $reporter = User::firstOrCreate(
+                ['email' => $syntheticEmail],
+                [
+                    'name'      => $displayName,
+                    'password'  => Str::random(32),
+                    'user_type' => 'requester',
+                ]
+            );
+        }
+
+        // 3) Fallback final: si por cualquier motivo no podemos resolver usuario, usamos un requester genérico "TaskLab"
+        if (! $reporter) {
+            $reporter = User::firstOrCreate(
+                ['email' => 'tasklab@system.local'],
+                [
+                    'name'      => 'TaskLab',
                     'password'  => Str::random(32),
                     'user_type' => 'requester',
                 ]

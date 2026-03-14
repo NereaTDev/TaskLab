@@ -282,8 +282,17 @@ class TaskController extends Controller
             $boardTasks = $boardTasksQuery->get();
         } else {
             // Dashboard: tareas del usuario autenticado
+            // - Tareas asignadas a él (assignee_id = user)
+            // - Tareas web_form no asignadas creadas por él (reporter_id = user, assignee_id IS NULL)
             $dashboardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages'])
-                ->where('assignee_id', optional($user)->id);
+                ->where(function ($q) use ($user) {
+                    $q->where('assignee_id', optional($user)->id)
+                      ->orWhere(function ($q2) use ($user) {
+                          $q2->where('source', 'web_form')
+                             ->where('reporter_id', optional($user)->id)
+                             ->whereNull('assignee_id');
+                      });
+                });
 
             if ($archived) {
                 $dashboardTasksQuery->whereNotNull('archived_at');
@@ -373,9 +382,9 @@ class TaskController extends Controller
 
         $status = $validated['status'] ?? 'new';
 
-        // Para tareas web_form: si no se elige assignee, se asigna al propio creador
-        // para que aparezca inmediatamente en su dashboard.
-        $assigneeId = $validated['assignee_id'] ?? optional($user)->id;
+        // Para tareas web_form: si no se elige assignee, se dejan sin asignar (assignee_id = null)
+        // pero siempre se marca el requester como el usuario creador.
+        $assigneeId = $validated['assignee_id'] ?? null;
 
         $task = Task::create([
             'title'           => $validated['title'] ?? null,
@@ -395,8 +404,9 @@ class TaskController extends Controller
             $task->categoryValues()->sync($validated['category_values']);
         }
 
-        // Lanzamos la IA de refinamiento
-        RefineTaskWithAi::dispatch($task);
+        // IA: no refinamos automáticamente tareas web_form; solo las que vienen de canales externos.
+        // El job RefineTaskWithAi seguirá ejecutándose para Discord/Teams desde sus propios flujos.
+        // (Aquí no llamamos a RefineTaskWithAi::dispatch($task)).
 
         // Redirección según rol: usuarios estándar al dashboard, admins/SA al tablero
         $targetView = ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser())

@@ -56,6 +56,12 @@
                   </template>
                 </span>
               </template>
+              <template x-if="modalTask && !modalTask.reporter">
+                <span class="inline-flex items-center rounded-full bg-tasklab-bg px-2 py-0.5 text-[11px] border border-slate-700">
+                  <span class="mr-1">Requester:</span>
+                  <span>TaskLab</span>
+                </span>
+              </template>
             </div>
           </div>
         </div>
