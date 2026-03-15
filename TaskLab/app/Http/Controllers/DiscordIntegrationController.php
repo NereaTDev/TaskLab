@@ -20,15 +20,46 @@ class DiscordIntegrationController extends Controller
         // como los nativos del payload de Discord (id, content, author...) directamente desde Pipedream.
         $raw = $request->all();
 
-        $messageId   = $raw['message_id']    ?? $raw['id']                            ?? null;
-        $messageText = $raw['message_text']  ?? $raw['content']                       ?? '';
+        // Algunos conectores (como Pipedream) anidan el mensaje real bajo "message" o
+        // exponen los adjuntos en campos alternativos. Aquí intentamos normalizar
+        // para que el resto del código pueda trabajar siempre con las mismas claves.
+        $messagePayload = $raw['message'] ?? $raw;
+
+        if (! isset($raw['attachments']) && isset($messagePayload['attachments'])) {
+            $raw['attachments'] = $messagePayload['attachments'];
+        }
+
+        // Normalizar un único image_url suelto a array image_urls
+        if (! isset($raw['image_urls']) && isset($raw['image_url']) && $raw['image_url']) {
+            $raw['image_urls'] = [$raw['image_url']];
+        }
+
+        // Algunos conectores de Discord mandan la imagen en embeds[0].image.url
+        if (! isset($raw['attachments']) && isset($messagePayload['embeds']) && is_array($messagePayload['embeds'])) {
+            $embedImageUrls = [];
+            foreach ($messagePayload['embeds'] as $embed) {
+                if (! is_array($embed)) {
+                    continue;
+                }
+                $url = $embed['image']['url'] ?? null;
+                if ($url) {
+                    $embedImageUrls[] = $url;
+                }
+            }
+            if ($embedImageUrls) {
+                $raw['image_urls'] = array_merge($raw['image_urls'] ?? [], $embedImageUrls);
+            }
+        }
+
+        $messageId   = $raw['message_id']    ?? $messagePayload['id']                 ?? null;
+        $messageText = $raw['message_text']  ?? $messagePayload['content']            ?? '';
         $messageUrl  = $raw['message_url']   ?? $raw['jump_url']                      ?? null;
         $channelId   = $raw['channel_id']                                             ?? null;
         $channelName = $raw['channel_name']                                           ?? null;
         $teamName    = $raw['team_name']     ?? $raw['guild']['name']                 ?? null;
         $fromEmail   = $raw['from_email']                                             ?? null;
-        $fromName    = $raw['from_name']     ?? $raw['author']['username']            ?? null;
-        $fromUserId  = $raw['from_teams_id'] ?? $raw['author']['id']                 ?? null;
+        $fromName    = $raw['from_name']     ?? $messagePayload['author']['username'] ?? null;
+        $fromUserId  = $raw['from_teams_id'] ?? $messagePayload['author']['id']      ?? null;
 
         if (empty($messageId)) {
             return response()->json(['error' => 'message_id is required'], 422);
