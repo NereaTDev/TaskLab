@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Limpiar caches de compilación (pueden ser de un build anterior)
 php artisan config:clear || true
 php artisan route:clear  || true
 php artisan view:clear   || true
@@ -16,5 +15,8 @@ if [ "${APP_ENV}" = "production" ]; then
     php artisan view:cache
 fi
 
-echo "[entrypoint] Starting FrankenPHP..."
-exec frankenphp run --config /etc/caddy/Caddyfile
+echo "[entrypoint] Starting PHP-FPM..."
+php-fpm --daemonize
+
+echo "[entrypoint] Starting nginx..."
+exec nginx -g 'daemon off;'
