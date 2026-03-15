@@ -65,12 +65,18 @@ class TaskController extends Controller
 
         $applyCommonFilters($statsBaseQuery);
 
+        // Una sola query GROUP BY en lugar de 5 COUNT separados
+        $statusCounts = (clone $statsBaseQuery)
+            ->selectRaw('status, count(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
+
         $stats = [
-            'total'        => (clone $statsBaseQuery)->count(),
-            'pending'      => (clone $statsBaseQuery)->whereIn('status', ['new', 'ready_for_dev'])->count(),
-            'in_progress'  => (clone $statsBaseQuery)->where('status', 'in_progress')->count(),
-            'in_review'    => (clone $statsBaseQuery)->where('status', 'blocked')->count(),
-            'done'         => (clone $statsBaseQuery)->where('status', 'done')->count(),
+            'total'       => $statusCounts->sum(),
+            'pending'     => ($statusCounts['new'] ?? 0) + ($statusCounts['ready_for_dev'] ?? 0),
+            'in_progress' => $statusCounts['in_progress'] ?? 0,
+            'in_review'   => $statusCounts['blocked'] ?? 0,
+            'done'        => $statusCounts['done'] ?? 0,
         ];
 
         // Datos adicionales para la vista de análisis
@@ -492,12 +498,15 @@ class TaskController extends Controller
             'status' => ['required', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
         ]);
 
-        $task->update(['status' => $validated['status']]);
+        $updates = ['status' => $validated['status']];
 
         if ($validated['status'] === 'archived' && is_null($task->archived_at)) {
-            $task->archived_at = now();
-            $task->save();
+            $updates['archived_at'] = now();
+        } elseif ($validated['status'] === 'done' && is_null($task->done_at)) {
+            $updates['done_at'] = now();
         }
+
+        $task->update($updates);
 
         if ($request->wantsJson()) {
             return response()->json([
