@@ -98,6 +98,7 @@
                         @endphp
                         <div
                             class="rounded-2xl border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card flex flex-col min-h-[260px] @if($columnKey === '__none__') bg-[#0b122000] shadow-none @endif"
+                            data-column-wrapper="{{ $columnKey }}"
                             @dragover.prevent
                             @drop.prevent="moveUserToCategory('{{ $columnKey }}')"
                         >
@@ -112,28 +113,28 @@
                                                 $count += $child['users']->count();
                                             }
                                         @endphp
-                                        <p class="text-meta text-tasklab-muted">{{ $count }} personas</p>
+                                        <p class="text-meta text-tasklab-muted" data-column-count="{{ $columnKey }}">{{ $count }} personas</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="mt-2 space-y-3 flex-1">
                                 {{-- Usuarios asignados al valor sin subcategoría --}}
-                                @if($column['users_for_parent']->isNotEmpty())
-                                    <div class="space-y-1">
-                                        @foreach($column['users_for_parent'] as $member)
-                                            @php $profile = $member->developerProfile; @endphp
-                                            <article
-                                                class="rounded-xl border border-slate-800 bg-tasklab-bg px-3 py-2 flex items-center justify-between gap-2 cursor-move"
-                                                :class="{
-                                                    'ring-1 ring-tasklab-accent/60 ring-offset-1 ring-offset-tasklab-bg-muted': highlightUserId === {{ $member->id }},
-                                                    'border-tasklab-accent/70 bg-tasklab-accent/5': cloneUserId === {{ $member->id }}
-                                                }"
-                                                draggable="true"
-                                                @dragstart="draggedUserId = {{ $member->id }}"
-                                                @dragend="draggedUserId = null"
-                                                @click.stop="toggleHighlight({{ $member->id }})"
-                                            >
+                                <div class="space-y-1" data-users-container="{{ $columnKey }}">
+                                    @foreach($column['users_for_parent'] as $member)
+                                        @php $profile = $member->developerProfile; @endphp
+                                        <article
+                                            class="rounded-xl border border-slate-800 bg-tasklab-bg px-3 py-2 flex items-center justify-between gap-2 cursor-move"
+                                            :class="{
+                                                'ring-1 ring-tasklab-accent/60 ring-offset-1 ring-offset-tasklab-bg-muted': highlightUserId === {{ $member->id }},
+                                                'border-tasklab-accent/70 bg-tasklab-accent/5': cloneUserId === {{ $member->id }}
+                                            }"
+                                            draggable="true"
+                                            data-user-id="{{ $member->id }}"
+                                            @dragstart="draggedUserId = {{ $member->id }}; draggedEl = $event.target.closest('article')"
+                                            @dragend="draggedUserId = null; draggedEl = null"
+                                            @click.stop="toggleHighlight({{ $member->id }})"
+                                        >
                                                 <div class="flex items-center gap-2 min-w-0">
                                                     <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text">
                                                         {{ strtoupper(substr($member->name ?? 'A', 0, 2)) }}
@@ -193,9 +194,8 @@
                                                     </div>
                                                 </div>
                                             </article>
-                                        @endforeach
-                                    </div>
-                                @endif
+                                    @endforeach
+                                </div>
 
                                 {{-- Subcategorías dentro del valor --}}
                                 @foreach($column['children'] as $childId => $child)
@@ -205,7 +205,7 @@
                                         @drop.prevent="moveUserToCategory('{{ $childId }}')"
                                     >
                                         <p class="text-label font-semibold text-tasklab-text mb-1">{{ $child['value']->name }}</p>
-                                        <div class="space-y-1">
+                                        <div class="space-y-1" data-users-container="{{ $childId }}">
                                             @forelse($child['users'] as $member)
                                                 @php $profile = $member->developerProfile; @endphp
                                                 <article
@@ -215,8 +215,9 @@
                                                         'border-tasklab-accent/70 bg-tasklab-accent/5': cloneUserId === {{ $member->id }}
                                                     }"
                                                     draggable="true"
-                                                    @dragstart="draggedUserId = {{ $member->id }}"
-                                                    @dragend="draggedUserId = null"
+                                                    data-user-id="{{ $member->id }}"
+                                                    @dragstart="draggedUserId = {{ $member->id }}; draggedEl = $event.target.closest('article')"
+                                                    @dragend="draggedUserId = null; draggedEl = null"
                                                     @click.stop="toggleHighlight({{ $member->id }})"
                                                 >
                                                     <div class="flex items-center gap-2 min-w-0">
@@ -628,12 +629,12 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('teamBoard', (categoryTypeSlug) => ({
                 draggedUserId: null,
+                draggedEl: null,
                 isLoading: false,
                 categoryTypeSlug: categoryTypeSlug || '',
                 cloneUserId: null,
                 highlightUserId: null,
 
-                // Estado del modal de gestión de usuario
                 isUserModalOpen: false,
                 modalUser: null,
 
@@ -655,32 +656,28 @@
                     this.modalUser = null;
                 },
 
+                // Recalcula los contadores de cada columna leyendo los artículos del DOM
+                _refreshColumnCounts() {
+                    document.querySelectorAll('[data-column-wrapper]').forEach(wrapper => {
+                        const countEl = wrapper.querySelector('[data-column-count]');
+                        if (countEl) {
+                            const count = wrapper.querySelectorAll('article[data-user-id]').length;
+                            countEl.textContent = `${count} personas`;
+                        }
+                    });
+                },
+
                 async setUserRole(role) {
                     if (!this.modalUser) return;
-
                     this.isLoading = true;
                     try {
                         const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-                        const payload = {
-                            user_id: this.modalUser.id,
-                            role,
-                        };
-
                         const res = await fetch('{{ route('team.users.update-role') }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrf,
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            body: JSON.stringify({ user_id: this.modalUser.id, role }),
                         });
-
-                        if (!res.ok) {
-                            console.error('Failed to update user role', await res.text());
-                            return;
-                        }
-
+                        if (!res.ok) { console.error('Failed to update user role', await res.text()); return; }
                         window.location.reload();
                     } catch (e) {
                         console.error('Error updating user role', e);
@@ -692,73 +689,72 @@
                 async moveUserToCategory(columnKey) {
                     if (!this.draggedUserId || this.isLoading || !this.categoryTypeSlug) return;
 
+                    const sourceEl = this.draggedEl;
+                    const isClone = this.cloneUserId === this.draggedUserId;
+                    const draggedUserId = this.draggedUserId;
+
                     this.isLoading = true;
                     try {
                         const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-
-                        const payload = {
-                            user_id: this.draggedUserId,
-                            category_type_slug: this.categoryTypeSlug,
-                            category_value_id: columnKey === '__none__' ? null : Number(columnKey),
-                            clone: this.cloneUserId === this.draggedUserId,
-                        };
-
                         const res = await fetch('{{ route('team.reassign-category') }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrf,
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                user_id: draggedUserId,
+                                category_type_slug: this.categoryTypeSlug,
+                                category_value_id: columnKey === '__none__' ? null : Number(columnKey),
+                                clone: isClone,
+                            }),
                         });
 
-                        if (!res.ok) {
-                            console.error('Failed to reassign category', await res.text());
-                            return;
-                        }
+                        if (!res.ok) { console.error('Failed to reassign category', await res.text()); return; }
 
-                        window.location.reload();
+                        const targetContainer = document.querySelector(`[data-users-container="${columnKey}"]`);
+                        if (targetContainer && sourceEl) {
+                            if (isClone) {
+                                const clone = sourceEl.cloneNode(true);
+                                targetContainer.appendChild(clone);
+                                Alpine.initTree(clone);
+                            } else {
+                                targetContainer.appendChild(sourceEl);
+                            }
+                            this._refreshColumnCounts();
+                        }
                     } catch (e) {
                         console.error('Error reassigning category', e);
                     } finally {
                         this.isLoading = false;
                         this.draggedUserId = null;
+                        this.draggedEl = null;
                         this.cloneUserId = null;
                     }
                 },
 
                 async deleteCategoryAssignment(userId, categoryValueId) {
                     if (!this.categoryTypeSlug) return;
-
-
                     this.isLoading = true;
                     try {
                         const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-
-                        const payload = {
-                            user_id: userId,
-                            category_type_slug: this.categoryTypeSlug,
-                            category_value_id: categoryValueId,
-                            delete_single: true,
-                        };
-
                         const res = await fetch('{{ route('team.reassign-category') }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrf,
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                user_id: userId,
+                                category_type_slug: this.categoryTypeSlug,
+                                category_value_id: categoryValueId,
+                                delete_single: true,
+                            }),
                         });
 
-                        if (!res.ok) {
-                            console.error('Failed to delete assignment', await res.text());
-                            return;
-                        }
+                        if (!res.ok) { console.error('Failed to delete assignment', await res.text()); return; }
 
-                        window.location.reload();
+                        const containerKey = categoryValueId ?? '__none__';
+                        const container = document.querySelector(`[data-users-container="${containerKey}"]`);
+                        const article = container?.querySelector(`[data-user-id="${userId}"]`);
+                        if (article) {
+                            article.remove();
+                            this._refreshColumnCounts();
+                        }
                     } catch (e) {
                         console.error('Error deleting assignment', e);
                     } finally {
