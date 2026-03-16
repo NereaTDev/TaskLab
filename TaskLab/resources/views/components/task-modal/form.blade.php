@@ -114,7 +114,7 @@
     </section>
 
     {{-- Adjuntos externos (Discord/Teams), imágenes y URLs --}}
-    <template x-if="modalTask && (modalTask.primary_url || (modalTask.additional_urls && modalTask.additional_urls.length) || (modalTask.attachments && modalTask.attachments.length))">
+    <template x-if="modalTask && (modalTask.primary_url || (modalTask.additional_urls && modalTask.additional_urls.length) || (modalTask.attachments && modalTask.attachments.length) || (modalTask.task_images && modalTask.task_images.length))">
       <section class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-3">
         <h3 class="text-label font-semibold text-tasklab-text">Adjuntos y URLs</h3>
 
@@ -178,6 +178,24 @@
                     </a>
                   </template>
                 </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="modalTask.task_images && modalTask.task_images.length">
+          <div>
+            <p class="text-meta uppercase tracking-wide text-tasklab-muted/80 mb-2">Imágenes guardadas</p>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="img in modalTask.task_images" :key="img.id">
+                <a :href="img.url" target="_blank" rel="noopener noreferrer" class="block group">
+                  <img
+                    :src="img.url"
+                    :alt="img.original_name || 'Imagen'"
+                    class="h-24 w-auto max-w-[180px] rounded-lg border border-slate-700 object-cover group-hover:border-tasklab-accent transition-colors"
+                  />
+                  <span class="mt-1 block text-meta text-tasklab-muted truncate max-w-[180px]" x-text="img.original_name || 'imagen'"></span>
+                </a>
               </template>
             </div>
           </div>
