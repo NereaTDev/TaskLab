@@ -227,7 +227,7 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                     'primary_url'         => $this->extractFirstUrl($data['description_raw']),
                 ]);
 
-                RefineTaskWithAi::dispatch($task);
+                RefineTaskWithAi::dispatch($task, $allImageUrls);
                 $assignmentService->assign($task);
 
                 if (! empty($allImageUrls)) {
@@ -260,7 +260,7 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                 $task->save();
 
                 // Re-refinar con el nuevo contexto
-                RefineTaskWithAi::dispatch($task);
+                RefineTaskWithAi::dispatch($task, $allImageUrls);
 
                 if (! empty($allImageUrls)) {
                     DownloadTaskAttachments::dispatch($task, $allImageUrls);

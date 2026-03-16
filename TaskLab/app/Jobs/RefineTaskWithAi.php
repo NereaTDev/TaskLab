@@ -18,15 +18,17 @@ class RefineTaskWithAi implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public Task $task;
+    public array $imageUrls;
 
-    public function __construct(Task $task)
+    public function __construct(Task $task, array $imageUrls = [])
     {
-        $this->task = $task;
+        $this->task      = $task;
+        $this->imageUrls = $imageUrls;
     }
 
     public function handle(AiTaskRefiner $refiner): void
     {
-        $result = $refiner->refine($this->task->description_raw);
+        $result = $refiner->refine($this->task->description_raw, $this->imageUrls);
 
         // Normalizar puntos a los valores permitidos (0.5,1,2,4,6,8,10,12,16)
         $points = $result['points'] ?? null;

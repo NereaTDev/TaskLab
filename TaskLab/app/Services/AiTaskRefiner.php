@@ -11,7 +11,7 @@ class AiTaskRefiner
      * Refina la descripción bruta de una petición usando un modelo de IA real
      * (OpenAI) cuando hay API key configurada. Si no, vuelve al modo "fake".
      */
-    public function refine(string $rawDescription): array
+    public function refine(string $rawDescription, array $imageUrls = []): array
     {
         $apiKey = config('services.openai.api_key');
         $model  = config('services.openai.tasklab_model', 'gpt-4.1-mini');
@@ -71,9 +71,24 @@ Instrucciones clave:
   de los tipos/categorías/subcategorías configurados en TaskLab. Si no ves una correspondencia clara, deja "categories": [].
   Ejemplos de rutas válidas podrían ser:
   ["Área funcional", "Campus", "Home"], ["Producto", "Dashboard", "Empresas"].
+- Si se incluyen imágenes adjuntas, analízalas visualmente y descríbelas en summary y description_raw de forma útil para el desarrollador (qué se ve, qué problema muestra, qué pantalla es).
 PROMPT;
 
-            $userPrompt = "Descripción bruta de la petición (texto tal cual del usuario):\n\n" . $rawDescription;
+            $userText = "Descripción bruta de la petición (texto tal cual del usuario):\n\n" . $rawDescription;
+
+            if (! empty($imageUrls)) {
+                $userText .= "\n\nEl usuario ha adjuntado " . count($imageUrls) . " imagen(es). Analízalas y úsalas para enriquecer la descripción de la tarea.";
+            }
+
+            // Construir el contenido del mensaje de usuario (con o sin imágenes)
+            if (! empty($imageUrls)) {
+                $userContent = [['type' => 'text', 'text' => $userText]];
+                foreach (array_slice($imageUrls, 0, 4) as $url) {
+                    $userContent[] = ['type' => 'image_url', 'image_url' => ['url' => $url, 'detail' => 'low']];
+                }
+            } else {
+                $userContent = $userText;
+            }
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
@@ -87,7 +102,7 @@ PROMPT;
                     ],
                     [
                         'role'    => 'user',
-                        'content' => $userPrompt,
+                        'content' => $userContent,
                     ],
                 ],
                 'temperature'     => 0.2,
