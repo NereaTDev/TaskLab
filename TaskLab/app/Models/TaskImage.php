@@ -22,6 +22,11 @@ class TaskImage extends Model
 
     public function getUrlAttribute(): string
     {
+        // Cloudinary y otras URLs absolutas ya son la URL final
+        if (str_starts_with($this->storage_path, 'https://') || str_starts_with($this->storage_path, 'http://')) {
+            return $this->storage_path;
+        }
+
         $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
         return Storage::disk($disk)->url($this->storage_path);
     }

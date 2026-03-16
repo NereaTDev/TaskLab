@@ -45,4 +45,10 @@ return [
         'tasklab_model'=> env('OPENAI_TASKLAB_MODEL', 'gpt-4.1-mini'),
     ],
 
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key'    => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+    ],
+
 ];

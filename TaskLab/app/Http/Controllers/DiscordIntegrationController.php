@@ -21,39 +21,44 @@ class DiscordIntegrationController extends Controller
         $raw = $request->all();
 
         \Log::info('DiscordIntegrationController: inbound payload', [
-            'headers' => $request->headers->all(),
-            'raw'     => $raw,
+            'raw_keys'    => array_keys($raw),
+            'attachments' => $raw['attachments'] ?? 'not_set',
+            'embeds'      => isset($raw['embeds']) ? count($raw['embeds']) . ' embeds' : 'not_set',
+            'image_urls'  => $raw['image_urls'] ?? 'not_set',
+            'raw'         => $raw,
         ]);
 
-        // Algunos conectores (como Pipedream) anidan el mensaje real bajo "message" o
-        // exponen los adjuntos en campos alternativos. Aquí intentamos normalizar
-        // para que el resto del código pueda trabajar siempre con las mismas claves.
+        // Algunos conectores (como Pipedream) anidan el mensaje real bajo "message".
         $messagePayload = $raw['message'] ?? $raw;
 
-        if (! isset($raw['attachments']) && isset($messagePayload['attachments'])) {
+        // Usar empty() en lugar de !isset() para que arrays vacíos también sean reemplazados
+        if (empty($raw['attachments']) && ! empty($messagePayload['attachments'])) {
             $raw['attachments'] = $messagePayload['attachments'];
         }
 
         // Normalizar un único image_url suelto a array image_urls
-        if (! isset($raw['image_urls']) && isset($raw['image_url']) && $raw['image_url']) {
+        if (empty($raw['image_urls']) && ! empty($raw['image_url'])) {
             $raw['image_urls'] = [$raw['image_url']];
         }
 
-        // Algunos conectores de Discord mandan la imagen en embeds[0].image.url
-        if (! isset($raw['attachments']) && isset($messagePayload['embeds']) && is_array($messagePayload['embeds'])) {
-            $embedImageUrls = [];
-            foreach ($messagePayload['embeds'] as $embed) {
-                if (! is_array($embed)) {
-                    continue;
-                }
-                $url = $embed['image']['url'] ?? null;
-                if ($url) {
-                    $embedImageUrls[] = $url;
-                }
+        // Extraer imágenes de embeds (Discord manda embeds cuando pegas una URL de imagen)
+        // Se ejecuta incluso si attachments es [] vacío — ese es el bug que había antes
+        $embedImageUrls = [];
+        foreach ($messagePayload['embeds'] ?? [] as $embed) {
+            if (! is_array($embed)) {
+                continue;
             }
-            if ($embedImageUrls) {
-                $raw['image_urls'] = array_merge($raw['image_urls'] ?? [], $embedImageUrls);
+            // embed.image.url — imagen principal del embed
+            if (! empty($embed['image']['url'])) {
+                $embedImageUrls[] = $embed['image']['url'];
             }
+            // embed.thumbnail.url — thumbnail del embed
+            if (! empty($embed['thumbnail']['url'])) {
+                $embedImageUrls[] = $embed['thumbnail']['url'];
+            }
+        }
+        if (! empty($embedImageUrls)) {
+            $raw['image_urls'] = array_merge($raw['image_urls'] ?? [], $embedImageUrls);
         }
 
         $messageId   = $raw['message_id']    ?? $messagePayload['id']                 ?? null;
