@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'integrations/teams/messages',
             'integrations/discord/messages',
+            'integrations/discord/inspect',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
