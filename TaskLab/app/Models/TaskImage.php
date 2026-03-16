@@ -22,7 +22,8 @@ class TaskImage extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk('public')->url($this->storage_path);
+        $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+        return Storage::disk($disk)->url($this->storage_path);
     }
 
     protected $appends = ['url'];

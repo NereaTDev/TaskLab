@@ -21,10 +21,11 @@ class TaskImageController extends Controller
         $filename = 'task_' . $task->id . '_' . Str::random(12) . '.' . $extension;
         $path = 'task-images/' . $filename;
 
-        Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
+        $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+        Storage::disk($disk)->put($path, file_get_contents($file->getRealPath()));
 
         $image = TaskImage::create([
-            'task_id'      => $task->id,
+            'task_id'       => $task->id,
             'original_name' => $file->getClientOriginalName(),
             'storage_path'  => $path,
             'mime_type'     => $file->getMimeType(),
@@ -42,7 +43,8 @@ class TaskImageController extends Controller
     {
         abort_if($image->task_id !== $task->id, 404);
 
-        Storage::disk('public')->delete($image->storage_path);
+        $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+        Storage::disk($disk)->delete($image->storage_path);
         $image->delete();
 
         return response()->json(['status' => 'ok']);

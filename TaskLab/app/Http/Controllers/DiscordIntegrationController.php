@@ -20,6 +20,11 @@ class DiscordIntegrationController extends Controller
         // como los nativos del payload de Discord (id, content, author...) directamente desde Pipedream.
         $raw = $request->all();
 
+        \Log::info('DiscordIntegrationController: inbound payload', [
+            'headers' => $request->headers->all(),
+            'raw'     => $raw,
+        ]);
+
         // Algunos conectores (como Pipedream) anidan el mensaje real bajo "message" o
         // exponen los adjuntos en campos alternativos. Aquí intentamos normalizar
         // para que el resto del código pueda trabajar siempre con las mismas claves.

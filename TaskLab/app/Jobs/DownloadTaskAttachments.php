@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -38,11 +39,15 @@ class DownloadTaskAttachments implements ShouldQueue
             $response = Http::timeout(20)->get($url);
 
             if (! $response->ok()) {
+                Log::warning('DownloadTaskAttachments: URL returned non-OK status', [
+                    'task_id' => $this->task->id,
+                    'url'     => $url,
+                    'status'  => $response->status(),
+                ]);
                 return;
             }
 
             $contentType = $response->header('Content-Type') ?? 'image/jpeg';
-            // Solo procesamos imágenes
             if (! str_starts_with($contentType, 'image/')) {
                 return;
             }
@@ -57,9 +62,9 @@ class DownloadTaskAttachments implements ShouldQueue
             $filename = 'task_' . $this->task->id . '_' . Str::random(12) . '.' . $extension;
             $path = 'task-images/' . $filename;
 
-            Storage::disk('public')->put($path, $response->body());
+            $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+            Storage::disk($disk)->put($path, $response->body());
 
-            // Nombre legible: extraer del final de la URL si es posible
             $originalName = basename(parse_url($url, PHP_URL_PATH)) ?: $filename;
 
             TaskImage::create([
@@ -69,8 +74,18 @@ class DownloadTaskAttachments implements ShouldQueue
                 'mime_type'     => $contentType,
                 'size'          => strlen($response->body()),
             ]);
-        } catch (\Throwable) {
-            // Si falla la descarga no rompemos el flujo
+
+            Log::info('DownloadTaskAttachments: stored image', [
+                'task_id' => $this->task->id,
+                'path'    => $path,
+                'disk'    => $disk,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('DownloadTaskAttachments: failed to download image', [
+                'task_id' => $this->task->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
         }
     }
 }
