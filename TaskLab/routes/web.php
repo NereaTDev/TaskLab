@@ -21,6 +21,18 @@ Route::post('/integrations/teams/messages', [TeamsIntegrationController::class, 
 Route::post('/integrations/discord/messages', [DiscordIntegrationController::class, 'store'])
     ->name('integrations.discord.messages');
 
+// Endpoint de inspección temporal — devuelve el payload crudo para depurar Pipedream
+Route::post('/integrations/discord/inspect', function (\Illuminate\Http\Request $request) {
+    return response()->json([
+        'headers'     => $request->headers->all(),
+        'body'        => $request->all(),
+        'raw_keys'    => array_keys($request->all()),
+        'attachments' => $request->input('attachments', 'KEY_NOT_PRESENT'),
+        'embeds'      => $request->input('embeds', 'KEY_NOT_PRESENT'),
+        'message'     => $request->input('message', 'KEY_NOT_PRESENT'),
+    ]);
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return redirect()->route('tasks.index');
