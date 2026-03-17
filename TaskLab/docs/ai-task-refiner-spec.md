@@ -2,7 +2,7 @@
 
 Este documento define **cómo debe comportarse la IA** que refina las peticiones entrantes (por ejemplo, desde Discord, Teams o formulario web) en una tarea de TaskLab.
 
-La idea: a partir de un texto libre (description_raw) y algo de contexto, la IA debe producir un conjunto de campos estructurados que dejen la tarea lista para que un desarrollador la pueda abordar sin ambigüedades.
+La idea: a partir de un texto libre (`description_raw`) y algo de contexto, la IA produce un conjunto de campos estructurados que dejan la tarea lista para que un desarrollador pueda abordarla sin ambigüedades.
 
 ---
 
@@ -10,11 +10,10 @@ La idea: a partir de un texto libre (description_raw) y algo de contexto, la IA 
 
 Entrada mínima obligatoria:
 
-- `description_raw` (string): texto original enviado por el usuario (por ejemplo, mensaje en Discord o formulario web). Puede incluir un pseudo‑formato como:
+- `description_raw` (string): texto original enviado por el usuario. Puede incluir un pseudo‑formato como:
 
   ```text
   TIPO: bug
-  AREA: web
   PRIORIDAD: high
 
   DESCRIPCION:
@@ -36,20 +35,18 @@ Entrada mínima obligatoria:
   ...
   ```
 
-Entrada opcional (contexto futuro):
+Entrada opcional (contexto):
 
 - `source` (string): origen de la petición (`web_form`, `discord`, `teams`, etc.).
 - `url` (string|null): URL principal asociada, si se ha detectado.
 - `reporter_name` (string|null): nombre de quien reporta.
-- `area_hint` (string|null): indicación previa del área (`web`, `plataforma`, `frontierz`, `dashboard_empresas`).
-
-La primera versión real de la IA puede trabajar solo con `description_raw` y `source`.
+- `image_urls` (string[]): URLs de imágenes adjuntas (la IA las analiza con visión si están presentes).
 
 ---
 
 ## 2. Salidas esperadas (formato JSON)
 
-La IA debe devolver SIEMPRE un objeto JSON con esta forma (aunque algunos campos estén vacíos):
+La IA devuelve SIEMPRE un objeto JSON con esta forma:
 
 ```json
 {
@@ -60,140 +57,76 @@ La IA debe devolver SIEMPRE un objeto JSON con esta forma (aunque algunos campos
   "test_cases": [],
   "type": "",
   "priority": "",
-  "area": "",
-  "estimated_effort": "",
-  "url": "",
+  "points": null,
+  "primary_url": "",
+  "additional_urls": [],
   "impact": "",
   "parsed_fields": {
     "raw_tipo": "",
-    "raw_area": "",
     "raw_prioridad": "",
     "raw_resultado_esperado": "",
     "raw_resultado_actual": ""
-  }
+  },
+  "categories": [
+    { "path": ["Tipo", "Categoria", "Subcategoria"] }
+  ]
 }
 ```
 
 ### Descripción campo a campo
 
-- `title` (string)
-  - Título corto, claro y accionable de la tarea.
-  - Debe ser entendible sin leer toda la descripción.
-  - Incluir, si es posible, pantalla/componente y síntoma.
+- `title` (string) — Título corto, claro, accionable. Debe mencionar módulo/página + síntoma.
 
-- `summary` (string)
-  - Descripción refinada en 2–6 frases, en español, enfocada a alguien técnico que no ha visto el contexto original.
-  - Combina y limpia la información de DESCRIPCION, IMPACTO, RESULTADO_ESPERADO y RESULTADO_ACTUAL.
+- `summary` (string) — Descripción refinada en 2–6 frases en español, para alguien técnico sin contexto previo.
 
-- `requirements` (string[])
-  - Lista de requisitos que deben cumplirse para considerar la tarea terminada.
-  - Cada elemento debe ser una frase concreta, comprobable.
+- `requirements` (string[]) — Lista de criterios de aceptación concretos y comprobables.
 
-- `behavior` (string)
-  - Texto con dos bloques, algo como:
+- `behavior` (string) — Dos bloques: comportamiento actual vs comportamiento esperado.
 
-    ```text
-    Comportamiento actual:
-    ...
+- `test_cases` (string[]) — Escenarios de QA para validar la solución.
 
-    Comportamiento esperado:
-    ...
-    ```
+- `type` (string) — Uno de: `bug`, `feature`, `improvement`, `question`.
 
-- `test_cases` (string[])
-  - Lista de casos de prueba que QA puede seguir para validar la solución.
-  - Incluir pasos y resultado esperado, pero de forma breve.
+- `priority` (string) — Uno de: `critical`, `high`, `medium`, `low`.
+  - `critical`: bloquea pagos, registros, acceso o un flujo clave para la mayoría de usuarios.
+  - `high`: alto impacto en negocio o experiencia, pero no bloquea totalmente.
+  - `medium`: problema relevante con impacto moderado.
+  - `low`: mejora, detalle visual o edge case.
 
-- `type` (string)
-  - Uno de: `bug`, `feature`, `improvement`, `question`.
-  - Si el usuario ha rellenado `TIPO:` en el mensaje, respétalo salvo que sea incoherente.
-  - Si no hay pista clara, usar `bug` por defecto.
+- `points` (number|null) — Estimación de esfuerzo en horas (1 punto ≈ 1 hora). Valores permitidos: 0.5, 1, 2, 4, 6, 8, 10, 12, 16.
 
-- `priority` (string)
-  - Uno de: `critical`, `high`, `medium`, `low`.
-  - Criterio orientativo:
-    - `critical`: bloquea pagos, registros, acceso o un flujo clave para la mayoría de usuarios.
-    - `high`: no bloquea totalmente pero tiene alto impacto en negocio o experiencia.
-    - `medium`: problema relevante pero con impacto moderado.
-    - `low`: mejora, detalle visual o edge case.
-  - Si el usuario ha indicado PRIORIDAD, usarla como guía.
+- `primary_url` (string) — URL principal donde ocurre el problema.
 
-- `area` (string)
-  - Uno de: `web`, `plataforma`, `frontierz`, `dashboard_empresas`.
-  - Intentar inferirla a partir de:
-    - URL
-    - Nombre de la página/componente
-    - Texto del mensaje (por ejemplo “dashboard de empresas” → `dashboard_empresas`).
+- `additional_urls` (string[]) — URLs adicionales relevantes.
 
-- `estimated_effort` (string)
-  - Uno de: `low`, `medium`, `high`.
-  - Estimación muy aproximada basada en la complejidad aparente.
+- `impact` (string) — Frase corta explicando el impacto en negocio/usuarios.
 
-- `url` (string)
-  - URL principal relevante, si se menciona claramente en `description_raw`.
+- `parsed_fields` — Campos auxiliares con los valores explícitos encontrados en el mensaje (para debug y trazabilidad).
 
-- `impact` (string)
-  - Explicación compacta del impacto en negocio/usuarios (1–3 frases).
-
-- `parsed_fields` (objeto)
-  - Campos auxiliares donde la IA vuelca, si los encuentra explícitos, los valores de las etiquetas del mensaje (`TIPO:`, `AREA:`, `PRIORIDAD:`, etc.).
-  - Esto ayuda a debuggear y evolucionar el parser sin perder la info cruda.
+- `categories` — Propuesta de categorización dinámica. Cada item es un path de tipo → categoría → subcategoría, mapeado contra los `CategoryType`/`CategoryValue` existentes en la BD.
 
 ---
 
 ## 3. Reglas y estilo para la IA
 
 1. **Idioma**: siempre en español.
-2. **Claridad**: evitar jerga innecesaria; explicar como si el desarrollador no hubiera visto el mensaje original.
-3. **No inventar datos**:
-   - Si falta información clave, no inventarla; señalar claramente la ausencia en `requirements` o `summary` (por ejemplo: "El mensaje no indica el navegador.").
-4. **Uso de campos TIPO/AREA/PRIORIDAD**:
-   - Si el mensaje incluye un bloque estructurado (por ejemplo `TIPO: bug`), úsalo como primera fuente.
-   - Si no existe, intenta inferirlo; si la inferencia no es clara, usa el valor por defecto y explica la duda en `impact` o `requirements`.
-5. **Coherencia con el mensaje original**:
-   - No eliminar detalles importantes aunque parezcan redundantes.
+2. **No inventar datos**: si falta información clave, señalarlo en `requirements` o `summary`.
+3. **Respetar TIPO/PRIORIDAD explícitos**: si el mensaje los incluye, usarlos como primera fuente.
+4. **Coherencia**: no eliminar detalles importantes aunque parezcan redundantes.
+5. **Imágenes**: si se pasan `image_urls`, analizarlas con visión y usarlas para enriquecer la descripción.
 
 ---
 
-## 4. Integración con el servicio `AiTaskRefiner`
+## 4. Integración con `AiTaskRefiner`
 
-El servicio `App\\Services\\AiTaskRefiner` debe:
+El servicio `App\Services\AiTaskRefiner` recibe `description_raw` + `imageUrls[]`, construye el prompt, llama a OpenAI (modelo configurado en `OPENAI_TASKLAB_MODEL`), parsea el JSON y actualiza la tarea.
 
-1. Recibir `description_raw` (y, en el futuro, otros campos de contexto si se añaden).
-2. Construir un `prompt` para el modelo de IA que incluya:
-   - Instrucciones de esta especificación.
-   - El texto original (`description_raw`).
-3. Llamar al proveedor de IA (OpenAI, Claude, etc.) para obtener el JSON anterior.
-4. Parsear el JSON y devolver un array de PHP con al menos:
-
-   ```php
-   return [
-       'title'           => $json['title'] ?? $fallbackTitle,
-       'summary'         => $json['summary'] ?? null,
-       'requirements'    => $json['requirements'] ?? [],
-       'behavior'        => $json['behavior'] ?? null,
-       'test_cases'      => $json['test_cases'] ?? [],
-       'type'            => $json['type'] ?? 'bug',
-       'priority'        => $json['priority'] ?? 'medium',
-       'area'            => $json['area'] ?? null,
-       'estimated_effort'=> $json['estimated_effort'] ?? 'medium',
-   ];
-   ```
-
-5. En caso de error en la llamada a la IA (timeout, JSON inválido, etc.), no romper el flujo:
-   - Mantener el `description_raw`.
-   - Rellenar campos con valores seguros por defecto.
+En caso de error (timeout, JSON inválido), no rompe el flujo: mantiene `description_raw` y rellena campos con valores seguros por defecto.
 
 ---
 
-## 5. Estado actual vs estado objetivo
+## 5. Estado actual
 
-- **Estado actual** (MVP):
-  - `AiTaskRefiner::refine()` devuelve un refinamiento fake, estático.
-  - No hay conexión real con un modelo de IA externo.
-
-- **Estado objetivo**:
-  - `AiTaskRefiner::refine()` llama a un modelo de IA real siguiendo esta especificación.
-  - El flujo Discord → TaskLab → IA deja las tareas listas para desarrollo con el mínimo trabajo manual posible.
-
-Este documento sirve como contrato de comportamiento para cuando se implemente la integración real con IA.
+- **Implementado**: `AiTaskRefiner::refine()` llama a OpenAI con visión. El job `RefineTaskWithAi` lo lanza en background tras crear la tarea.
+- **Modelo**: `gpt-4.1-mini` por defecto, configurable con `OPENAI_TASKLAB_MODEL`.
+- **Categorías dinámicas**: la IA propone paths de categorías que se mapean contra los `CategoryType`/`CategoryValue` existentes con fuzzy matching.

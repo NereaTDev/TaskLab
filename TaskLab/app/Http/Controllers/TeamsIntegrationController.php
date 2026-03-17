@@ -147,7 +147,6 @@ class TeamsIntegrationController extends Controller
             'external_message_id' => $data['message_id'],
             'external_channel'    => $data['channel_id'] ?? $data['channel_name'] ?? null,
             'external_user_id'    => $data['from_teams_id'] ?? null,
-            'external_payload'    => $request->all(),
             'attachments'         => $attachments,
         ]);
 

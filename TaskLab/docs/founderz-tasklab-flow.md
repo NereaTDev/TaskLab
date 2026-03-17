@@ -32,8 +32,7 @@ Fuentes de entrada previstas:
    - Título, resumen, requisitos, comportamiento actual/esperado, casos de prueba.
    - Tipo (`bug/feature/improvement/question`).
    - Prioridad (`critical/high/medium/low`).
-   - Área (`web/plataforma/frontierz/dashboard_empresas`).
-   - Esfuerzo aproximado (`low/medium/high`).
+   - Puntos de esfuerzo estimados (0.5–16h).
 6. TaskLab actualiza la `Task` con esos campos.
 7. El motor de asignación (`TaskAssignmentService` ampliado) decide a qué persona del equipo va la tarea, según:
    - Área y tipo (front/back/fullstack).
@@ -72,8 +71,7 @@ A partir de `description_raw` (mensaje original) + contexto, la IA debe generar:
 6. **Clasificación**
    - `type`: bug/feature/improvement/question.
    - `priority`: critical/high/medium/low.
-   - `area`: web/plataforma/frontierz/dashboard_empresas.
-   - `estimated_effort`: low/medium/high (estimación aproximada).
+   - `points`: estimación de esfuerzo en horas (0.5–16).
 
 7. **Metadatos adicionales**
    - `url`: URL principal donde ocurre (si la puede inferir del mensaje o de un patrón conocido).
@@ -105,7 +103,7 @@ TaskLab debe poder mapear esto a:
 
 - Cada tarea tiene un campo `points` (estimación de esfuerzo).
 - Regla de negocio: **1 punto ≈ 1 hora de trabajo** de un desarrollador estándar.
-- La IA, a partir de la descripción, puede sugerir un `estimated_effort` (`low/medium/high`) que luego se traduce en puntos aproximados (p. ej. low=1–2, medium=3–5, high=8+), pero la decisión final de puntos puede ser humana.
+- La IA sugiere `points` directamente (0.5–16h). La decisión final puede ajustarse manualmente en el modal de la tarea.
 
 ### 4.3. Criterios para elegir la persona asignada
 
@@ -151,7 +149,7 @@ Para que la IA entienda bien el entorno Founderz:
 
 - Se tendrá en cuenta el dominio `founderz.com` y el campus (URLs, nombres de módulos, procesos típicos, etc.).
 - Ejemplos típicos de mensajes:
-  - "En el campus no se puede activar la cámara" → bug, área `web`, tipo `front`, alta prioridad si bloquea clases.
-  - "Queremos añadir badges en el dashboard de empresas" → feature, área `dashboard_empresas`, probablemente front+back.
+  - "En el campus no se puede activar la cámara" → bug, tipo `front`, alta prioridad si bloquea clases.
+  - "Queremos añadir badges en el dashboard de empresas" → feature, probablemente front+back.
 
 La especificación detallada del prompt que se envía a OpenAI está en `docs/ai-task-refiner-spec.md` y se irá ajustando con ejemplos reales.

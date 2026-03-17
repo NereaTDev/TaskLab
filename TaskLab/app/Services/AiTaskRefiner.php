@@ -40,7 +40,6 @@ SIEMPRE devuelves SOLO un objeto JSON válido, sin texto adicional, con esta est
   "impact": string,
   "parsed_fields": {
     "raw_tipo": string,
-    "raw_area": string,
     "raw_prioridad": string,
     "raw_resultado_esperado": string,
     "raw_resultado_actual": string

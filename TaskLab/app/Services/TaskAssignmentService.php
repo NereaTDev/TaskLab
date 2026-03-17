@@ -15,7 +15,6 @@ class TaskAssignmentService
      *
      * Rules (MVP):
      * - Filter devs by active=true
-     * - Filter devs whose areas include the task area (if set)
      * - Filter devs whose type matches the task type, or are fullstack
      * - Optionally respect max_parallel_tasks if set
      * - Choose the dev with the fewest active tasks (status in [new, ready_for_dev, in_progress])

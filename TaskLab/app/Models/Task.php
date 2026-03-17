@@ -29,15 +29,12 @@ class Task extends Model
         'reporter_id',
         'assignee_id',
         'source',
-        'area',
-        'estimated_effort',
         'primary_url',
         'additional_urls',
         'impact',
         'external_message_id',
         'external_channel',
         'external_user_id',
-        'external_payload',
         'attachments',
         'done_at',
     ];
@@ -45,7 +42,6 @@ class Task extends Model
     protected $casts = [
         'requirements'      => 'array',
         'test_cases'        => 'array',
-        'external_payload'  => 'array',
         'additional_urls'   => 'array',
         'attachments'       => 'array',
         'points'            => 'float',

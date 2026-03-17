@@ -114,8 +114,6 @@ A partir del mensaje de Discord, TaskLab alimenta los siguientes campos de la Ta
 - `reporter` → en el futuro se podrá mapear el usuario de Discord a un usuario de TaskLab.
 - `type` → inicialmente `bug` (MVP), más adelante se inferirá por IA o leyendo el campo TIPO.
 - `priority` → inicialmente `medium`, después la IA podrá sugerir cambios.
-- `area` → inicialmente `web`, después se leerá de AREA o se inferirá.
-- `estimated_effort` → valor por defecto ("medium"), ajustable por el equipo.
 
 En la UI, verás:
 
