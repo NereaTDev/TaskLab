@@ -27,8 +27,12 @@ class TaskImage extends Model
             return $this->storage_path;
         }
 
-        $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
-        return Storage::disk($disk)->url($this->storage_path);
+        try {
+            $disk = config('filesystems.default') === 'local' ? 'public' : config('filesystems.default');
+            return Storage::disk($disk)->url($this->storage_path);
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     protected $appends = ['url'];
