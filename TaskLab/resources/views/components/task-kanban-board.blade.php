@@ -155,7 +155,12 @@
             @dragend="draggedTaskId = null"
             @click.stop="openTaskModal(task)"
           >
-            <h3 class="text-sm font-medium text-tasklab-text line-clamp-2" x-text="task.title || ('Sin título #' + task.id)"></h3>
+            <div class="flex items-start justify-between gap-1">
+              <h3 class="text-sm font-medium text-tasklab-text line-clamp-2" x-text="task.title || ('Sin título #' + task.id)"></h3>
+              <div x-data="updatedBadge(task.id, task.ai_refined_at)" x-show="show" x-transition.opacity class="shrink-0">
+                <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/40">updated</span>
+              </div>
+            </div>
             <div class="mt-2 flex flex-wrap gap-1">
               <span
                 class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium"

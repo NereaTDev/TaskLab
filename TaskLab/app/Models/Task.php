@@ -37,6 +37,7 @@ class Task extends Model
         'external_user_id',
         'attachments',
         'done_at',
+        'ai_refined_at',
         'rejection_reasons',
         'co_requester_ids',
     ];
@@ -51,6 +52,7 @@ class Task extends Model
         'points'            => 'float',
         'archived_at'       => 'datetime',
         'done_at'           => 'datetime',
+        'ai_refined_at'     => 'datetime',
     ];
 
     public function reporter()

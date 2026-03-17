@@ -184,6 +184,41 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
 }));
 
 // ---------------------------------------------------------------------------
+// updatedBadge — etiqueta naranja "updated" durante 1 min desde primera vista
+// Se apoya en localStorage para persistir el momento de primera visualización.
+// ---------------------------------------------------------------------------
+Alpine.data('updatedBadge', (taskId, aiRefinedAt) => ({
+    show: false,
+
+    init() {
+        if (!aiRefinedAt || !taskId) return;
+
+        const now         = Date.now();
+        const refinedTime = new Date(aiRefinedAt).getTime();
+
+        // Solo mostramos si fue refinado en las últimas 24 horas
+        if (now - refinedTime > 86400000) return;
+
+        const key       = `task_ai_seen_${taskId}`;
+        const firstSeen = localStorage.getItem(key);
+
+        if (!firstSeen) {
+            // Primera vez que el usuario ve esta tarea actualizada
+            localStorage.setItem(key, now.toString());
+            this.show = true;
+            setTimeout(() => { this.show = false; }, 60000);
+        } else {
+            const elapsed = now - parseInt(firstSeen, 10);
+            if (elapsed < 60000) {
+                // Todavía dentro del minuto
+                this.show = true;
+                setTimeout(() => { this.show = false; }, 60000 - elapsed);
+            }
+        }
+    },
+}));
+
+// ---------------------------------------------------------------------------
 // notificationBell — campana de notificaciones in-app
 // Hace polling cada 30s al endpoint /notifications
 // ---------------------------------------------------------------------------

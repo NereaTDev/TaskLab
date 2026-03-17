@@ -99,9 +99,14 @@
                   >
                     <td class="px-4 py-2 text-meta text-tasklab-muted">#{{ $task->id }}</td>
                     <td class="px-4 py-2 text-body text-tasklab-text">
-                      <span class="hover:text-tasklab-accent">
-                        {{ $task->title ?? 'Task #'.$task->id }}
-                      </span>
+                      <div class="flex items-center gap-2">
+                        <span class="hover:text-tasklab-accent">{{ $task->title ?? 'Task #'.$task->id }}</span>
+                        @if($task->ai_refined_at)
+                          <div x-data="updatedBadge({{ $task->id }}, '{{ $task->ai_refined_at->toIso8601String() }}')" x-show="show" x-transition.opacity>
+                            <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/40">updated</span>
+                          </div>
+                        @endif
+                      </div>
                       <div class="text-meta text-tasklab-muted line-clamp-1">
                         {{ Str::limit($task->description_raw, 120) }}
                       </div>

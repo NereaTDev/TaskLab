@@ -218,6 +218,8 @@ class RefineTaskWithAi implements ShouldQueue
         if (! empty($result['additional_urls'])) $update['additional_urls'] = $result['additional_urls'];
         if (! empty($result['impact']))          $update['impact']         = $result['impact'];
 
+        $update['ai_refined_at'] = now();
+
         $this->task->update($update);
 
         // Mapear categorías propuestas por la IA contra los valores reales de la BD
