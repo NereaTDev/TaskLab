@@ -81,12 +81,17 @@ class TaskAssignmentService
         // Choose dev with lowest active_count
         $bestDevId = $availableDevs->sortBy('active_count')->keys()->first();
 
+        $alreadyAssigned = ($task->assignee_id === $bestDevId);
+
         $task->assignee_id = $bestDevId;
         $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
         $task->save();
 
-        $task->assignee->notify(new TaskAssigned($task->fresh()));
-        app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+        // Idempotencia: no notificar si ya estaba asignado al mismo dev (evita doble DM en retries del job)
+        if (! $alreadyAssigned) {
+            $task->assignee->notify(new TaskAssigned($task->fresh()));
+            app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+        }
 
         return $task;
     }
@@ -115,11 +120,15 @@ class TaskAssignmentService
             return; // No hay nadie a quien asignar por defecto
         }
 
+        $alreadyAssigned = ($task->assignee_id === $superAdmin->id);
+
         $task->assignee_id = $superAdmin->id;
         $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
         $task->save();
 
-        $superAdmin->notify(new TaskAssigned($task->fresh()));
-        app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+        if (! $alreadyAssigned) {
+            $superAdmin->notify(new TaskAssigned($task->fresh()));
+            app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+        }
     }
 }

@@ -79,27 +79,42 @@ class DiscordNotificationService
         $this->sendDm($channelId, $message, $task->id, 'conflict');
     }
 
-    public function notifyTaskMerged(Task $task, Task $existingTask): void
+    public function notifyTaskMerged(Task $newTask, Task $existingTask): void
     {
-        $channelId = $this->openDm($task);
-        if (! $channelId) {
-            return;
+        $existingTitle   = $existingTask->title ?? "Tarea #{$existingTask->id}";
+        $newReporterName = $newTask->reporter?->name ?? 'Alguien';
+
+        // DM al nuevo solicitante (user 2): su mensaje se fusionó con la tarea existente
+        $channelIdNew = $this->openDm($newTask);
+        if ($channelIdNew) {
+            $message = <<<MSG
+            🔗 **Tu solicitud ha sido fusionada con una tarea existente**
+
+            Hemos detectado que tu petición aporta contexto adicional a una tarea que ya está en el flujo de trabajo:
+
+            **Tarea existente:** {$existingTitle} (#{$existingTask->id})
+            **Estado:** {$existingTask->status}
+
+            Tu información ha sido añadida a esa tarea y te hemos registrado como co-solicitante. ¡Gracias por el contexto extra!
+            MSG;
+
+            $this->sendDm($channelIdNew, $message, $newTask->id, 'merged-new');
         }
 
-        $existingTitle = $existingTask->title ?? "Tarea #{$existingTask->id}";
+        // DM al solicitante original (user 1): alguien añadió contexto a su tarea
+        $channelIdExisting = $this->openDm($existingTask);
+        if ($channelIdExisting) {
+            $message = <<<MSG
+            💬 **Alguien ha añadido contexto a tu tarea**
 
-        $message = <<<MSG
-        🔗 **Tu solicitud ha sido fusionada con una tarea existente**
+            **Tarea:** {$existingTitle} (#{$existingTask->id})
+            **Nuevo contexto aportado por:** {$newReporterName}
 
-        Hemos detectado que tu petición aporta contexto adicional a una tarea que ya está en el flujo de trabajo:
+            Su información ha sido añadida a tu solicitud para ayudar al equipo a entenderla mejor.
+            MSG;
 
-        **Tarea existente:** {$existingTitle} (#{$existingTask->id})
-        **Estado:** {$existingTask->status}
-
-        Tu información ha sido añadida a esa tarea y te hemos registrado como co-solicitante. ¡Gracias por el contexto extra!
-        MSG;
-
-        $this->sendDm($channelId, $message, $task->id, 'merged');
+            $this->sendDm($channelIdExisting, $message, $existingTask->id, 'merged-existing');
+        }
     }
 
     private function openDm(Task $task): ?string

@@ -86,7 +86,7 @@ class RefineTaskWithAi implements ShouldQueue
 
         if (($duplicate['status'] ?? 'unique') === 'related' && ! empty($duplicate['related_task_id'])) {
             $relatedTask = Task::find($duplicate['related_task_id']);
-            if ($relatedTask && in_array($relatedTask->status, ['new', 'ready_for_dev', 'in_progress'])) {
+            if ($relatedTask && in_array($relatedTask->status, ['processing', 'new', 'ready_for_dev', 'in_progress'])) {
                 $this->mergeIntoExisting($relatedTask, $discord);
                 return; // La nueva tarea ha sido fusionada, no continuar
             }
@@ -181,6 +181,11 @@ class RefineTaskWithAi implements ShouldQueue
             'co_requester_ids' => $coRequesterIds,
             'description_raw'  => $existingTask->description_raw . $additionalContext,
         ]);
+
+        // Transferir imágenes del mensaje fusionado a la tarea existente
+        if (! empty($this->imageUrls)) {
+            DownloadTaskAttachments::dispatch($existingTask, $this->imageUrls);
+        }
 
         // Archivar la tarea nueva (ya fusionada)
         $this->task->update([
