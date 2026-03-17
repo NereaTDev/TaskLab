@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\DownloadTaskAttachments;
 use App\Models\CategoryType;
 use App\Models\CategoryValue;
 use App\Models\Task;
