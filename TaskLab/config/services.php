@@ -51,4 +51,8 @@ return [
         'api_secret' => env('CLOUDINARY_API_SECRET'),
     ],
 
+    'discord' => [
+        'bot_token' => env('DISCORD_BOT_TOKEN'),
+    ],
+
 ];

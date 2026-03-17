@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DeveloperProfile;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\DiscordNotificationService;
 
 class TaskAssignmentService
 {
@@ -84,6 +85,8 @@ class TaskAssignmentService
         $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
         $task->save();
 
+        app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+
         return $task;
     }
 
@@ -114,5 +117,7 @@ class TaskAssignmentService
         $task->assignee_id = $superAdmin->id;
         $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
         $task->save();
+
+        app(DiscordNotificationService::class)->notifyTaskAssigned($task);
     }
 }
