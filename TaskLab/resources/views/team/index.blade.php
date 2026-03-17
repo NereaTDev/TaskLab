@@ -67,6 +67,46 @@
             </p>
         </div>
 
+        {{-- Usuarios sin equipo (sin ninguna asignación de categoría) — solo SuperAdmin --}}
+        @if(auth()->user()->isSuperAdmin() && $pendingUsers->isNotEmpty())
+            <div class="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 shadow-card space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-4 w-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-yellow-300">
+                            {{ $pendingUsers->count() }} {{ $pendingUsers->count() === 1 ? 'usuario sin equipo' : 'usuarios sin equipo' }}
+                        </span>
+                    </div>
+                    @if($categoryTypes->isNotEmpty())
+                        <a href="{{ route('team.index', ['group' => 'category:'.$categoryTypes->first()->slug]) }}"
+                           class="text-[11px] text-tasklab-accent hover:underline">
+                            Ir a tablero de categorías →
+                        </a>
+                    @endif
+                </div>
+
+                <p class="text-xs text-tasklab-muted pl-6">
+                    Estos usuarios no tienen ningún tipo asignado. Usa las pestañas de categorías para arrastrarlos a su equipo.
+                </p>
+
+                <div class="flex flex-wrap gap-2 pl-6">
+                    @foreach($pendingUsers as $pUser)
+                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-1.5">
+                            <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-600 text-[10px] font-semibold text-tasklab-text">
+                                {{ strtoupper(substr($pUser->name, 0, 2)) }}
+                            </span>
+                            <span class="text-xs text-tasklab-text">{{ $pUser->name }}</span>
+                            @if($pUser->position)
+                                <span class="text-[10px] text-tasklab-muted">· {{ $pUser->position }}</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Contenido principal --}}
         @if($teamMembers->isEmpty())
             <div class="rounded-2xl border border-slate-800 bg-tasklab-bg-muted p-8 text-center shadow-card">

@@ -6,6 +6,8 @@ use App\Jobs\DownloadTaskAttachments;
 use App\Models\CategoryType;
 use App\Models\CategoryValue;
 use App\Models\Task;
+use App\Models\User;
+use App\Models\UserCategoryAssignment;
 use App\Services\AiTaskRefiner;
 use App\Services\DiscordNotificationService;
 use App\Services\TaskAssignmentService;
@@ -48,8 +50,9 @@ class RefineTaskWithAi implements ShouldQueue
 
     public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment): void
     {
-        // 1. Construir contexto: árbol de categorías y tareas similares
+        // 1. Construir contexto: árbol de categorías, equipos y tareas similares
         $categoryTree = $this->buildCategoryTree();
+        $teamContext  = $this->buildTeamContext();
         $similarTasks = $this->findSimilarTasks();
 
         // 2. Llamar a la IA con contexto completo
@@ -58,6 +61,7 @@ class RefineTaskWithAi implements ShouldQueue
             $this->imageUrls,
             $categoryTree,
             $similarTasks,
+            $teamContext,
         );
 
         // 3. Gate de aceptación — ¿la tarea tiene suficiente calidad?
@@ -102,8 +106,12 @@ class RefineTaskWithAi implements ShouldQueue
         // 5. Aplicar refinamiento completo
         $this->applyRefinement($result);
 
-        // 6. Asignar la tarea
-        $assignment->assign($this->task->fresh());
+        // 6. Asignar la tarea (pasando el equipo y posición sugeridos por la IA)
+        $assignment->assign(
+            $this->task->fresh(),
+            $result['team']              ?? '',
+            $result['required_position'] ?? '',
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -131,6 +139,55 @@ class RefineTaskWithAi implements ShouldQueue
                     $lines[] = "    - {$child->name}";
                 }
             }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Construye el contexto de equipos para la IA: por cada CategoryType lista
+     * los perfiles (posición) de los usuarios asignados a él.
+     */
+    private function buildTeamContext(): string
+    {
+        $types = CategoryType::orderBy('name')->get();
+
+        if ($types->isEmpty()) {
+            return '';
+        }
+
+        $lines = [];
+
+        foreach ($types as $type) {
+            // IDs de usuarios con asignaciones en este CategoryType
+            $userIds = UserCategoryAssignment::join(
+                'category_values',
+                'category_values.id', '=', 'user_category_assignments.category_value_id'
+            )
+                ->where('category_values.category_type_id', $type->id)
+                ->distinct()
+                ->pluck('user_category_assignments.user_id');
+
+            if ($userIds->isEmpty()) {
+                continue;
+            }
+
+            $users = User::whereIn('id', $userIds)
+                ->where('is_super_admin', false)
+                ->get(['id', 'name', 'position']);
+
+            if ($users->isEmpty()) {
+                continue;
+            }
+
+            $lines[] = "Equipo: {$type->name}";
+
+            $positions = $users->pluck('position')->filter()->unique()->values();
+            if ($positions->isNotEmpty()) {
+                $lines[] = "  Perfiles disponibles: " . $positions->implode(', ');
+            }
+
+            $lines[] = "  Miembros: {$users->count()}";
         }
 
         return implode("\n", $lines);

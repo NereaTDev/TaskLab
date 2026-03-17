@@ -34,6 +34,13 @@
             </div>
         </div>
 
+        {{-- Posición en la empresa --}}
+        <div>
+            <x-input-label for="position" value="Tu posición en la empresa" />
+            <x-text-input id="position" class="block mt-1 w-full" type="text" name="position" :value="old('position')" placeholder="Ej: Frontend Developer, Product Manager…" />
+            <x-input-error :messages="$errors->get('position')" class="mt-1" />
+        </div>
+
         <div class="mt-4 flex items-center justify-between">
             <p class="text-meta text-tasklab-muted">Already have an account?
                 <a href="{{ route('login') }}" class="font-medium text-tasklab-accent hover:text-tasklab-accent-soft">Sign in</a>

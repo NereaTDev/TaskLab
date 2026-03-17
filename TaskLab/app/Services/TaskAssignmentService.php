@@ -2,92 +2,129 @@
 
 namespace App\Services;
 
+use App\Models\CategoryType;
 use App\Models\DeveloperProfile;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\UserCategoryAssignment;
 use App\Notifications\TaskAssigned;
 use App\Services\DiscordNotificationService;
+use Illuminate\Support\Str;
 
 class TaskAssignmentService
 {
     /**
-     * Attempt to auto-assign a task to the best available developer.
+     * Asigna la tarea al mejor candidato disponible.
      *
-     * Rules (MVP):
-     * - Filter devs by active=true
-     * - Filter devs whose type matches the task type, or are fullstack
-     * - Optionally respect max_parallel_tasks if set
-     * - Choose the dev with the fewest active tasks (status in [new, ready_for_dev, in_progress])
+     * Estrategia (por orden de prioridad):
+     * 1. Usuarios del equipo (CategoryType) sugerido por la IA con posición coincidente.
+     * 2. Cualquier usuario del equipo sugerido (sin filtrar por posición).
+     * 3. Fallback: DeveloperProfile activo con tipo compatible (sistema legacy).
+     * 4. Último recurso: superadmin.
      */
-    public function assign(Task $task): ?Task
+    public function assign(Task $task, string $teamName = '', string $requiredPosition = ''): ?Task
     {
-        if (! $task->type) {
-            // Sin tipo no podemos tomar una decisión mínimamente razonable.
-            return $task;
+        // ── 1 & 2. Asignación basada en equipo (CategoryType) ─────────────────
+        if ($teamName !== '') {
+            $type = CategoryType::get()->first(function ($t) use ($teamName) {
+                similar_text(Str::lower($t->name), Str::lower($teamName), $pct);
+                return $pct >= 70;
+            });
+
+            if ($type) {
+                $userIds = UserCategoryAssignment::join(
+                    'category_values',
+                    'category_values.id', '=', 'user_category_assignments.category_value_id'
+                )
+                    ->where('category_values.category_type_id', $type->id)
+                    ->distinct()
+                    ->pluck('user_category_assignments.user_id');
+
+                $candidates = User::whereIn('id', $userIds)
+                    ->where('is_super_admin', false)
+                    ->get();
+
+                // Intento 1: filtrar por posición
+                if ($requiredPosition !== '' && $candidates->count() > 1) {
+                    $needle = Str::lower($requiredPosition);
+                    $byPosition = $candidates->filter(fn ($u) =>
+                        $u->position && str_contains(Str::lower($u->position), $needle)
+                    );
+                    if ($byPosition->isNotEmpty()) {
+                        $candidates = $byPosition;
+                    }
+                }
+
+                $best = $this->pickLeastLoaded($candidates);
+                if ($best) {
+                    return $this->doAssign($task, $best->id);
+                }
+            }
         }
 
-        $devs = DeveloperProfile::query()
-            ->where('active', true)
-            ->where(function ($q) use ($task) {
-                // Compatibilidad de tipo: mismo tipo o fullstack
-                $q->where('type', $task->type)
-                  ->orWhere('type', 'fullstack');
-            })
-            // De momento NO filtramos por área fija de la tarea, porque ahora las áreas
-            // son dinámicas vía CategoryType/CategoryValue. Más adelante podremos
-            // usar esas categorías para un filtrado más fino.
-            ->with(['user' => function ($q) {
-                $q->select('id', 'name', 'email');
-            }])
-            ->get();
+        // ── 3. Fallback: DeveloperProfile activo con tipo compatible ──────────
+        if ($task->type) {
+            $devs = DeveloperProfile::where('active', true)
+                ->where(fn ($q) => $q->where('type', $task->type)->orWhere('type', 'fullstack'))
+                ->with(['user:id,name,email'])
+                ->get();
 
-        if ($devs->isEmpty()) {
-            // Fallback: si no hay ningún developer activo compatible, intentamos
-            // asignar la tarea al superadmin configurado, para que no quede huérfana.
-            $this->assignToSuperAdmin($task);
-            return $task;
+            if ($devs->isNotEmpty()) {
+                $best = $this->pickLeastLoadedFromProfiles($devs);
+                if ($best) {
+                    return $this->doAssign($task, $best);
+                }
+            }
         }
 
-        // For each dev, compute current load (number of active tasks).
-        $devWithLoad = $devs->mapWithKeys(function (DeveloperProfile $profile) {
+        // ── 4. Último recurso: superadmin ─────────────────────────────────────
+        $this->assignToSuperAdmin($task);
+        return $task;
+    }
+
+    /** Devuelve el User con menos tareas activas de la colección. */
+    private function pickLeastLoaded(\Illuminate\Support\Collection $users): ?User
+    {
+        if ($users->isEmpty()) {
+            return null;
+        }
+
+        return $users->map(function (User $u) {
+            return [
+                'user'  => $u,
+                'load'  => Task::where('assignee_id', $u->id)
+                    ->whereIn('status', ['new', 'ready_for_dev', 'in_progress'])
+                    ->count(),
+            ];
+        })->sortBy('load')->first()['user'];
+    }
+
+    /** Versión para DeveloperProfile que respeta max_parallel_tasks. */
+    private function pickLeastLoadedFromProfiles(\Illuminate\Support\Collection $profiles): ?int
+    {
+        $mapped = $profiles->mapWithKeys(function (DeveloperProfile $profile) {
             $user = $profile->user;
-
-            $activeCount = Task::query()
-                ->where('assignee_id', $user->id)
+            $count = Task::where('assignee_id', $user->id)
                 ->whereIn('status', ['new', 'ready_for_dev', 'in_progress'])
                 ->count();
-
-            // Respect max_parallel_tasks if set
-            if (! is_null($profile->max_parallel_tasks) && $activeCount >= $profile->max_parallel_tasks) {
-                $activeCount = PHP_INT_MAX; // treat as "unavailable" for now
+            if (! is_null($profile->max_parallel_tasks) && $count >= $profile->max_parallel_tasks) {
+                $count = PHP_INT_MAX;
             }
+            return [$user->id => $count];
+        })->filter(fn ($c) => $c < PHP_INT_MAX);
 
-            return [$user->id => [
-                'profile'      => $profile,
-                'active_count' => $activeCount,
-            ]];
-        });
+        return $mapped->isEmpty() ? null : $mapped->sortBy(fn ($v) => $v)->keys()->first();
+    }
 
-        // Filter out devs that are effectively unavailable
-        $availableDevs = $devWithLoad->filter(fn ($data) => $data['active_count'] < PHP_INT_MAX);
+    /** Hace el update, save y notificaciones con idempotencia. */
+    private function doAssign(Task $task, int $userId): Task
+    {
+        $alreadyAssigned = ($task->assignee_id === $userId);
 
-        if ($availableDevs->isEmpty()) {
-            // Todos los devs están por encima de su capacidad. Mismo fallback que
-            // cuando no hay devs: asignamos al superadmin si existe.
-            $this->assignToSuperAdmin($task);
-            return $task;
-        }
-
-        // Choose dev with lowest active_count
-        $bestDevId = $availableDevs->sortBy('active_count')->keys()->first();
-
-        $alreadyAssigned = ($task->assignee_id === $bestDevId);
-
-        $task->assignee_id = $bestDevId;
-        $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
+        $task->assignee_id = $userId;
+        $task->status      = $task->status === 'new' ? 'ready_for_dev' : $task->status;
         $task->save();
 
-        // Idempotencia: no notificar si ya estaba asignado al mismo dev (evita doble DM en retries del job)
         if (! $alreadyAssigned) {
             $task->assignee->notify(new TaskAssigned($task->fresh()));
             app(DiscordNotificationService::class)->notifyTaskAssigned($task);
@@ -96,39 +133,17 @@ class TaskAssignmentService
         return $task;
     }
 
-    /**
-     * Fallback de asignación: si no hay developers elegibles, intentamos
-     * asignar la tarea al superadmin configurado (por email) o al primer
-     * usuario con flag is_super_admin.
-     */
     protected function assignToSuperAdmin(Task $task): void
     {
-        $superAdmin = null;
+        $email      = env('TASKLAB_SUPERADMIN_EMAIL');
+        $superAdmin = $email
+            ? User::where('email', $email)->first()
+            : null;
 
-        // Primero intentamos por email de entorno (TASKLAB_SUPERADMIN_EMAIL)
-        $email = env('TASKLAB_SUPERADMIN_EMAIL');
-        if ($email) {
-            $superAdmin = User::where('email', $email)->first();
-        }
+        $superAdmin ??= User::where('is_super_admin', true)->first();
 
-        // Si no hay email configurado o no existe el usuario, buscamos por flag
-        if (! $superAdmin) {
-            $superAdmin = User::where('is_super_admin', true)->first();
-        }
-
-        if (! $superAdmin) {
-            return; // No hay nadie a quien asignar por defecto
-        }
-
-        $alreadyAssigned = ($task->assignee_id === $superAdmin->id);
-
-        $task->assignee_id = $superAdmin->id;
-        $task->status = $task->status === 'new' ? 'ready_for_dev' : $task->status;
-        $task->save();
-
-        if (! $alreadyAssigned) {
-            $superAdmin->notify(new TaskAssigned($task->fresh()));
-            app(DiscordNotificationService::class)->notifyTaskAssigned($task);
+        if ($superAdmin) {
+            $this->doAssign($task, $superAdmin->id);
         }
     }
 }

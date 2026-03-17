@@ -178,6 +178,17 @@ class TeamController extends Controller
             }
         }
 
+        // Usuarios sin ninguna asignación de categoría (= sin equipo) — solo visible para superadmin
+        // Los CategoryTypes son los "equipos": si no tienes ningún valor asignado, no perteneces a ningún equipo.
+        $pendingUsers = collect();
+        if ($user->isSuperAdmin()) {
+            $pendingUsers = User::where('is_super_admin', false)
+                ->where(fn ($q) => $q->whereNull('user_type')->orWhere('user_type', '!=', 'requester'))
+                ->whereDoesntHave('categoryAssignments')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
         return view('team.index', [
             'teamMembers'          => $teamMembers,
             'filters'              => $filters,
@@ -190,6 +201,7 @@ class TeamController extends Controller
             'categoryBoardType'    => $categoryBoardType,
             'categoryColumns'      => $categoryColumns,
             'categoryAssignCounts' => $categoryAssignCounts,
+            'pendingUsers'         => $pendingUsers,
         ]);
     }
 

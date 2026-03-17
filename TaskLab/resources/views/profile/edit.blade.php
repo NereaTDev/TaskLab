@@ -27,17 +27,13 @@
             </div>
         </div>
 
-        {{-- Contenido principal: info de cuenta, perfil dev y contraseña --}}
+        {{-- Contenido principal: info de cuenta y contraseña --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-            {{-- Columna principal: info de cuenta + perfil dev en una sola card --}}
+            {{-- Columna principal: info de cuenta --}}
             <div class="lg:col-span-2">
                 <div class="p-4 sm:p-6 bg-tasklab-bg-muted border border-slate-800 shadow-card sm:rounded-lg">
-                    <div class="max-w-xl space-y-8">
+                    <div class="max-w-xl">
                         @include('profile.partials.update-profile-information-form')
-
-                        <div class="border-t border-slate-800 pt-6">
-                            @include('profile.partials.update-developer-profile-form')
-                        </div>
                     </div>
                 </div>
             </div>

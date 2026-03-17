@@ -20,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'integrations/discord/messages',
             'integrations/discord/inspect',
         ]);
+
+        // Middleware de alias para verificación de equipo
+        $middleware->alias([
+            'team.required' => \App\Http\Middleware\EnsureUserHasTeam::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

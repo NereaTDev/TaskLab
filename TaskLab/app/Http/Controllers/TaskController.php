@@ -15,13 +15,9 @@ class TaskController extends Controller
     {
         $user = $request->user();
 
-        // Vista por defecto: board para admins/superadmins, dashboard para usuarios estándar
-        $isPrivileged = $user && (
-            (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) ||
-            (method_exists($user, 'isAreaAdmin')  && $user->isAreaAdmin())
-        );
-        $defaultView = $isPrivileged ? 'board' : 'dashboard';
-        $view = $request->get('view', $defaultView);
+        // Dashboard siempre es la vista por defecto para todos los usuarios.
+        // El Tablero del equipo es explícito via view=board.
+        $view = $request->get('view', 'dashboard');
 
         // Todos los usuarios autenticados pueden usar estas vistas; cualquier otra cae a dashboard
         $allowedViews = ['dashboard', 'board', 'analysis'];
@@ -51,8 +47,11 @@ class TaskController extends Controller
             }
         };
 
-        // Stats globales para tarjetas (filtradas por los parámetros comunes)
+        // Stats: en dashboard = solo las tareas del usuario; en board/analysis = globales del equipo.
         $statsBaseQuery = Task::query();
+        if ($view === 'dashboard' && $user && ! $user->isSuperAdmin()) {
+            $statsBaseQuery->where('assignee_id', $user->id);
+        }
         if (! $archived) {
             $statsBaseQuery->whereNull('archived_at')->where('status', '!=', 'processing');
         } else {
@@ -271,13 +270,20 @@ class TaskController extends Controller
         $dashboardTasks = null; // tareas del usuario (dashboard personal)
 
         if ($view === 'board') {
-            // Tablero: todas las tareas de la empresa (solo para admins / super admins)
             $boardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages']);
+
             if ($archived) {
                 $boardTasksQuery->whereNotNull('archived_at');
             } else {
                 $boardTasksQuery->whereNull('archived_at')->where('status', '!=', 'processing');
             }
+
+            // ── Scoping por equipo (CategoryType = equipo) ───────────────────────
+            // Los no-superadmin solo ven tareas de usuarios que comparten su CategoryType.
+            if ($user && ! $user->isSuperAdmin()) {
+                $boardTasksQuery->whereIn('assignee_id', $user->teamMemberIds());
+            }
+            // ─────────────────────────────────────────────────────────────────────
 
             if ($status && $status !== 'archived' && $status !== 'all') {
                 $boardTasksQuery->where('status', $status);
@@ -288,17 +294,9 @@ class TaskController extends Controller
             $boardTasks = $boardTasksQuery->get();
         } else {
             // Dashboard: tareas del usuario autenticado
-            // - Tareas asignadas a él (assignee_id = user)
-            // - Tareas web_form no asignadas creadas por él (reporter_id = user, assignee_id IS NULL)
+            // Solo tareas asignadas a él (assignee_id = user), independientemente del origen
             $dashboardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages'])
-                ->where(function ($q) use ($user) {
-                    $q->where('assignee_id', optional($user)->id)
-                      ->orWhere(function ($q2) use ($user) {
-                          $q2->where('source', 'web_form')
-                             ->where('reporter_id', optional($user)->id)
-                             ->whereNull('assignee_id');
-                      });
-                });
+                ->where('assignee_id', optional($user)->id);
 
             if ($archived) {
                 $dashboardTasksQuery->whereNotNull('archived_at');

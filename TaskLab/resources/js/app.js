@@ -253,12 +253,15 @@ Alpine.data('notificationBell', () => ({
                 this.unread = Math.max(0, this.unread - 1);
             } catch (_) {}
         }
-        // Abrir la tarea en el modal si hay task_id
+        // Navegar según el tipo de notificación
         if (n.data?.task_id) {
             this.open = false;
             window.dispatchEvent(new CustomEvent('open-task-modal-by-id', {
                 detail: { taskId: n.data.task_id }
             }));
+        } else if (n.data?.type === 'new_user_registered') {
+            this.open = false;
+            window.location.href = '/admin/teams';
         }
     },
 

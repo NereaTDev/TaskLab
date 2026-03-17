@@ -14,12 +14,14 @@ class AiTaskRefiner
      * @param  array   $imageUrls        URLs de imágenes adjuntas
      * @param  string  $categoryTree     Árbol de categorías formateado como texto
      * @param  array   $similarTasks     Tareas existentes similares [{id, title, status, categories}]
+     * @param  string  $teamContext      Árbol de equipos (CategoryTypes) con perfiles disponibles
      */
     public function refine(
         string $rawDescription,
         array  $imageUrls    = [],
         string $categoryTree = '',
         array  $similarTasks = [],
+        string $teamContext  = '',
     ): array {
         $apiKey = config('services.openai.api_key');
         $model  = config('services.openai.tasklab_model', 'gpt-4.1-mini');
@@ -31,6 +33,10 @@ class AiTaskRefiner
         try {
             $categorySection = $categoryTree
                 ? "\n\nÁRBOL DE CATEGORÍAS DISPONIBLES EN TASKLAB (úsalas EXACTAMENTE como aparecen aquí):\n{$categoryTree}"
+                : '';
+
+            $teamSection = $teamContext
+                ? "\n\nEQUIPOS Y PERFILES DISPONIBLES (usa el nombre EXACTO del equipo en el campo \"team\"):\n{$teamContext}"
                 : '';
 
             $similarSection = '';
@@ -71,6 +77,8 @@ SIEMPRE devuelves SOLO un objeto JSON válido, sin texto adicional, con esta est
   "categories": [
     { "path": ["NombreExactoTipo", "NombreExactoCategoría", "NombreExactoSubcategoría"] }
   ],
+  "team": string | null,
+  "required_position": string | null,
   "acceptance_check": {
     "status": "approved" | "needs_review",
     "score": number,
@@ -143,6 +151,14 @@ Compara la petición actual contra las tareas existentes proporcionadas arriba.
   En este caso related_task_id = ID de la tarea relacionada más relevante, confidence = 0.0-1.0.
 
 Si no hay tareas existentes proporcionadas, devuelve siempre "unique".
+
+═══════════════════════════════════════════
+ASIGNACIÓN DE EQUIPO Y PERFIL{$teamSection}
+
+INSTRUCCIONES DE ASIGNACIÓN:
+- Analiza la tarea y determina qué equipo debería resolverla usando el árbol de EQUIPOS Y PERFILES anterior.
+- "team": nombre EXACTO del equipo (tal como aparece en "Equipo: X"). Si no hay equipos definidos o no encaja en ninguno, pon null.
+- "required_position": describe en pocas palabras qué perfil se necesita para resolver esta tarea (ej. "Frontend Developer", "Backend Developer", "Product Manager"). Intenta que coincida con alguno de los perfiles listados en el equipo elegido. Si no puedes determinarlo, pon null.
 PROMPT;
 
             $userText = "Descripción de la petición del usuario:\n\n" . $rawDescription;
@@ -200,7 +216,9 @@ PROMPT;
                 'primary_url'      => $decoded['primary_url']      ?? null,
                 'additional_urls'  => $decoded['additional_urls']  ?? [],
                 'impact'           => $decoded['impact']           ?? null,
-                'categories'       => $decoded['categories']       ?? [],
+                'categories'        => $decoded['categories']        ?? [],
+                'team'              => $decoded['team']              ?? null,
+                'required_position' => $decoded['required_position'] ?? null,
                 'acceptance_check' => $decoded['acceptance_check'] ?? ['status' => 'approved', 'score' => 7, 'issues' => []],
                 'duplicate_check'  => $decoded['duplicate_check']  ?? ['status' => 'unique', 'related_task_id' => null, 'confidence' => 0, 'explanation' => ''],
             ];

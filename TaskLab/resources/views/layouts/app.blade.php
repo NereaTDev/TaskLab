@@ -29,8 +29,8 @@
               {{-- Tabs de navegación en pastilla, alineadas con el logo --}}
               @php $navUser = auth()->user(); @endphp
               <div class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-1 py-1 text-xs">
-                <a href="{{ route('tasks.index') }}"
-                   class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->routeIs('tasks.index') && in_array(request()->get('view'), [null, 'dashboard'], true) ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
+                <a href="{{ route('tasks.index', ['view' => 'dashboard']) }}"
+                   class="inline-flex text-sm items-center gap-1.5 rounded-full px-3 py-1.5 font-medium {{ request()->get('view') === 'dashboard' || (request()->routeIs('tasks.index') && !request()->has('view')) ? 'bg-tasklab-bg text-tasklab-text border border-tasklab-accent' : 'text-tasklab-muted hover:text-tasklab-text' }}">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                   </svg>
@@ -153,19 +153,24 @@
                           {{-- Dot unread --}}
                           <span class="mt-1 h-2 w-2 shrink-0 rounded-full" :class="n.read ? 'bg-slate-700' : 'bg-tasklab-primary'"></span>
                           <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium text-tasklab-text truncate" x-text="n.data.task_title"></p>
+                            <p class="text-xs font-medium text-tasklab-text truncate" x-text="n.data.task_title || n.data.name || 'Notificación'"></p>
                             <p class="text-[11px] text-tasklab-muted mt-0.5" x-text="n.data.message"></p>
                             <div class="flex items-center gap-2 mt-1">
-                              <span
-                                class="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium"
-                                :class="{
-                                  'bg-red-500/20 text-red-400':    n.data.priority === 'critical',
-                                  'bg-orange-500/20 text-orange-400': n.data.priority === 'high',
-                                  'bg-yellow-500/20 text-yellow-400': n.data.priority === 'medium',
-                                  'bg-green-500/20 text-green-400':  n.data.priority === 'low',
-                                }"
-                                x-text="n.data.priority"
-                              ></span>
+                              <template x-if="n.data.priority">
+                                <span
+                                  class="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium"
+                                  :class="{
+                                    'bg-red-500/20 text-red-400':    n.data.priority === 'critical',
+                                    'bg-orange-500/20 text-orange-400': n.data.priority === 'high',
+                                    'bg-yellow-500/20 text-yellow-400': n.data.priority === 'medium',
+                                    'bg-green-500/20 text-green-400':  n.data.priority === 'low',
+                                  }"
+                                  x-text="n.data.priority"
+                                ></span>
+                              </template>
+                              <template x-if="n.data.type === 'new_user_registered'">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/20 text-blue-400">Nuevo usuario</span>
+                              </template>
                               <span class="text-[10px] text-tasklab-muted" x-text="n.time"></span>
                             </div>
                           </div>

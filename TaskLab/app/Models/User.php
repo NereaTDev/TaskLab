@@ -12,11 +12,6 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -27,28 +22,18 @@ class User extends Authenticatable
         'is_admin',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-            'is_super_admin' => 'boolean',
+            'password'          => 'hashed',
+            'is_admin'          => 'boolean',
+            'is_super_admin'    => 'boolean',
         ];
     }
 
@@ -74,12 +59,47 @@ class User extends Authenticatable
 
     public function isAreaAdmin(): bool
     {
-        // Admin de área: tiene flag is_admin pero no es super admin
         return ! $this->isSuperAdmin() && (bool) ($this->is_admin ?? false);
     }
 
     public function isStandardUser(): bool
     {
         return ! $this->isSuperAdmin() && ! $this->isAreaAdmin();
+    }
+
+    /**
+     * Un usuario "tiene equipo" si tiene al menos una asignación de categoría.
+     * Los CategoryTypes son los equipos — asignarte a un valor de un tipo = pertenecer a ese equipo.
+     */
+    public function hasTeam(): bool
+    {
+        return $this->categoryAssignments()->exists();
+    }
+
+    /**
+     * IDs de todos los usuarios que comparten al menos un CategoryType con este usuario.
+     * Usado para filtrar tareas en el tablero (solo ves tareas de tu mismo "equipo/tipo").
+     */
+    public function teamMemberIds(): array
+    {
+        // CategoryType IDs a los que este usuario tiene asignaciones
+        $typeIds = \DB::table('user_category_assignments')
+            ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+            ->where('user_category_assignments.user_id', $this->id)
+            ->pluck('category_values.category_type_id')
+            ->unique();
+
+        if ($typeIds->isEmpty()) {
+            return [$this->id];
+        }
+
+        // Todos los usuarios que tienen asignaciones en esos mismos tipos
+        return \DB::table('user_category_assignments')
+            ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+            ->whereIn('category_values.category_type_id', $typeIds)
+            ->pluck('user_category_assignments.user_id')
+            ->unique()
+            ->values()
+            ->all();
     }
 }

@@ -52,6 +52,30 @@
             </div>
         </div>
 
+        {{-- Posición en la empresa --}}
+        <div>
+            <x-input-label for="position" value="Posición en la empresa" />
+            <x-text-input id="position" name="position" type="text" class="mt-1 block w-full" :value="old('position', $user->position)" placeholder="Ej: Frontend Developer, Product Manager…" />
+            <x-input-error class="mt-2" :messages="$errors->get('position')" />
+        </div>
+
+        {{-- Equipo actual (solo lectura) --}}
+        @php $userTeam = $user->teams->first(); @endphp
+        @if($userTeam)
+            <div class="rounded-lg border border-slate-800 bg-tasklab-bg px-4 py-3 flex items-center gap-3">
+                <svg class="h-4 w-4 shrink-0 text-tasklab-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20h6M3 20h5v-2a4 4 0 00-3-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <div>
+                    <p class="text-xs text-tasklab-muted">Equipo actual</p>
+                    <p class="text-sm font-medium text-tasklab-text">{{ $userTeam->name }}</p>
+                </div>
+                <span class="ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ $user->pivot?->role === 'admin' || $userTeam->pivot?->role === 'admin' ? 'bg-tasklab-accent/10 text-tasklab-accent' : 'bg-slate-800 text-tasklab-muted' }}">
+                    {{ $userTeam->pivot->role === 'admin' ? 'Admin' : 'Miembro' }}
+                </span>
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button class="text-body">{{ __('Save') }}</x-primary-button>
 
