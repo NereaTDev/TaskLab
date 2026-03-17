@@ -82,10 +82,37 @@ APP_URL=https://tu-app.onrender.com
 - `docs/ai-task-refiner-spec.md` — especificación del refinador de IA
 - `docs/founderz-tasklab-flow.md` — flujo general de la aplicación
 
+## Pipeline de IA (RefineTaskWithAi)
+
+El job hace una sola llamada a OpenAI con contexto completo y luego orquesta:
+
+```
+1. buildCategoryTree()   → árbol de CategoryTypes/Values de la BD
+2. findSimilarTasks()    → hasta 8 tareas activas pre-filtradas por similitud
+3. AiTaskRefiner::refine() → 1 llamada OpenAI con todo el contexto
+4. acceptance_check
+   └─ needs_review → status='needs_review' + rejection_reasons + DM → STOP
+   └─ approved → continuar
+5. duplicate_check
+   └─ conflict → DM al requester → la tarea sigue
+   └─ related  → merge en tarea existente + archivar nueva + DM → STOP
+   └─ unique   → continuar
+6. applyRefinement() + mapCategoriesToValues() + TaskAssignmentService::assign()
+```
+
+**Estado nuevo de tarea:** `needs_review` — tarea bloqueada por falta de calidad/contexto.
+
+**Campos nuevos en tasks:** `rejection_reasons` (json), `co_requester_ids` (json).
+
+**Notificaciones Discord (DiscordNotificationService):**
+- `notifyTaskAssigned()` — tarea asignada
+- `notifyTaskNeedsReview()` — tarea bloqueada por gate de calidad
+- `notifyTaskConflict()` — tarea conflictiva con otra existente
+- `notifyTaskMerged()` — tarea fusionada en otra existente
+
 ## Próximas features planificadas
 
-1. **Notificaciones in-app** — campana en el nav, tabla `notifications`, Alpine.js polling. Disparar desde `TaskAssignmentService` para cualquier fuente (webform, Discord, Teams).
-2. **Notificaciones de estado** — DM de Discord cuando la tarea cambia a "in progress" o "done".
+- Notificaciones de estado — DM de Discord cuando la tarea cambia a "in progress" o "done".
 
 ## Convenciones del proyecto
 

@@ -37,6 +37,8 @@ class Task extends Model
         'external_user_id',
         'attachments',
         'done_at',
+        'rejection_reasons',
+        'co_requester_ids',
     ];
 
     protected $casts = [
@@ -44,6 +46,8 @@ class Task extends Model
         'test_cases'        => 'array',
         'additional_urls'   => 'array',
         'attachments'       => 'array',
+        'rejection_reasons' => 'array',
+        'co_requester_ids'  => 'array',
         'points'            => 'float',
         'archived_at'       => 'datetime',
         'done_at'           => 'datetime',

@@ -2,38 +2,191 @@
 
 namespace App\Jobs;
 
-use App\Models\Task;
 use App\Models\CategoryType;
 use App\Models\CategoryValue;
+use App\Models\Task;
 use App\Services\AiTaskRefiner;
+use App\Services\DiscordNotificationService;
+use App\Services\TaskAssignmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RefineTaskWithAi implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public Task $task;
-    public array $imageUrls;
+    public int $tries   = 3;
+    public int $timeout = 120;
 
-    public function __construct(Task $task, array $imageUrls = [])
+    public function __construct(
+        public Task  $task,
+        public array $imageUrls = [],
+    ) {}
+
+    public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment): void
     {
-        $this->task      = $task;
-        $this->imageUrls = $imageUrls;
+        // 1. Construir contexto: árbol de categorías y tareas similares
+        $categoryTree = $this->buildCategoryTree();
+        $similarTasks = $this->findSimilarTasks();
+
+        // 2. Llamar a la IA con contexto completo
+        $result = $refiner->refine(
+            $this->task->description_raw,
+            $this->imageUrls,
+            $categoryTree,
+            $similarTasks,
+        );
+
+        // 3. Gate de aceptación — ¿la tarea tiene suficiente calidad?
+        $acceptance = $result['acceptance_check'] ?? ['status' => 'approved', 'issues' => []];
+
+        if (($acceptance['status'] ?? 'approved') === 'needs_review') {
+            $this->task->update([
+                'title'             => $result['title'] ?? $this->task->title,
+                'status'            => 'needs_review',
+                'rejection_reasons' => $acceptance['issues'] ?? [],
+            ]);
+
+            $discord->notifyTaskNeedsReview($this->task, $acceptance['issues'] ?? []);
+
+            Log::info("RefineTaskWithAi: tarea #{$this->task->id} bloqueada por calidad", [
+                'score'  => $acceptance['score'] ?? null,
+                'issues' => $acceptance['issues'] ?? [],
+            ]);
+            return; // No asignar ni procesar más
+        }
+
+        // 4. Detección de duplicados/conflictos
+        $duplicate = $result['duplicate_check'] ?? ['status' => 'unique'];
+
+        if (($duplicate['status'] ?? 'unique') === 'conflict') {
+            $conflictingTask = Task::find($duplicate['related_task_id']);
+            if ($conflictingTask) {
+                $discord->notifyTaskConflict($this->task, $conflictingTask);
+                Log::info("RefineTaskWithAi: tarea #{$this->task->id} en conflicto con #{$conflictingTask->id}");
+            }
+            // La tarea sigue adelante (el usuario puede querer revertir el cambio)
+        }
+
+        if (($duplicate['status'] ?? 'unique') === 'related' && ! empty($duplicate['related_task_id'])) {
+            $relatedTask = Task::find($duplicate['related_task_id']);
+            if ($relatedTask && in_array($relatedTask->status, ['new', 'ready_for_dev', 'in_progress'])) {
+                $this->mergeIntoExisting($relatedTask, $discord);
+                return; // La nueva tarea ha sido fusionada, no continuar
+            }
+        }
+
+        // 5. Aplicar refinamiento completo
+        $this->applyRefinement($result);
+
+        // 6. Asignar la tarea
+        $assignment->assign($this->task->fresh());
     }
 
-    public function handle(AiTaskRefiner $refiner): void
-    {
-        $result = $refiner->refine($this->task->description_raw, $this->imageUrls);
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
 
-        // Normalizar puntos a los valores permitidos (0.5,1,2,4,6,8,10,12,16)
+    private function buildCategoryTree(): string
+    {
+        $types = CategoryType::with(['values' => function ($q) {
+            $q->orderBy('sort_order')->with(['children' => function ($q) {
+                $q->orderBy('sort_order');
+            }]);
+        }])->get();
+
+        if ($types->isEmpty()) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ($types as $type) {
+            $lines[] = "- {$type->name}";
+            foreach ($type->values->whereNull('parent_id') as $value) {
+                $lines[] = "  - {$value->name}";
+                foreach ($value->children as $child) {
+                    $lines[] = "    - {$child->name}";
+                }
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function findSimilarTasks(): array
+    {
+        // Buscar tareas activas de los últimos 6 meses
+        $candidates = Task::whereNull('archived_at')
+            ->whereNotIn('status', ['archived', 'done'])
+            ->where('id', '!=', $this->task->id)
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->with(['reporter', 'categoryValues.categoryType'])
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return [];
+        }
+
+        // Pre-filtrar por similitud de texto (evitar pasar cientos de tareas a la IA)
+        $needle = Str::lower($this->task->description_raw . ' ' . ($this->task->title ?? ''));
+
+        $scored = $candidates->map(function (Task $t) use ($needle) {
+            $haystack = Str::lower(($t->title ?? '') . ' ' . ($t->description_raw ?? ''));
+            similar_text($needle, $haystack, $pct);
+            return ['task' => $t, 'score' => $pct];
+        })->sortByDesc('score')->take(8);
+
+        return $scored->map(function ($item) {
+            $t          = $item['task'];
+            $categories = $t->categoryValues->map(fn ($cv) => $cv->name)->implode(' > ');
+            return [
+                'id'         => $t->id,
+                'title'      => $t->title ?? Str::limit($t->description_raw, 60),
+                'status'     => $t->status,
+                'categories' => $categories ? [$categories] : [],
+            ];
+        })->values()->all();
+    }
+
+    private function mergeIntoExisting(Task $existingTask, DiscordNotificationService $discord): void
+    {
+        // Añadir el reporter de la tarea nueva como co-requester de la existente
+        $coRequesterIds   = $existingTask->co_requester_ids ?? [];
+        $newReporterId    = $this->task->reporter_id;
+
+        if ($newReporterId && ! in_array($newReporterId, $coRequesterIds)) {
+            $coRequesterIds[] = $newReporterId;
+        }
+
+        // Añadir contexto adicional al description_raw de la tarea existente
+        $additionalContext = "\n\n---\n**Contexto adicional (solicitante: {$this->task->reporter?->name}):**\n{$this->task->description_raw}";
+
+        $existingTask->update([
+            'co_requester_ids' => $coRequesterIds,
+            'description_raw'  => $existingTask->description_raw . $additionalContext,
+        ]);
+
+        // Archivar la tarea nueva (ya fusionada)
+        $this->task->update([
+            'archived_at' => now(),
+            'status'      => 'archived',
+        ]);
+
+        $discord->notifyTaskMerged($this->task, $existingTask);
+
+        Log::info("RefineTaskWithAi: tarea #{$this->task->id} fusionada en #{$existingTask->id}");
+    }
+
+    private function applyRefinement(array $result): void
+    {
         $points = $result['points'] ?? null;
         if (is_numeric($points)) {
-            $points = (float) $points;
+            $points  = (float) $points;
             $allowed = [0.5, 1, 2, 4, 6, 8, 10, 12, 16];
             $closest = null;
             $minDiff = null;
@@ -50,65 +203,41 @@ class RefineTaskWithAi implements ShouldQueue
         }
 
         $update = [
-            'title'          => $result['title'] ?? $this->task->title,
-            'description_ai' => $result['summary'] ?? $this->task->description_ai,
+            'title'          => $result['title']        ?? $this->task->title,
+            'description_ai' => $result['summary']      ?? $this->task->description_ai,
             'requirements'   => $result['requirements'] ?? [],
-            'behavior'       => $result['behavior'] ?? null,
-            'test_cases'     => $result['test_cases'] ?? [],
+            'behavior'       => $result['behavior']     ?? null,
+            'test_cases'     => $result['test_cases']   ?? [],
             'status'         => 'ready_for_dev',
         ];
 
-        if (! empty($result['type'])) {
-            $update['type'] = $result['type'];
-        }
-
-        if (! empty($result['priority'])) {
-            $update['priority'] = $result['priority'];
-        }
-
-        if ($points !== null) {
-            $update['points'] = $points;
-        }
-
-        if (! empty($result['primary_url'])) {
-            $update['primary_url'] = $result['primary_url'];
-        }
-
-        if (! empty($result['additional_urls']) && is_array($result['additional_urls'])) {
-            $update['additional_urls'] = $result['additional_urls'];
-        }
-
-        if (! empty($result['impact'])) {
-            $update['impact'] = $result['impact'];
-        }
+        if (! empty($result['type']))            $update['type']           = $result['type'];
+        if (! empty($result['priority']))        $update['priority']       = $result['priority'];
+        if ($points !== null)                    $update['points']         = $points;
+        if (! empty($result['primary_url']))     $update['primary_url']    = $result['primary_url'];
+        if (! empty($result['additional_urls'])) $update['additional_urls'] = $result['additional_urls'];
+        if (! empty($result['impact']))          $update['impact']         = $result['impact'];
 
         $this->task->update($update);
 
-        // Asignación automática de categorías dinámicas (tipo → categoría → subcategoría)
-        // a partir de la propuesta de la IA. No inventamos nada: sólo mapeamos contra
-        // CategoryType/CategoryValue existentes y descartamos rutas que no encajen.
-        $rawCategories = $result['categories'] ?? [];
-        $categoryValueIds = $this->mapCategoriesToValues($rawCategories);
-
+        // Mapear categorías propuestas por la IA contra los valores reales de la BD
+        $categoryValueIds = $this->mapCategoriesToValues($result['categories'] ?? []);
         if (! empty($categoryValueIds)) {
             $this->task->categoryValues()->sync($categoryValueIds);
         }
     }
 
-    /**
-     * Mapea rutas de categorías devueltas por la IA a IDs reales de CategoryValue.
-     * Cada item de $categories debe tener la forma:
-     * [ 'path' => ['Tipo', 'Categoria', 'Subcategoria'] ].
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Mapeo fuzzy de categorías (sin cambios respecto a la versión anterior)
+    // ─────────────────────────────────────────────────────────────────────────
+
     protected function mapCategoriesToValues(array $categories): array
     {
         if (empty($categories)) {
             return [];
         }
 
-        // Cargar todos los tipos y valores con jerarquía en memoria
         $types = CategoryType::with(['values.children'])->get();
-
         if ($types->isEmpty()) {
             return [];
         }
@@ -121,42 +250,26 @@ class RefineTaskWithAi implements ShouldQueue
                 continue;
             }
 
-            // Normalizamos texto para comparaciones más suaves
-            $path = array_map(function ($segment) {
-                return trim(mb_strtolower($segment));
-            }, $path);
+            $path = array_map(fn ($s) => trim(mb_strtolower($s)), $path);
 
-            // 1) Resolver CategoryType (primer elemento del path)
-            $typeName = $path[0] ?? null;
-            if (! $typeName) {
+            $type = $this->bestMatchType($types, $path[0] ?? '');
+            if (! $type) {
                 continue;
             }
 
-            $type = $this->bestMatchType($types, $typeName);
-            if (! $type) {
-                continue; // tipo desconocido
-            }
-
-            // 2) Resolver valores hijos dentro de ese tipo, siguiendo el path
             $currentLevel = $type->values->whereNull('parent_id');
-            $parent = null;
+            $parent       = null;
 
-            // Recorremos path[1], path[2]... como categoría, subcategoría...
             for ($i = 1; $i < count($path); $i++) {
-                $segment = $path[$i];
-                if ($segment === '') {
+                if ($path[$i] === '') {
                     continue;
                 }
-
-                $value = $this->bestMatchValue($currentLevel, $segment);
+                $value = $this->bestMatchValue($currentLevel, $path[$i]);
                 if (! $value) {
-                    // Si no encontramos una coincidencia razonable en este nivel,
-                    // dejamos de seguir esta ruta (mejor no asignar nada que inventar).
                     $parent = null;
                     break;
                 }
-
-                $parent = $value;
+                $parent       = $value;
                 $currentLevel = $value->children;
             }
 
@@ -171,53 +284,38 @@ class RefineTaskWithAi implements ShouldQueue
     protected function bestMatchType($types, string $needle): ?CategoryType
     {
         $needleNorm = Str::slug($needle);
-        $best = null;
-        $bestScore = 0;
+        $best       = null;
+        $bestScore  = 0;
 
         foreach ($types as $type) {
-            $nameNorm = Str::slug($type->name);
-            $slugNorm = Str::slug($type->slug ?? '');
-
-            $scores = [
-                similar_text($needleNorm, $nameNorm, $p1),
-                similar_text($needleNorm, $slugNorm, $p2),
-            ];
-
+            similar_text($needleNorm, Str::slug($type->name), $p1);
+            similar_text($needleNorm, Str::slug($type->slug ?? ''), $p2);
             $score = max($p1, $p2);
             if ($score > $bestScore) {
                 $bestScore = $score;
-                $best = $type;
+                $best      = $type;
             }
         }
 
-        // Umbral de similitud mínimo (porcentaje) para aceptar un tipo
         return $bestScore >= 60 ? $best : null;
     }
 
     protected function bestMatchValue($values, string $needle): ?CategoryValue
     {
         $needleNorm = Str::slug($needle);
-        $best = null;
-        $bestScore = 0;
+        $best       = null;
+        $bestScore  = 0;
 
         foreach ($values as $value) {
-            $nameNorm = Str::slug($value->name);
-            $slugNorm = Str::slug($value->slug ?? '');
-
-            $scores = [
-                similar_text($needleNorm, $nameNorm, $p1),
-                similar_text($needleNorm, $slugNorm, $p2),
-            ];
-
+            similar_text($needleNorm, Str::slug($value->name), $p1);
+            similar_text($needleNorm, Str::slug($value->slug ?? ''), $p2);
             $score = max($p1, $p2);
             if ($score > $bestScore) {
                 $bestScore = $score;
-                $best = $value;
+                $best      = $value;
             }
         }
 
-        // Umbral de similitud mínimo (porcentaje) para aceptar una categoría
         return $bestScore >= 60 ? $best : null;
     }
 }
-
