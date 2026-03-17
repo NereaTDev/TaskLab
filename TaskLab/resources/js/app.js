@@ -23,6 +23,12 @@ Alpine.data('taskModal', (initialCategoryTypes = []) => ({
         window.addEventListener('open-create-task', (e) => {
             this.openCreateTaskModal(e.detail || {});
         });
+        window.addEventListener('open-task-modal-by-id', async (e) => {
+            try {
+                const res = await window.axios.get(`/tasks/${e.detail.taskId}`);
+                if (res.data?.task) this.openTaskModal(res.data.task);
+            } catch (_) {}
+        });
     },
 
     openTaskModal(task) {
@@ -174,6 +180,59 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
             this.isUpdating = false;
             this.draggedTaskId = null;
         }
+    },
+}));
+
+// ---------------------------------------------------------------------------
+// notificationBell — campana de notificaciones in-app
+// Hace polling cada 30s al endpoint /notifications
+// ---------------------------------------------------------------------------
+Alpine.data('notificationBell', () => ({
+    open: false,
+    unread: 0,
+    notifications: [],
+    pollInterval: null,
+
+    init() {
+        this.fetch();
+        this.pollInterval = setInterval(() => this.fetch(), 30000);
+    },
+
+    async fetch() {
+        try {
+            const res = await window.axios.get('/notifications');
+            this.unread        = res.data.unread;
+            this.notifications = res.data.notifications;
+        } catch (_) {}
+    },
+
+    toggle() {
+        this.open = !this.open;
+    },
+
+    async markRead(n) {
+        if (!n.read) {
+            try {
+                await window.axios.post(`/notifications/${n.id}/read`);
+                n.read  = true;
+                this.unread = Math.max(0, this.unread - 1);
+            } catch (_) {}
+        }
+        // Abrir la tarea en el modal si hay task_id
+        if (n.data?.task_id) {
+            this.open = false;
+            window.dispatchEvent(new CustomEvent('open-task-modal-by-id', {
+                detail: { taskId: n.data.task_id }
+            }));
+        }
+    },
+
+    async markAllRead() {
+        try {
+            await window.axios.post('/notifications/read-all');
+            this.notifications.forEach(n => n.read = true);
+            this.unread = 0;
+        } catch (_) {}
     },
 }));
 

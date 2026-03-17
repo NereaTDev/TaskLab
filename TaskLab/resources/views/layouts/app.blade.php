@@ -95,12 +95,86 @@
                     <span class="pointer-events-none inline-block h-4 w-4 translate-x-0.5 rounded-full bg-tasklab-primary shadow ring-0 transition translate-y-0.5"></span>
                   </button>
                 </div>
-                <button type="button" class="relative p-1.5 rounded-lg text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text">
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                  </svg>
-                  <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">9+</span>
-                </button>
+                @auth
+                <div
+                  x-data="notificationBell()"
+                  x-init="init()"
+                  @click.outside="open = false"
+                  class="relative"
+                >
+                  {{-- Botón campana --}}
+                  <button
+                    type="button"
+                    class="relative p-1.5 rounded-lg text-tasklab-muted hover:bg-slate-900 hover:text-tasklab-text"
+                    @click="toggle()"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span
+                      x-show="unread > 0"
+                      x-text="unread > 9 ? '9+' : unread"
+                      class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white"
+                    ></span>
+                  </button>
+
+                  {{-- Dropdown notificaciones --}}
+                  <div
+                    x-show="open"
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    class="absolute right-0 top-10 z-50 w-80 rounded-xl border border-slate-800 bg-tasklab-bg-muted shadow-card"
+                  >
+                    {{-- Cabecera --}}
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                      <span class="text-xs font-semibold text-tasklab-text">Notificaciones</span>
+                      <button
+                        x-show="unread > 0"
+                        @click="markAllRead()"
+                        class="text-[10px] text-tasklab-muted hover:text-tasklab-text"
+                      >Marcar todas como leídas</button>
+                    </div>
+
+                    {{-- Lista --}}
+                    <div class="max-h-80 overflow-y-auto divide-y divide-slate-800">
+                      <template x-if="notifications.length === 0">
+                        <p class="px-4 py-6 text-center text-xs text-tasklab-muted">Sin notificaciones</p>
+                      </template>
+                      <template x-for="n in notifications" :key="n.id">
+                        <div
+                          class="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-900 transition-colors"
+                          :class="{ 'opacity-50': n.read }"
+                          @click="markRead(n)"
+                        >
+                          {{-- Dot unread --}}
+                          <span class="mt-1 h-2 w-2 shrink-0 rounded-full" :class="n.read ? 'bg-slate-700' : 'bg-tasklab-primary'"></span>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs font-medium text-tasklab-text truncate" x-text="n.data.task_title"></p>
+                            <p class="text-[11px] text-tasklab-muted mt-0.5" x-text="n.data.message"></p>
+                            <div class="flex items-center gap-2 mt-1">
+                              <span
+                                class="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium"
+                                :class="{
+                                  'bg-red-500/20 text-red-400':    n.data.priority === 'critical',
+                                  'bg-orange-500/20 text-orange-400': n.data.priority === 'high',
+                                  'bg-yellow-500/20 text-yellow-400': n.data.priority === 'medium',
+                                  'bg-green-500/20 text-green-400':  n.data.priority === 'low',
+                                }"
+                                x-text="n.data.priority"
+                              ></span>
+                              <span class="text-[10px] text-tasklab-muted" x-text="n.time"></span>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+                @endauth
               </div>
 
               @auth

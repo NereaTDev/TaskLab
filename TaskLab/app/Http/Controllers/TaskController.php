@@ -426,6 +426,12 @@ class TaskController extends Controller
 
     public function show(Request $request, Task $task)
     {
+        // Petición AJAX desde la campana de notificaciones
+        if ($request->expectsJson()) {
+            $task->load(['assignee', 'reporter', 'taskImages', 'categoryValues.categoryType']);
+            return response()->json(['task' => $task]);
+        }
+
         // Reutilizamos el índice abriendo el modal con ?task=, preservando view y view_mode
         $view = $request->get('view', 'board');
         $viewMode = $request->get('view_mode', 'board');
