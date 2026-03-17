@@ -31,13 +31,19 @@ class RefineTaskWithAi implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        // Si el job falla definitivamente, devolver la tarea a 'new' para que
-        // sea visible (aunque sin refinar). Mejor mostrar algo que nada.
-        $this->task->update(['status' => 'new']);
-
-        Log::error("RefineTaskWithAi: job fallido para tarea #{$this->task->id}", [
+        Log::error("RefineTaskWithAi: job fallido definitivamente para tarea #{$this->task->id}", [
             'error' => $exception->getMessage(),
         ]);
+
+        // Notificar al requester antes de borrar
+        try {
+            $discord = app(DiscordNotificationService::class);
+            $discord->notifyTaskProcessingFailed($this->task);
+        } catch (\Throwable) {}
+
+        // Borrar la tarea — no tiene contenido útil sin refinar
+        // El requester recibirá un DM para que reenvíe su petición
+        $this->task->forceDelete();
     }
 
     public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment): void

@@ -65,37 +65,28 @@
     {{-- Descripción de IA (para tareas que no vienen del formulario web) --}}
     <section
       class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2"
-      x-show="modalTask && modalTask.source !== 'web_form'"
+      x-show="modalTask && modalTask.source !== 'web_form' && modalTask.description_ai"
     >
       <h3 class="text-label font-semibold text-tasklab-text">Descripción de la tarea</h3>
       <p
         class="text-body text-tasklab-muted whitespace-pre-wrap"
-        x-text="modalTask && modalTask.description_ai
-          ? modalTask.description_ai
-          : 'Refinamiento pendiente o no disponible. Revisa la descripción original y completa los detalles necesarios.'"
+        x-text="modalTask.description_ai"
       ></p>
     </section>
 
-    {{-- Criterios de aceptación --}}
+    {{-- Criterios de aceptación: solo si hay requirements reales --}}
     <section
       class="rounded-xl border border-slate-800 bg-tasklab-bg-muted p-3 space-y-2"
-      x-show="modalTask && modalTask.source !== 'web_form'"
+      x-show="modalTask && modalTask.source !== 'web_form' && modalTask.requirements && modalTask.requirements.length"
     >
       <h3 class="text-label font-semibold text-tasklab-text">Criterios de aceptación</h3>
-      <template x-if="modalTask && modalTask.requirements && modalTask.requirements.length">
-        <ul class="space-y-2">
-          <template x-for="(req, idx) in modalTask.requirements" :key="idx">
-            <li class="rounded-lg border border-slate-800 bg-tasklab-bg px-3 py-2">
-              <p class="text-body text-tasklab-text" x-text="req"></p>
-            </li>
-          </template>
-        </ul>
-      </template>
-      <template x-if="!modalTask || !modalTask.requirements || !modalTask.requirements.length">
-        <p class="text-body text-tasklab-muted">
-          La IA todavía no ha definido criterios de aceptación.
-        </p>
-      </template>
+      <ul class="space-y-2">
+        <template x-for="(req, idx) in modalTask.requirements" :key="idx">
+          <li class="rounded-lg border border-slate-800 bg-tasklab-bg px-3 py-2">
+            <p class="text-body text-tasklab-text" x-text="req"></p>
+          </li>
+        </template>
+      </ul>
     </section>
 
     {{-- Descripción editable (para tareas web_form) --}}

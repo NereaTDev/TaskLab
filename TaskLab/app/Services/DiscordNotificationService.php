@@ -117,6 +117,24 @@ class DiscordNotificationService
         }
     }
 
+    public function notifyTaskProcessingFailed(Task $task): void
+    {
+        $channelId = $this->openDm($task);
+        if (! $channelId) {
+            return;
+        }
+
+        $message = <<<MSG
+        ❌ **No hemos podido procesar tu solicitud**
+
+        Lo sentimos, ha ocurrido un error al analizar tu petición y no ha podido ser procesada.
+
+        Por favor, vuelve a enviar tu mensaje e inténtalo de nuevo. Si el problema persiste, contacta con el equipo de soporte.
+        MSG;
+
+        $this->sendDm($channelId, $message, $task->id, 'processing_failed');
+    }
+
     private function openDm(Task $task): ?string
     {
         $token = config('services.discord.bot_token');
