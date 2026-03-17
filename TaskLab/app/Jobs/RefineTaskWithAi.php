@@ -28,6 +28,17 @@ class RefineTaskWithAi implements ShouldQueue
         public array $imageUrls = [],
     ) {}
 
+    public function failed(\Throwable $exception): void
+    {
+        // Si el job falla definitivamente, devolver la tarea a 'new' para que
+        // sea visible (aunque sin refinar). Mejor mostrar algo que nada.
+        $this->task->update(['status' => 'new']);
+
+        Log::error("RefineTaskWithAi: job fallido para tarea #{$this->task->id}", [
+            'error' => $exception->getMessage(),
+        ]);
+    }
+
     public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment): void
     {
         // 1. Construir contexto: árbol de categorías y tareas similares

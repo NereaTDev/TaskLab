@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use App\Jobs\RefineTaskWithAi;
 use App\Models\Task;
 use App\Models\User;
-use App\Services\TaskAssignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class TeamsIntegrationController extends Controller
 {
-    public function store(Request $request, TaskAssignmentService $assignmentService)
+    public function store(Request $request)
     {
         // Autenticación simple por token
         $expectedToken = config('services.teams.token');
@@ -137,7 +136,7 @@ class TeamsIntegrationController extends Controller
             'title'               => null,
             'description_raw'     => $descriptionRaw,
             'type'                => 'bug',
-            'status'              => 'new',
+            'status'              => 'processing',
             'priority'            => 'medium',
             'reporter_id'         => $reporter?->id,
             'assignee_id'         => null,
@@ -151,8 +150,8 @@ class TeamsIntegrationController extends Controller
         ]);
 
         // Lanzar el job de refinamiento con "IA" y la asignación automática
+        // (la asignación se hace dentro de RefineTaskWithAi al final del proceso)
         RefineTaskWithAi::dispatch($task);
-        $assignmentService->assign($task);
 
         return response()->json([
             'status'  => 'ok',

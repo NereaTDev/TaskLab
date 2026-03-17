@@ -6,7 +6,6 @@ use App\Models\DiscordMessageBuffer;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\DiscordBatchAnalyzer;
-use App\Services\TaskAssignmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +30,7 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         public string $channelId,
     ) {}
 
-    public function handle(DiscordBatchAnalyzer $analyzer, TaskAssignmentService $assignmentService): void
+    public function handle(DiscordBatchAnalyzer $analyzer): void
     {
         // Comprobamos si el usuario sigue escribiendo (ventana deslizante)
         $lastMessage = DiscordMessageBuffer::where('discord_user_id', $this->discordUserId)
@@ -59,13 +58,13 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         }
 
         try {
-            $this->processBatch($analyzer, $assignmentService);
+            $this->processBatch($analyzer);
         } finally {
             $lock->release();
         }
     }
 
-    private function processBatch(DiscordBatchAnalyzer $analyzer, TaskAssignmentService $assignmentService): void
+    private function processBatch(DiscordBatchAnalyzer $analyzer): void
     {
         $messages = DiscordMessageBuffer::where('discord_user_id', $this->discordUserId)
             ->where('channel_id', $this->channelId)
@@ -162,7 +161,7 @@ class ProcessDiscordMessageBatch implements ShouldQueue
 
         foreach ($validActions as $action) {
             try {
-                $this->executeAction($action, $messages, $recentTasks, $reporter, $assignmentService);
+                $this->executeAction($action, $messages, $recentTasks, $reporter);
             } catch (\Throwable $e) {
                 Log::error('ProcessDiscordMessageBatch: error executing action', [
                     'action'  => $action,
@@ -183,7 +182,6 @@ class ProcessDiscordMessageBatch implements ShouldQueue
         $messages,
         $recentTasks,
         ?User $reporter,
-        TaskAssignmentService $assignmentService,
     ): void {
         $type = $action['type'] ?? 'ignore';
 
@@ -213,7 +211,7 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                     'title'               => $data['title'] ?? null,
                     'description_raw'     => $data['description_raw'],
                     'type'                => $data['type'] ?? 'bug',
-                    'status'              => 'new',
+                    'status'              => 'processing',
                     'priority'            => $data['priority'] ?? 'medium',
                     'reporter_id'         => $reporter?->id,
                     'source'              => 'discord',
@@ -225,7 +223,6 @@ class ProcessDiscordMessageBatch implements ShouldQueue
                 ]);
 
                 RefineTaskWithAi::dispatch($task, $allImageUrls);
-                $assignmentService->assign($task);
 
                 if (! empty($allImageUrls)) {
                     DownloadTaskAttachments::dispatch($task, $allImageUrls);

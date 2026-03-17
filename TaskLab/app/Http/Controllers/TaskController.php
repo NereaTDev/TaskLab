@@ -54,7 +54,7 @@ class TaskController extends Controller
         // Stats globales para tarjetas (filtradas por los parámetros comunes)
         $statsBaseQuery = Task::query();
         if (! $archived) {
-            $statsBaseQuery->whereNull('archived_at');
+            $statsBaseQuery->whereNull('archived_at')->where('status', '!=', 'processing');
         } else {
             $statsBaseQuery->whereNotNull('archived_at');
         }
@@ -276,7 +276,7 @@ class TaskController extends Controller
             if ($archived) {
                 $boardTasksQuery->whereNotNull('archived_at');
             } else {
-                $boardTasksQuery->whereNull('archived_at');
+                $boardTasksQuery->whereNull('archived_at')->where('status', '!=', 'processing');
             }
 
             if ($status && $status !== 'archived' && $status !== 'all') {
@@ -303,7 +303,7 @@ class TaskController extends Controller
             if ($archived) {
                 $dashboardTasksQuery->whereNotNull('archived_at');
             } else {
-                $dashboardTasksQuery->whereNull('archived_at');
+                $dashboardTasksQuery->whereNull('archived_at')->where('status', '!=', 'processing');
             }
 
             if ($status && $status !== 'archived' && $status !== 'all') {
