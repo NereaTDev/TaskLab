@@ -6,21 +6,25 @@ La idea: cualquier persona puede escribir en un canal de Discord, y TaskLab conv
 
 ---
 
-## 1. Cómo funciona la integración (visión rápida)
+## 1. Cómo funciona la integración (estado actual — marzo 2026)
 
-1. Escribes un mensaje en el canal de Discord configurado (por ejemplo `#incidencias`).
-2. Un workflow en Pipedream escucha ese canal y envía el mensaje a TaskLab.
-3. TaskLab crea una **Task** con:
-   - `source = discord`
-   - `description_raw` = texto del mensaje (y, en el futuro, más contexto)
-   - `type`, `priority`, `area`, etc. con valores por defecto (editable luego).
-4. El **refinador de IA** genera (en segundo plano):
-   - Título
-   - Resumen/descripcion refinada (`description_ai`)
-   - Requisitos, comportamiento esperado y casos de prueba
-5. El **motor de asignación** decide, según tipo/área/esfuerzo, a qué desarrollador asignar la tarea.
-
-> Nota: en la versión actual el refinador de IA es "fake" para que el flujo funcione sin dependencias externas. Este documento ya está pensado para cuando usemos un modelo real.
+1. Escribes un mensaje (o mandas una imagen) en el canal de Discord configurado.
+2. **Pipedream** escucha ese canal y ejecuta un code step que:
+   - Extrae URLs de imagen del texto del mensaje (regex)
+   - Llama a la Discord API (`GET /channels/{id}/messages/{id}`) para obtener attachments reales con URL
+   - Extrae imágenes de embeds (previews de URLs pegadas)
+   - Devuelve `{ message_id, message_text, channel_id, from_name, from_teams_id, attachments, image_urls }`
+3. Pipedream hace `POST /integrations/discord/messages` con ese payload + header `X-Teams-Token`.
+4. `DiscordIntegrationController` guarda el mensaje en `discord_message_buffer` (incluyendo `image_urls`).
+5. `ProcessDiscordMessageBatch` (job con 30s de delay, agrupa mensajes del mismo usuario):
+   - Analiza los mensajes con IA (`DiscordBatchAnalyzer`)
+   - Crea/modifica/ignora tareas según el análisis
+   - Lanza `RefineTaskWithAi` (IA real via OpenAI, con visión si hay imágenes)
+   - Lanza `DownloadTaskAttachments` si hay `image_urls`
+6. `DownloadTaskAttachments` sube las imágenes a **Cloudinary** (sin SDK, firmado con SHA1). Si falla, descarga y guarda en disco local.
+7. `TaskAssignmentService` asigna la tarea al developer más adecuado (por tipo y carga de trabajo).
+8. `DiscordNotificationService` envía un **DM al requester de Discord** con el nombre del assignee y la prioridad.
+9. Las imágenes aparecen en el modal de la tarea en la app.
 
 ---
 
@@ -179,9 +183,35 @@ Cuando el refinador de IA esté conectado a un modelo real, su objetivo será:
 2. La IA (fake por ahora, real en el futuro) enriquece la tarea.
 3. El motor de asignación puede asignar la tarea directamente al desarrollador adecuado.
 4. Podrás ver y gestionar la tarea en el tablero (drag & drop, editar detalles, cambiar estado, etc.).
+5. El bot de Discord te enviará un DM confirmando quién ha sido asignado a tu tarea.
 
-En el futuro podemos añadir:
+---
 
-- Respuesta automática en Discord con el ID de la Task creada.
-- Notificaciones cuando cambie de estado (en progreso, done, etc.).
-- Integración con otros canales (Teams, email) usando el mismo modelo de `description_raw` + IA.
+## 7. Configuración técnica requerida
+
+### Pipedream
+- Trigger: Discord trigger en el canal `task_lab`
+- Code step: extrae imágenes (ver `docs/WORK_LOG.md` 2026-03-17 para el código completo)
+- HTTP step: `POST https://tu-app.render.com/integrations/discord/messages` con header `X-Teams-Token`
+- Variable de entorno en Pipedream: `DISCORD_BOT_TOKEN`
+
+### Render — variables de entorno (web service y worker)
+```
+DISCORD_BOT_TOKEN=...
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+FILESYSTEM_DISK=local
+SERVICES_TEAMS_TOKEN=...   ← token compartido con Pipedream para autenticar webhooks
+```
+
+### Bot de Discord (Developer Portal)
+- Permisos necesarios: `Read Messages`, `Read Message History`, `Send Messages` (para DMs)
+- El bot debe estar en el servidor de Discord
+
+---
+
+## 8. Próximas mejoras previstas
+
+- Notificaciones in-app (campana en el frontend) para cualquier fuente de tarea
+- Notificaciones de cambio de estado (en progreso, done) de vuelta al canal de Discord
