@@ -215,7 +215,7 @@ class RefineTaskWithAi implements ShouldQueue
             ->whereNotIn('status', ['archived', 'done'])
             ->where('id', '!=', $this->task->id)
             ->where('created_at', '>=', now()->subMonths(6))
-            ->with(['reporter', 'categoryValues.categoryType'])
+            ->with(['reporter', 'categoryValues'])
             ->get();
 
         if ($candidates->isEmpty()) {
