@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings/github', [GithubConnectionController::class, 'store'])->name('settings.github.store');
         Route::delete('/settings/github', [GithubConnectionController::class, 'destroy'])->name('settings.github.destroy');
         Route::post('/settings/github/sync', [GithubConnectionController::class, 'sync'])->name('settings.github.sync');
+        Route::patch('/settings/github/site-url', [GithubConnectionController::class, 'updateSiteUrl'])->name('settings.github.site-url');
 
 
     });

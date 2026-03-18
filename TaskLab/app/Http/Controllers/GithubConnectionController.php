@@ -183,6 +183,25 @@ class GithubConnectionController extends Controller
     }
 
     /**
+     * Update the site URL for the active connection.
+     */
+    public function updateSiteUrl(Request $request)
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+
+        $conn = GithubConnection::active();
+        abort_unless($conn, 404);
+
+        $validated = $request->validate([
+            'site_url' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        $conn->update(['site_url' => $validated['site_url'] ?: null]);
+
+        return redirect()->route('settings.index')->with('status', 'URL de producción actualizada.');
+    }
+
+    /**
      * Re-sync the file tree for the active connection.
      */
     public function sync(Request $request)

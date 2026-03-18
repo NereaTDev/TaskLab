@@ -145,8 +145,13 @@ class GithubContextService
             return '';
         }
 
-        return "CÓDIGO FUENTE RELEVANTE DEL REPOSITORIO ({$conn->owner}/{$conn->repo} · rama {$conn->branch}):\n\n"
-            . implode("\n\n", $sections);
+        $header = "CÓDIGO FUENTE RELEVANTE DEL REPOSITORIO ({$conn->owner}/{$conn->repo} · rama {$conn->branch})";
+
+        if ($conn->site_url) {
+            $header .= "\nURL DE PRODUCCIÓN: {$conn->site_url} — usa este dominio como base para construir las URLs en primary_url y additional_urls.";
+        }
+
+        return $header . "\n\n" . implode("\n\n", $sections);
     }
 
     // ── Private helpers ────────────────────────────────────────────────────

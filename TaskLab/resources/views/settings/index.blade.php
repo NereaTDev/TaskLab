@@ -109,6 +109,60 @@
                         </div>
                     </div>
 
+                    {{-- ── Site URL ── --}}
+                    <div class="mt-4 pt-4 border-t border-slate-800/60"
+                         x-data="{ editing: false, url: '{{ $githubConnection->site_url ?? '' }}' }">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <span class="text-[11px] font-medium text-tasklab-muted uppercase tracking-wider">URL de producción</span>
+                                    <p class="text-xs text-tasklab-muted mt-0.5">Dominio base que la IA usará para construir las URLs de las tareas.</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                @click="editing = !editing"
+                                class="shrink-0 text-[11px] font-medium text-tasklab-accent hover:text-tasklab-accent/80 transition-colors"
+                                x-text="editing ? 'Cancelar' : (url ? 'Editar' : 'Añadir')"
+                            ></button>
+                        </div>
+
+                        {{-- Current value (non-editing) --}}
+                        <div x-show="!editing && url" class="mt-2">
+                            <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-tasklab-bg px-2.5 py-1 text-xs font-mono text-tasklab-text" x-text="url"></span>
+                        </div>
+                        <div x-show="!editing && !url" class="mt-2">
+                            <span class="text-xs text-tasklab-muted/60 italic">Sin URL configurada</span>
+                        </div>
+
+                        {{-- Edit form --}}
+                        <form
+                            x-show="editing"
+                            method="POST"
+                            action="{{ route('settings.github.site-url') }}"
+                            class="mt-3 flex items-center gap-2"
+                        >
+                            @csrf
+                            @method('PATCH')
+                            <input
+                                type="url"
+                                name="site_url"
+                                x-model="url"
+                                placeholder="https://tu-app.onrender.com"
+                                class="flex-1 rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none"
+                            />
+                            <button
+                                type="submit"
+                                class="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-3 py-2 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors"
+                            >
+                                Guardar
+                            </button>
+                        </form>
+                    </div>
+
                 @elseif(request('github_pick') && session('github_pending_token'))
                     {{-- ── Repo picker (after OAuth callback) ── --}}
                     <div class="space-y-4">
