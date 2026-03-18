@@ -230,28 +230,28 @@
                                 {{-- Member cards grid --}}
                                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                     @foreach($group['members'] as $member)
-                                        <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-tasklab-bg px-3 py-2.5 hover:border-slate-700 transition-colors">
-                                            <div class="flex items-center gap-2.5 min-w-0">
-                                                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-tasklab-primary/30 to-tasklab-accent/20 text-[10px] font-bold text-tasklab-text border border-slate-700">
-                                                    {{ strtoupper(substr($member->name, 0, 2)) }}
-                                                </span>
-                                                <div class="min-w-0">
-                                                    <p class="text-xs font-medium text-tasklab-text truncate">{{ $member->name }}</p>
-                                                    <p class="text-[10px] text-tasklab-muted truncate">{{ $member->position ?: '—' }}</p>
+                                        @php
+                                            $memberTeamCount = $member->categoryValues
+                                                ->pluck('category_type_id')->unique()->count();
+                                        @endphp
+                                        <div class="flex flex-col gap-2 rounded-xl border border-slate-800 bg-tasklab-bg px-3 py-3 hover:border-slate-700 transition-colors">
+                                            {{-- Top row: avatar + name + actions --}}
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-tasklab-primary/30 to-tasklab-accent/20 text-[11px] font-bold text-tasklab-text border border-slate-700">
+                                                        {{ strtoupper(substr($member->name, 0, 2)) }}
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="text-xs font-semibold text-tasklab-text truncate leading-tight">{{ $member->name }}</p>
+                                                        <p class="text-[10px] text-tasklab-muted truncate leading-tight mt-0.5">
+                                                            {{ $member->position ?: 'Sin posición' }}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                {{-- Role badge --}}
-                                                @if($member->isSuperAdmin())
-                                                    <span class="rounded-full bg-violet-500/10 border border-violet-500/30 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">SA</span>
-                                                @elseif($member->is_admin)
-                                                    <span class="rounded-full bg-tasklab-primary/10 border border-tasklab-primary/30 px-1.5 py-0.5 text-[10px] font-medium text-tasklab-primary">Admin</span>
-                                                @endif
 
                                                 {{-- Actions dropdown (SuperAdmin only) --}}
                                                 @if($isSuperAdmin)
-                                                    <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                                    <div class="relative shrink-0" x-data="{ open: false }" @click.outside="open = false">
                                                         <button
                                                             @click="open = !open"
                                                             class="flex h-6 w-6 items-center justify-center rounded-lg text-tasklab-muted hover:text-tasklab-text hover:bg-slate-700 transition-colors"
@@ -266,7 +266,7 @@
                                                             x-transition:enter="transition ease-out duration-100"
                                                             x-transition:enter-start="opacity-0 scale-95"
                                                             x-transition:enter-end="opacity-100 scale-100"
-                                                            class="absolute right-0 top-7 z-30 w-44 rounded-xl border border-slate-700 bg-tasklab-bg shadow-xl py-1"
+                                                            class="absolute right-0 top-7 z-30 w-48 rounded-xl border border-slate-700 bg-tasklab-bg shadow-xl py-1"
                                                             style="display:none"
                                                         >
                                                             {{-- Role actions --}}
@@ -290,27 +290,53 @@
 
                                                             <div class="my-1 border-t border-slate-800"></div>
 
-                                                            {{-- Reassign team --}}
+                                                            {{-- Move to another team --}}
                                                             <button
-                                                                @click="open=false; openAssignModal({{ $member->id }}, '{{ $member->name }}', '{{ $section['type']->slug }}')"
+                                                                @click="open=false; openAssignModal({{ $member->id }}, '{{ addslashes($member->name) }}', '{{ $section['type']->slug }}', false)"
                                                                 class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
                                                             >
                                                                 <svg class="h-3.5 w-3.5 text-tasklab-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                                                                Cambiar equipo
+                                                                Mover a otro equipo
+                                                            </button>
+
+                                                            {{-- Add to additional team (clone) --}}
+                                                            <button
+                                                                @click="open=false; openAssignModal({{ $member->id }}, '{{ addslashes($member->name) }}', '', true)"
+                                                                class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
+                                                            >
+                                                                <svg class="h-3.5 w-3.5 text-tasklab-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                                Añadir a otro equipo
                                                             </button>
 
                                                             <div class="my-1 border-t border-slate-800"></div>
 
-                                                            {{-- Remove from team --}}
+                                                            {{-- Remove from this team --}}
                                                             <button
                                                                 @click="open=false; removeFromTeam({{ $member->id }}, '{{ $section['type']->slug }}')"
                                                                 class="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
                                                             >
                                                                 <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                                                Quitar del equipo
+                                                                Quitar de este equipo
                                                             </button>
                                                         </div>
                                                     </div>
+                                                @endif
+                                            </div>
+
+                                            {{-- Bottom row: role badge + multi-team indicator --}}
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                @if($member->isSuperAdmin())
+                                                    <span class="rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[10px] font-medium text-violet-300">Super Admin</span>
+                                                @elseif($member->is_admin)
+                                                    <span class="rounded-full bg-tasklab-primary/10 border border-tasklab-primary/30 px-2 py-0.5 text-[10px] font-medium text-tasklab-primary">Admin</span>
+                                                @else
+                                                    <span class="rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-medium text-tasklab-muted">Usuario</span>
+                                                @endif
+
+                                                @if($memberTeamCount > 1)
+                                                    <span class="rounded-full bg-tasklab-accent/10 border border-tasklab-accent/30 px-2 py-0.5 text-[10px] font-medium text-tasklab-accent">
+                                                        +{{ $memberTeamCount - 1 }} equipo{{ $memberTeamCount - 1 > 1 ? 's' : '' }}
+                                                    </span>
                                                 @endif
                                             </div>
                                         </div>
@@ -344,15 +370,40 @@
                 class="w-full max-w-sm rounded-2xl border border-slate-700 bg-tasklab-bg shadow-2xl p-6 space-y-5"
             >
                 <div>
-                    <h3 class="text-sm font-semibold text-tasklab-text">Cambiar asignación de equipo</h3>
+                    <h3 class="text-sm font-semibold text-tasklab-text" x-text="modal.clone ? 'Añadir a otro equipo' : 'Mover a otro equipo'"></h3>
                     <p class="text-xs text-tasklab-muted mt-1" x-text="modal.userName"></p>
                 </div>
+
+                {{-- Mode indicator --}}
+                <div class="flex rounded-xl border border-slate-700 overflow-hidden text-xs">
+                    <button
+                        type="button"
+                        @click="modal.clone = false"
+                        :class="!modal.clone ? 'bg-tasklab-bg text-tasklab-accent font-medium' : 'bg-transparent text-tasklab-muted hover:text-tasklab-text'"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 transition-colors"
+                    >
+                        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        Mover
+                    </button>
+                    <button
+                        type="button"
+                        @click="modal.clone = true"
+                        :class="modal.clone ? 'bg-tasklab-bg text-tasklab-accent font-medium' : 'bg-transparent text-tasklab-muted hover:text-tasklab-text'"
+                        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 transition-colors border-l border-slate-700"
+                    >
+                        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Añadir también
+                    </button>
+                </div>
+                <p class="text-[11px] text-tasklab-muted -mt-2" x-show="!modal.clone">Quita al miembro del equipo actual y lo mueve al nuevo.</p>
+                <p class="text-[11px] text-tasklab-muted -mt-2" x-show="modal.clone">Mantiene al miembro en su equipo actual y lo añade a uno adicional.</p>
 
                 <div class="space-y-3">
                     <div>
                         <label class="block text-[11px] font-medium text-tasklab-muted mb-1.5 uppercase tracking-wider">Equipo</label>
                         <select
                             x-model="modal.typeSlug"
+                            @change="modal.valueId = ''"
                             class="w-full rounded-xl border border-slate-700 bg-tasklab-bg-muted px-3 py-2 text-sm text-tasklab-text focus:border-tasklab-accent focus:outline-none"
                         >
                             <option value="">Selecciona equipo…</option>
@@ -387,9 +438,8 @@
                         @click="submitAssign()"
                         :disabled="!modal.typeSlug || !modal.valueId"
                         class="flex-1 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-4 py-2 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Asignar
-                    </button>
+                        x-text="modal.clone ? 'Añadir a equipo' : 'Mover a equipo'"
+                    ></button>
                 </div>
             </div>
         </div>
@@ -409,6 +459,7 @@
                 userName: '',
                 typeSlug: '',
                 valueId: '',
+                clone: false,
             },
 
             categoryTypes: @json($categoryTypesJson),
@@ -416,7 +467,7 @@
             init() {
                 this.$el.addEventListener('assign-user', (e) => {
                     const { userId, typeSlug, valueId } = e.detail;
-                    this.doAssign(userId, typeSlug, valueId);
+                    this.doAssign(userId, typeSlug, valueId, false);
                 });
             },
 
@@ -425,27 +476,28 @@
                 return t ? t.values : [];
             },
 
-            openAssignModal(userId, userName, currentTypeSlug) {
+            openAssignModal(userId, userName, currentTypeSlug, clone = false) {
                 this.modal.userId      = userId;
                 this.modal.userName    = userName;
                 this.modal.typeSlug    = currentTypeSlug || '';
                 this.modal.valueId     = '';
+                this.modal.clone       = clone;
                 this.modal.open        = true;
             },
 
             async submitAssign() {
                 if (! this.modal.typeSlug || ! this.modal.valueId) return;
                 this.modal.open = false;
-                await this.doAssign(this.modal.userId, this.modal.typeSlug, this.modal.valueId);
+                await this.doAssign(this.modal.userId, this.modal.typeSlug, this.modal.valueId, this.modal.clone);
             },
 
-            async doAssign(userId, typeSlug, valueId) {
+            async doAssign(userId, typeSlug, valueId, clone = false) {
                 try {
                     const res = await this.post('{{ route('team.reassign-category') }}', {
                         user_id:            userId,
                         category_type_slug: typeSlug,
                         category_value_id:  valueId,
-                        clone:              false,
+                        clone:              clone,
                     });
                     this.notify('Asignación actualizada');
                     setTimeout(() => window.location.reload(), 600);
