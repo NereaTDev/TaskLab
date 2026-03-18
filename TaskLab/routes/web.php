@@ -76,6 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/settings/github', [GithubConnectionController::class, 'destroy'])->name('settings.github.destroy');
         Route::post('/settings/github/sync', [GithubConnectionController::class, 'sync'])->name('settings.github.sync');
         Route::patch('/settings/github/site-url', [GithubConnectionController::class, 'updateSiteUrl'])->name('settings.github.site-url');
+        Route::patch('/settings/github/project-memory', [GithubConnectionController::class, 'updateProjectMemory'])->name('settings.github.project-memory');
+        Route::post('/settings/github/project-memory/regenerate', [GithubConnectionController::class, 'regenerateProjectMemory'])->name('settings.github.project-memory.regenerate');
 
 
     });

@@ -12,6 +12,7 @@ class GithubConnection extends Model
         'token',
         'branch',
         'site_url',
+        'project_memory',
         'active',
         'file_tree',
         'last_synced_at',

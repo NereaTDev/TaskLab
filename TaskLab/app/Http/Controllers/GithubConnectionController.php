@@ -183,6 +183,48 @@ class GithubConnectionController extends Controller
     }
 
     /**
+     * Update the project memory manually (SuperAdmin editing the markdown).
+     */
+    public function updateProjectMemory(Request $request)
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+
+        $conn = GithubConnection::active();
+        abort_unless($conn, 404);
+
+        $validated = $request->validate([
+            'project_memory' => ['nullable', 'string', 'max:50000'],
+        ]);
+
+        $conn->update(['project_memory' => $validated['project_memory'] ?: null]);
+
+        return redirect()->route('settings.index')->with('status', 'Memoria del proyecto actualizada.');
+    }
+
+    /**
+     * Regenerate the project memory from the repo documentation.
+     */
+    public function regenerateProjectMemory(Request $request)
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+
+        $conn = GithubConnection::active();
+        abort_unless($conn, 404);
+
+        try {
+            app(GithubContextService::class)->syncProjectMemory($conn);
+            $conn->refresh();
+            $status = $conn->project_memory
+                ? 'Memoria del proyecto regenerada correctamente.'
+                : 'No se encontraron archivos de documentación en el repositorio.';
+        } catch (\Throwable $e) {
+            $status = 'Error al regenerar la memoria: ' . $e->getMessage();
+        }
+
+        return redirect()->route('settings.index')->with('status', $status);
+    }
+
+    /**
      * Update the site URL for the active connection.
      */
     public function updateSiteUrl(Request $request)

@@ -182,6 +182,112 @@
                         </div>
                     </div>
 
+                    {{-- ── Sub-row 3: Memoria del Proyecto ── --}}
+                    @php
+                        $memoryPreview = $githubConnection->project_memory
+                            ? mb_substr($githubConnection->project_memory, 0, 120) . (mb_strlen($githubConnection->project_memory) > 120 ? '…' : '')
+                            : null;
+                    @endphp
+                    <div x-data="{
+                        expanded: false,
+                        editing: false,
+                        memory: @js($githubConnection->project_memory ?? ''),
+                        regenerating: false
+                    }">
+                        <button
+                            type="button"
+                            @click="expanded = !expanded"
+                            class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-800/20 transition-colors"
+                        >
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] font-medium text-tasklab-muted uppercase tracking-wider">Memoria del Proyecto</p>
+                                @if($memoryPreview)
+                                    <p class="text-xs text-tasklab-muted mt-0.5 truncate">{{ $memoryPreview }}</p>
+                                @else
+                                    <p class="text-xs text-tasklab-muted/50 italic mt-0.5">Sin generar — haz clic en Regenerar</p>
+                                @endif
+                            </div>
+                            @if($githubConnection->project_memory)
+                                <span class="shrink-0 inline-flex items-center gap-1 rounded-full border border-tasklab-success/30 bg-tasklab-success/10 px-2 py-0.5 text-[10px] font-medium text-tasklab-success">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tasklab-success"></span>
+                                    Generada
+                                </span>
+                            @else
+                                <span class="shrink-0 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                                    Sin generar
+                                </span>
+                            @endif
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted transition-transform duration-200 ml-2" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="expanded" class="px-5 pb-4">
+                            <div class="rounded-xl border border-slate-800 bg-tasklab-bg p-4 space-y-3">
+
+                                {{-- Description --}}
+                                <p class="text-xs text-tasklab-muted">
+                                    La IA analiza automáticamente el README y los archivos de documentación del repo para construir esta memoria. Se inyecta en cada tarea como contexto permanente del proyecto.
+                                    Puedes editarla libremente para añadir instrucciones específicas o corregir información.
+                                </p>
+
+                                {{-- Actions bar --}}
+                                <div class="flex items-center gap-2">
+                                    <form method="POST" action="{{ route('settings.github.project-memory.regenerate') }}" @submit="regenerating = true">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            :disabled="regenerating"
+                                            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-tasklab-bg-muted px-3 py-1.5 text-xs font-medium text-tasklab-muted hover:text-tasklab-text hover:border-slate-600 disabled:opacity-50 transition-colors"
+                                        >
+                                            <svg class="h-3.5 w-3.5" :class="regenerating ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                            </svg>
+                                            <span x-text="regenerating ? 'Generando…' : 'Regenerar desde repo'"></span>
+                                        </button>
+                                    </form>
+                                    <button
+                                        type="button"
+                                        @click="editing = !editing"
+                                        class="inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/30 bg-tasklab-accent/10 px-3 py-1.5 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/20 transition-colors"
+                                        x-text="editing ? 'Cancelar edición' : 'Editar manualmente'"
+                                    ></button>
+                                </div>
+
+                                {{-- Read-only preview --}}
+                                <div x-show="!editing && memory" class="rounded-lg border border-slate-700 bg-tasklab-bg-muted p-3 max-h-64 overflow-y-auto">
+                                    <pre class="text-xs text-tasklab-muted whitespace-pre-wrap font-mono leading-relaxed" x-text="memory"></pre>
+                                </div>
+                                <div x-show="!editing && !memory" class="rounded-lg border border-slate-700/50 border-dashed bg-tasklab-bg-muted/50 p-4 text-center">
+                                    <p class="text-xs text-tasklab-muted/50">Pulsa "Regenerar desde repo" para que la IA analice la documentación del proyecto.</p>
+                                </div>
+
+                                {{-- Edit form --}}
+                                <form x-show="editing" method="POST" action="{{ route('settings.github.project-memory') }}" class="space-y-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <textarea
+                                        name="project_memory"
+                                        x-model="memory"
+                                        rows="16"
+                                        placeholder="Escribe aquí la memoria del proyecto en markdown…"
+                                        class="w-full rounded-xl border border-slate-700 bg-tasklab-bg-muted px-3 py-2 text-xs font-mono text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none resize-y leading-relaxed"
+                                    ></textarea>
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-4 py-2 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            Guardar memoria
+                                        </button>
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+                    </div>
+
                 @elseif(request('github_pick') && session('github_pending_token'))
 
                     {{-- ── Repo picker (after OAuth callback) ── --}}
