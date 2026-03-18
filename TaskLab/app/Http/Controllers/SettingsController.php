@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CategoryType;
 use App\Models\CategoryValue;
 use App\Models\Department;
+use App\Models\GithubConnection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -43,10 +44,13 @@ class SettingsController extends Controller
             ])->find($activeType->id);
         }
 
+        $githubConnection = GithubConnection::active();
+
         return view('settings.index', [
             'categoryTypes'        => $categoryTypes,
-            'activeType'          => $activeType,
-            'activeTypeWithValues'=> $activeTypeWithValues,
+            'activeType'           => $activeType,
+            'activeTypeWithValues' => $activeTypeWithValues,
+            'githubConnection'     => $githubConnection,
         ]);
     }
 
@@ -175,4 +179,5 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.index', ['type' => $type?->slug])->with('status', 'Valor de categoría eliminado.');
     }
+
 }

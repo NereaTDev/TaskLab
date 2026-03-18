@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\DiscordIntegrationController;
+use App\Http\Controllers\GithubConnectionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
@@ -7,7 +9,6 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskImageController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamsIntegrationController;
-use App\Http\Controllers\DiscordIntegrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Página de espera de asignación de equipo (accesible sin equipo)
     Route::get('/pending-team', fn () => view('pending-team'))->name('pending-team');
 
+    // GitHub OAuth callback (fuera de team.required, la sesión ya está activa)
+    Route::get('/settings/github/callback', [GithubConnectionController::class, 'callback'])->name('settings.github.callback');
+
     // ─── Rutas que requieren equipo ───────────────────────────────────────────
     Route::middleware('team.required')->group(function () {
 
@@ -64,6 +68,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings/category-types/{categoryType}/values', [SettingsController::class, 'storeCategoryValue'])->name('settings.category-values.store');
         Route::patch('/settings/category-values/{categoryValue}', [SettingsController::class, 'updateCategoryValue'])->name('settings.category-values.update');
         Route::delete('/settings/category-values/{categoryValue}', [SettingsController::class, 'destroyCategoryValue'])->name('settings.category-values.destroy');
+
+        // GitHub OAuth connection
+        Route::get('/settings/github/auth', [GithubConnectionController::class, 'redirect'])->name('settings.github.auth');
+        Route::get('/settings/github/repos', [GithubConnectionController::class, 'repos'])->name('settings.github.repos');
+        Route::post('/settings/github', [GithubConnectionController::class, 'store'])->name('settings.github.store');
+        Route::delete('/settings/github', [GithubConnectionController::class, 'destroy'])->name('settings.github.destroy');
+        Route::post('/settings/github/sync', [GithubConnectionController::class, 'sync'])->name('settings.github.sync');
 
 
     });

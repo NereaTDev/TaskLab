@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserCategoryAssignment;
 use App\Services\AiTaskRefiner;
 use App\Services\DiscordNotificationService;
+use App\Services\GithubContextService;
 use App\Services\TaskAssignmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -48,12 +49,15 @@ class RefineTaskWithAi implements ShouldQueue
         $this->task->forceDelete();
     }
 
-    public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment): void
+    public function handle(AiTaskRefiner $refiner, DiscordNotificationService $discord, TaskAssignmentService $assignment, GithubContextService $github): void
     {
-        // 1. Construir contexto: árbol de categorías, equipos y tareas similares
+        // 1. Construir contexto: árbol de categorías, equipos, tareas similares y código fuente
         $categoryTree = $this->buildCategoryTree();
         $teamContext  = $this->buildTeamContext();
         $similarTasks = $this->findSimilarTasks();
+        $codeContext  = $github->buildCodeContext(
+            $this->task->description_raw . ' ' . ($this->task->title ?? '')
+        );
 
         // 2. Llamar a la IA con contexto completo
         $result = $refiner->refine(
@@ -62,6 +66,7 @@ class RefineTaskWithAi implements ShouldQueue
             $categoryTree,
             $similarTasks,
             $teamContext,
+            $codeContext,
         );
 
         // 3. Gate de aceptación — ¿la tarea tiene suficiente calidad?

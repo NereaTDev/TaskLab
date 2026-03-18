@@ -22,6 +22,7 @@ class AiTaskRefiner
         string $categoryTree = '',
         array  $similarTasks = [],
         string $teamContext  = '',
+        string $codeContext  = '',
     ): array {
         $apiKey = config('services.openai.api_key');
         $model  = config('services.openai.tasklab_model', 'gpt-4.1-mini');
@@ -37,6 +38,10 @@ class AiTaskRefiner
 
             $teamSection = $teamContext
                 ? "\n\nEQUIPOS Y PERFILES DISPONIBLES (usa el nombre EXACTO del equipo en el campo \"team\"):\n{$teamContext}"
+                : '';
+
+            $codeSection = $codeContext
+                ? "\n\n{$codeContext}"
                 : '';
 
             $similarSection = '';
@@ -160,6 +165,19 @@ INSTRUCCIONES DE ASIGNACIÓN:
 - "team": nombre EXACTO del equipo (tal como aparece en "Equipo: X"). Si no hay equipos definidos o no encaja en ninguno, pon null.
 - "required_position": describe en pocas palabras qué perfil se necesita para resolver esta tarea (ej. "Frontend Developer", "Backend Developer", "Product Manager"). Intenta que coincida con alguno de los perfiles listados en el equipo elegido. Si no puedes determinarlo, pon null.
 PROMPT;
+
+            if ($codeSection) {
+                $systemPrompt .= $codeSection . "\n\n"
+                    . "═══════════════════════════════════════════\n"
+                    . "INSTRUCCIONES PARA EL CONTEXTO DE CÓDIGO\n"
+                    . "═══════════════════════════════════════════\n"
+                    . "Se te proporcionan fragmentos del repositorio del proyecto. Úsalos para:\n"
+                    . "- Identificar EXACTAMENTE qué archivo, componente, función o ruta está relacionada con la petición.\n"
+                    . "- Deducir la URL o ruta (route) afectada y rellenar \"primary_url\" con ella si puedes determinarla.\n"
+                    . "- Enriquecer \"summary\", \"requirements\" y \"behavior\" con referencias concretas al código (componente, función, fichero).\n"
+                    . "- Si el código revela la causa raíz del problema, inclúyela en \"behavior\" bajo \"Comportamiento actual:\".\n"
+                    . "- No inventes rutas ni componentes que no aparezcan en el código proporcionado.\n";
+            }
 
             $userText = "Descripción de la petición del usuario:\n\n" . $rawDescription;
 

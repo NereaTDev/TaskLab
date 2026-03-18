@@ -55,4 +55,10 @@ return [
         'bot_token' => env('DISCORD_BOT_TOKEN'),
     ],
 
+    'github' => [
+        'client_id'     => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect'      => env('APP_URL') . '/settings/github/callback',
+    ],
+
 ];
