@@ -261,7 +261,7 @@ Alpine.data('notificationBell', () => ({
             }));
         } else if (n.data?.type === 'new_user_registered') {
             this.open = false;
-            window.location.href = '/admin/teams';
+            window.location.href = '/team';
         }
     },
 

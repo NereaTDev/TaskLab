@@ -75,8 +75,10 @@ class TeamController extends Controller
 
         $areaOptions = collect(['web', 'plataforma', 'frontierz', 'dashboard_empresas']);
 
-        // Tipos de categoría (botones dinámicos de vista)
-        $categoryTypes = CategoryType::orderBy('name')->get();
+        // Tipos de categoría (= equipos), con sus valores para los selectores de asignación
+        $categoryTypes = CategoryType::with(['values' => function ($q) {
+            $q->orderBy('sort_order')->orderBy('name');
+        }])->orderBy('name')->get();
 
         // Agrupaciones especiales para vistas tipo tablero
         $categoryBoardType = null;
