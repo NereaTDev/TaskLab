@@ -39,17 +39,21 @@
             x-data="githubPicker()"
             x-init="init()"
         >
-            {{-- Header --}}
-            <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-800/60">
-                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
+            {{-- ── Header row (always visible, click to toggle) ── --}}
+            <button
+                type="button"
+                @click="open = !open"
+                class="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-800/30 transition-colors"
+            >
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
                     <svg class="h-4 w-4 text-tasklab-text" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
                     </svg>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-tasklab-text">Repositorio GitHub</p>
-                    <p class="text-[11px] text-tasklab-muted">
-                        Conecta el código fuente del proyecto para que la IA entienda la arquitectura y enriquezca las tareas con contexto real.
+                    <p class="text-[11px] text-tasklab-muted truncate">
+                        Conecta el código fuente para que la IA enriquezca las tareas con contexto real.
                     </p>
                 </div>
                 @if($githubConnection)
@@ -63,169 +67,158 @@
                         Sin conectar
                     </span>
                 @endif
-            </div>
+                <svg
+                    class="h-4 w-4 shrink-0 text-tasklab-muted transition-transform duration-200"
+                    :class="open ? 'rotate-180' : ''"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
 
-            <div class="p-5">
+            {{-- ── Expandable body ── --}}
+            <div x-show="open" class="border-t border-slate-800/60 divide-y divide-slate-800/60">
+
                 @if($githubConnection)
-                    {{-- ── Connected state ── --}}
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 border border-slate-700">
-                                <svg class="h-5 w-5 text-tasklab-text" fill="currentColor" viewBox="0 0 24 24">
-                                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-                                </svg>
+
+                    {{-- ── Sub-row 1: Repositorio ── --}}
+                    <div x-data="{ expanded: false }">
+                        <button
+                            type="button"
+                            @click="expanded = !expanded"
+                            class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-800/20 transition-colors"
+                        >
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] font-medium text-tasklab-muted uppercase tracking-wider">Repositorio</p>
+                                <p class="text-sm font-semibold text-tasklab-text mt-0.5">{{ $githubConnection->owner }}/{{ $githubConnection->repo }}</p>
                             </div>
-                            <div>
-                                <p class="text-sm font-semibold text-tasklab-text">{{ $githubConnection->owner }}/{{ $githubConnection->repo }}</p>
-                                <div class="flex items-center gap-2 mt-0.5 text-[11px] text-tasklab-muted">
-                                    <span>rama: <span class="font-medium text-tasklab-text">{{ $githubConnection->branch }}</span></span>
+                            <div class="hidden sm:flex items-center gap-2 text-[11px] text-tasklab-muted shrink-0">
+                                <span>rama: <span class="font-medium text-tasklab-text">{{ $githubConnection->branch }}</span></span>
+                                @if($githubConnection->file_tree)
+                                    <span>·</span>
+                                    <span>{{ count($githubConnection->file_tree) }} archivos</span>
+                                @endif
+                                @if($githubConnection->last_synced_at)
+                                    <span>·</span>
+                                    <span>{{ $githubConnection->last_synced_at->diffForHumans() }}</span>
+                                @endif
+                            </div>
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted transition-transform duration-200 ml-2" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="expanded" class="px-5 pb-4">
+                            <div class="rounded-xl border border-slate-800 bg-tasklab-bg p-4 space-y-3">
+                                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tasklab-muted">
+                                    <span>Rama: <span class="text-tasklab-text font-medium">{{ $githubConnection->branch }}</span></span>
                                     @if($githubConnection->file_tree)
-                                        <span>·</span>
-                                        <span>{{ count($githubConnection->file_tree) }} archivos</span>
+                                        <span>{{ count($githubConnection->file_tree) }} archivos indexados</span>
                                     @endif
                                     @if($githubConnection->last_synced_at)
-                                        <span>·</span>
-                                        <span>{{ $githubConnection->last_synced_at->diffForHumans() }}</span>
+                                        <span>Sincronizado {{ $githubConnection->last_synced_at->diffForHumans() }}</span>
                                     @endif
                                 </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-700/50">
+                                    <form method="POST" action="{{ route('settings.github.sync') }}">
+                                        @csrf
+                                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-tasklab-bg-muted px-3 py-1.5 text-xs font-medium text-tasklab-muted hover:text-tasklab-text hover:border-slate-600 transition-colors">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Sincronizar árbol
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ route('settings.github.destroy') }}" onsubmit="return confirm('¿Desconectar el repositorio?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/15 transition-colors">
+                                            Desconectar
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <form method="POST" action="{{ route('settings.github.sync') }}">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-1.5 text-xs font-medium text-tasklab-muted hover:text-tasklab-text hover:border-slate-600 transition-colors">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                    Sincronizar
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('settings.github.destroy') }}" onsubmit="return confirm('¿Desconectar el repositorio?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors">
-                                    Desconectar
-                                </button>
-                            </form>
                         </div>
                     </div>
 
-                    {{-- ── Site URL ── --}}
-                    <div class="mt-4 pt-4 border-t border-slate-800/60"
-                         x-data="{ editing: false, url: '{{ $githubConnection->site_url ?? '' }}' }">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
-                                </svg>
-                                <div class="min-w-0">
-                                    <span class="text-[11px] font-medium text-tasklab-muted uppercase tracking-wider">URL de producción</span>
-                                    <p class="text-xs text-tasklab-muted mt-0.5">Dominio base que la IA usará para construir las URLs de las tareas.</p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                @click="editing = !editing"
-                                class="shrink-0 text-[11px] font-medium text-tasklab-accent hover:text-tasklab-accent/80 transition-colors"
-                                x-text="editing ? 'Cancelar' : (url ? 'Editar' : 'Añadir')"
-                            ></button>
-                        </div>
-
-                        {{-- Current value (non-editing) --}}
-                        <div x-show="!editing && url" class="mt-2">
-                            <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-tasklab-bg px-2.5 py-1 text-xs font-mono text-tasklab-text" x-text="url"></span>
-                        </div>
-                        <div x-show="!editing && !url" class="mt-2">
-                            <span class="text-xs text-tasklab-muted/60 italic">Sin URL configurada</span>
-                        </div>
-
-                        {{-- Edit form --}}
-                        <form
-                            x-show="editing"
-                            method="POST"
-                            action="{{ route('settings.github.site-url') }}"
-                            class="mt-3 flex items-center gap-2"
+                    {{-- ── Sub-row 2: URL de producción ── --}}
+                    <div x-data="{ expanded: false, url: '{{ addslashes($githubConnection->site_url ?? '') }}' }">
+                        <button
+                            type="button"
+                            @click="expanded = !expanded"
+                            class="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-800/20 transition-colors"
                         >
-                            @csrf
-                            @method('PATCH')
-                            <input
-                                type="url"
-                                name="site_url"
-                                x-model="url"
-                                placeholder="https://tu-app.onrender.com"
-                                class="flex-1 rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none"
-                            />
-                            <button
-                                type="submit"
-                                class="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-3 py-2 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors"
-                            >
-                                Guardar
-                            </button>
-                        </form>
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] font-medium text-tasklab-muted uppercase tracking-wider">URL de producción</p>
+                                <p class="text-sm mt-0.5 truncate"
+                                   :class="url ? 'font-mono text-tasklab-text' : 'text-tasklab-muted/50 italic'"
+                                   x-text="url || 'Sin configurar'"></p>
+                            </div>
+                            <svg class="h-3.5 w-3.5 shrink-0 text-tasklab-muted transition-transform duration-200 ml-2" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="expanded" class="px-5 pb-4">
+                            <div class="rounded-xl border border-slate-800 bg-tasklab-bg p-4 space-y-3">
+                                <p class="text-xs text-tasklab-muted">Dominio base que la IA usará para construir las URLs en las tareas (ej. <span class="font-mono text-tasklab-text/70">https://tu-app.com</span>).</p>
+                                <form method="POST" action="{{ route('settings.github.site-url') }}" class="flex items-center gap-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input
+                                        type="url"
+                                        name="site_url"
+                                        x-model="url"
+                                        placeholder="https://tu-app.onrender.com"
+                                        class="flex-1 rounded-xl border border-slate-700 bg-tasklab-bg-muted px-3 py-2 text-sm text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none"
+                                    />
+                                    <button type="submit" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-3 py-2 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors">
+                                        Guardar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                 @elseif(request('github_pick') && session('github_pending_token'))
+
                     {{-- ── Repo picker (after OAuth callback) ── --}}
-                    <div class="space-y-4">
+                    <div class="p-5 space-y-4">
                         <div class="flex items-center gap-2">
                             <svg class="h-4 w-4 text-tasklab-success shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <p class="text-sm font-medium text-tasklab-text">GitHub autorizado. Elige el repositorio a conectar:</p>
                         </div>
-
                         <div x-show="loading" class="flex items-center gap-2 text-xs text-tasklab-muted">
                             <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                             Cargando repositorios…
                         </div>
-
                         <div x-show="!loading && repos.length" class="space-y-3">
-                            {{-- Search --}}
-                            <input
-                                type="text"
-                                x-model="search"
-                                placeholder="Buscar repositorio…"
-                                class="w-full rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none"
-                            />
-
-                            {{-- Repo list --}}
+                            <input type="text" x-model="search" placeholder="Buscar repositorio…" class="w-full rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text placeholder-tasklab-muted/40 focus:border-tasklab-accent/60 focus:outline-none"/>
                             <div class="max-h-64 overflow-y-auto space-y-1 rounded-xl border border-slate-800 bg-tasklab-bg p-2">
                                 <template x-for="repo in filteredRepos" :key="repo.full_name">
-                                    <button
-                                        type="button"
-                                        @click="selectRepo(repo)"
-                                        :class="selected?.full_name === repo.full_name ? 'border-tasklab-accent/50 bg-tasklab-accent/10 text-tasklab-text' : 'border-transparent text-tasklab-muted hover:text-tasklab-text hover:bg-slate-800'"
-                                        class="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors"
-                                    >
+                                    <button type="button" @click="selectRepo(repo)" :class="selected?.full_name === repo.full_name ? 'border-tasklab-accent/50 bg-tasklab-accent/10 text-tasklab-text' : 'border-transparent text-tasklab-muted hover:text-tasklab-text hover:bg-slate-800'" class="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors">
                                         <svg class="h-4 w-4 shrink-0 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-xs font-medium truncate" x-text="repo.full_name"></p>
                                             <p class="text-[10px] truncate opacity-60" x-text="repo.description || 'Sin descripción'"></p>
                                         </div>
                                         <span x-show="repo.private" class="shrink-0 rounded-full border border-slate-700 px-1.5 py-0.5 text-[10px] text-tasklab-muted">privado</span>
-                                        <span x-show="selected?.full_name === repo.full_name" class="shrink-0 text-tasklab-accent">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                        </span>
+                                        <span x-show="selected?.full_name === repo.full_name" class="shrink-0 text-tasklab-accent"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span>
                                     </button>
                                 </template>
                                 <p x-show="filteredRepos.length === 0 && !loading" class="px-3 py-4 text-center text-xs text-tasklab-muted">Sin resultados.</p>
                             </div>
-
-                            {{-- Confirm form --}}
                             <form x-show="selected" method="POST" action="{{ route('settings.github.store') }}" class="flex items-end gap-3">
                                 @csrf
                                 <input type="hidden" name="owner" :value="selected?.owner">
                                 <input type="hidden" name="repo" :value="selected?.name">
                                 <div class="flex-1">
                                     <label class="block text-[11px] font-medium text-tasklab-muted mb-1.5 uppercase tracking-wider">Rama</label>
-                                    <input
-                                        type="text"
-                                        name="branch"
-                                        :value="selected?.default_branch || 'main'"
-                                        class="w-full rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text focus:border-tasklab-accent/60 focus:outline-none"
-                                    />
+                                    <input type="text" name="branch" :value="selected?.default_branch || 'main'" class="w-full rounded-xl border border-slate-700 bg-tasklab-bg px-3 py-2 text-sm text-tasklab-text focus:border-tasklab-accent/60 focus:outline-none"/>
                                 </div>
-                                <button
-                                    type="submit"
-                                    class="inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-4 py-2 text-sm font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors"
-                                >
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-tasklab-accent/40 bg-tasklab-accent/20 px-4 py-2 text-sm font-medium text-tasklab-accent hover:bg-tasklab-accent/30 transition-colors">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                     Conectar <span x-text="selected?.full_name" class="opacity-70"></span>
                                 </button>
@@ -234,30 +227,25 @@
                     </div>
 
                 @elseif($githubOAuthConfigured)
+
                     {{-- ── OAuth connect button ── --}}
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-4">
                         <p class="text-xs text-tasklab-muted max-w-md">
-                            Autoriza TaskLab en GitHub para elegir el repositorio de tu proyecto. El token se almacena cifrado y solo se usa para leer el código.
+                            Autoriza TaskLab en GitHub para elegir el repositorio. El token se almacena cifrado.
                         </p>
-                        <a
-                            href="{{ route('settings.github.auth') }}"
-                            class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-medium text-tasklab-text hover:bg-slate-700 transition-colors"
-                        >
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-                            </svg>
+                        <a href="{{ route('settings.github.auth') }}" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-medium text-tasklab-text hover:bg-slate-700 transition-colors">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
                             Conectar con GitHub
                         </a>
                     </div>
 
                 @else
-                    {{-- ── OAuth not configured: guide to create the GitHub App ── --}}
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+
+                    {{-- ── OAuth not configured ── --}}
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-4">
                         <div class="space-y-1">
                             <p class="text-sm font-medium text-tasklab-text">Primero crea una OAuth App en GitHub</p>
-                            <p class="text-xs text-tasklab-muted">
-                                El botón te lleva a GitHub con la URL de callback ya rellena. Después añade las dos credenciales que GitHub te dé a tus variables de entorno.
-                            </p>
+                            <p class="text-xs text-tasklab-muted">El botón te lleva a GitHub con la URL de callback ya rellena.</p>
                         </div>
                         @php
                             $ghCreateUrl = 'https://github.com/settings/applications/new?' . http_build_query([
@@ -266,22 +254,15 @@
                                 'oauth_application[callback_url]' => config('services.github.redirect'),
                             ]);
                         @endphp
-                        <a
-                            href="{{ $ghCreateUrl }}"
-                            target="_blank"
-                            rel="noopener"
-                            class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-medium text-tasklab-text hover:bg-slate-700 transition-colors"
-                        >
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-                            </svg>
+                        <a href="{{ $ghCreateUrl }}" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-2.5 text-sm font-medium text-tasklab-text hover:bg-slate-700 transition-colors">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
                             Crear OAuth App en GitHub
-                            <svg class="h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
+                            <svg class="h-3.5 w-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
                     </div>
+
                 @endif
+
             </div>
         </div>
 
@@ -643,6 +624,7 @@
     <script>
     function githubPicker() {
         return {
+            open:     @js(request('github_pick') && session('github_pending_token') ? true : false),
             repos:    [],
             search:   '',
             selected: null,
