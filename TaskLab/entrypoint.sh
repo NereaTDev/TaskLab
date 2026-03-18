@@ -11,9 +11,9 @@ if [ "${APP_ENV}" = "production" ]; then
     php artisan migrate --force || echo "[entrypoint] WARNING: migrate failed (check logs), continuing startup"
 
     echo "[entrypoint] Caching config, routes and views for production..."
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
+    php artisan config:cache || echo "[entrypoint] WARNING: config:cache failed, continuing"
+    php artisan route:cache  || echo "[entrypoint] WARNING: route:cache failed, continuing"
+    php artisan view:cache   || echo "[entrypoint] WARNING: view:cache failed, continuing"
 fi
 
 echo "[entrypoint] Starting PHP-FPM..."
