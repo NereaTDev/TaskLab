@@ -13,3 +13,16 @@ services:
     dockerfilePath: ./Dockerfile
     dockerCommand: php artisan queue:work --tries=3 --timeout=120 --sleep=3 --max-time=3600
     numInstances: 1
+
+  # Discord Gateway bot — sustituye a Pipedream.
+  # Escucha mensajes de Discord directamente y los reenvía a /integrations/discord/messages.
+  # Env vars necesarias (añadir en Render):
+  #   TASKLAB_URL          → URL pública del web service (ej: https://tasklab.onrender.com)
+  #   SERVICES_TEAMS_TOKEN → mismo token que usa el web service (X-Teams-Token)
+  #   DISCORD_BOT_TOKEN    → token del bot de Discord
+  #   DISCORD_CHANNEL_IDS  → (opcional) IDs de canales separados por coma; vacío = todos
+  - type: worker
+    name: tasklab-discord-bot
+    env: docker
+    dockerfilePath: ./discord-bot/Dockerfile
+    numInstances: 1
