@@ -114,44 +114,50 @@ class GithubContextService
      */
     public function buildCodeContext(string $description): string
     {
-        $conn = GithubConnection::active();
-        if (! $conn) {
-            return '';
-        }
-
-        $paths = $this->findRelevantPaths($description);
-        if (empty($paths)) {
-            return '';
-        }
-
-        $sections = [];
-
-        foreach ($paths as $path) {
-            $content = $this->fetchFileContent($conn, $path);
-            if ($content === null) {
-                continue;
+        try {
+            $conn = GithubConnection::active();
+            if (! $conn) {
+                return '';
             }
 
-            // Truncate very long files
-            $lines = explode("\n", $content);
-            if (count($lines) > 300) {
-                $content = implode("\n", array_slice($lines, 0, 300)) . "\n... (truncado)";
+            $paths = $this->findRelevantPaths($description);
+            if (empty($paths)) {
+                return '';
             }
 
-            $sections[] = "### {$path}\n```\n{$content}\n```";
-        }
+            $sections = [];
 
-        if (empty($sections)) {
+            foreach ($paths as $path) {
+                $content = $this->fetchFileContent($conn, $path);
+                if ($content === null) {
+                    continue;
+                }
+
+                // Truncate very long files
+                $lines = explode("\n", $content);
+                if (count($lines) > 300) {
+                    $content = implode("\n", array_slice($lines, 0, 300)) . "\n... (truncado)";
+                }
+
+                $sections[] = "### {$path}\n```\n{$content}\n```";
+            }
+
+            if (empty($sections)) {
+                return '';
+            }
+
+            $header = "CÓDIGO FUENTE RELEVANTE DEL REPOSITORIO ({$conn->owner}/{$conn->repo} · rama {$conn->branch})";
+
+            if ($conn->site_url) {
+                $header .= "\nURL DE PRODUCCIÓN: {$conn->site_url} — usa este dominio como base para construir las URLs en primary_url y additional_urls.";
+            }
+
+            return $header . "\n\n" . implode("\n\n", $sections);
+
+        } catch (\Throwable $e) {
+            Log::warning("GithubContextService: buildCodeContext failed: " . $e->getMessage());
             return '';
         }
-
-        $header = "CÓDIGO FUENTE RELEVANTE DEL REPOSITORIO ({$conn->owner}/{$conn->repo} · rama {$conn->branch})";
-
-        if ($conn->site_url) {
-            $header .= "\nURL DE PRODUCCIÓN: {$conn->site_url} — usa este dominio como base para construir las URLs en primary_url y additional_urls.";
-        }
-
-        return $header . "\n\n" . implode("\n\n", $sections);
     }
 
     // ── Private helpers ────────────────────────────────────────────────────

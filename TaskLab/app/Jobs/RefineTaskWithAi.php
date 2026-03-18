@@ -55,9 +55,19 @@ class RefineTaskWithAi implements ShouldQueue
         $categoryTree = $this->buildCategoryTree();
         $teamContext  = $this->buildTeamContext();
         $similarTasks = $this->findSimilarTasks();
-        $codeContext  = $github->buildCodeContext(
-            $this->task->description_raw . ' ' . ($this->task->title ?? '')
-        );
+        try {
+            $t0 = microtime(true);
+            $codeContext = $github->buildCodeContext(
+                $this->task->description_raw . ' ' . ($this->task->title ?? '')
+            );
+            $elapsed = round(microtime(true) - $t0, 2);
+            Log::info("RefineTaskWithAi: code context built in {$elapsed}s for task #{$this->task->id}", [
+                'has_context' => $codeContext !== '',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("RefineTaskWithAi: error building code context for task #{$this->task->id}: " . $e->getMessage());
+            $codeContext = '';
+        }
 
         // 2. Llamar a la IA con contexto completo
         $result = $refiner->refine(
