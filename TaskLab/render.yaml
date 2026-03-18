@@ -11,5 +11,5 @@ services:
     name: tasklab-queue
     env: docker
     dockerfilePath: ./Dockerfile
-    dockerCommand: php artisan queue:work --tries=3 --timeout=120 --sleep=3
+    dockerCommand: php artisan queue:work --tries=3 --timeout=120 --sleep=3 --max-time=3600
     numInstances: 1
