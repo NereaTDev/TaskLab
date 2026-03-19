@@ -161,9 +161,12 @@ Si no hay tareas existentes proporcionadas, devuelve siempre "unique".
 ASIGNACIÓN DE EQUIPO Y PERFIL{$teamSection}
 
 INSTRUCCIONES DE ASIGNACIÓN:
-- Analiza la tarea y determina qué equipo debería resolverla usando el árbol de EQUIPOS Y PERFILES anterior.
-- "team": nombre EXACTO del equipo (tal como aparece en "Equipo: X"). Si no hay equipos definidos o no encaja en ninguno, pon null.
-- "required_position": describe en pocas palabras qué perfil se necesita para resolver esta tarea (ej. "Frontend Developer", "Backend Developer", "Product Manager"). Intenta que coincida con alguno de los perfiles listados en el equipo elegido. Si no puedes determinarlo, pon null.
+- Analiza la tarea y determina qué equipo debe resolverla usando el árbol de EQUIPOS Y PERFILES anterior.
+- "team": nombre EXACTO del equipo (tal como aparece en "Equipo: X"). Si no hay equipos o no encaja en ninguno, pon null.
+- "required_position": nombre EXACTO del perfil/subcategoría necesario dentro del equipo elegido (ej. "Frontend", "Backend", "React Developer"). Debe coincidir lo máximo posible con uno de los valores mostrados en el árbol del equipo (los que aparecen como "- NombreValor" o "  - NombreSubcategoría"). NO inventes perfiles que no existan en el árbol. Si no puedes determinarlo, pon null.
+- CRÍTICO: NO asignes tareas a equipos equivocados. Una tarea de frontend NO puede ir a un equipo de ventas o backend. Una tarea de base de datos NO puede ir a diseño. Elige el equipo cuyo árbol de categorías sea más relevante para la naturaleza técnica de la tarea.
+- Si el equipo tiene miembros con muchas horas activas (indicado como "Xh activas"), prioriza el perfil con menos carga dentro del mismo equipo.
+- El campo "categories" también debe reflejar la ruta correcta: ["NombreEquipo", "NombreValor", "NombreSubcategoría"] (usa los mismos nombres exactos del árbol de categorías).
 PROMPT;
 
             if ($codeSection) {

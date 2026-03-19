@@ -132,7 +132,7 @@
                     :href="modalTask.primary_url"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="flex items-center gap-1.5 text-body text-tasklab-accent hover:underline break-all"
+                    class="flex items-center gap-1.5 w-fit text-body text-tasklab-accent hover:underline break-all"
                     x-text="modalTask.primary_url"
                   ></a>
                 </div>
@@ -149,7 +149,7 @@
                           :href="url"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="flex items-center gap-1.5 text-body text-tasklab-accent hover:underline break-all"
+                          class="flex items-center gap-1.5 w-fit text-body text-tasklab-accent hover:underline break-all"
                           x-text="url"
                         ></a>
                       </li>

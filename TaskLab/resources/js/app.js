@@ -17,6 +17,9 @@ Alpine.data('taskModal', (initialCategoryTypes = []) => ({
     categorySelections: {},
 
     init() {
+        this.$watch('isTaskModalOpen', (val) => {
+            document.body.classList.toggle('overflow-hidden', val);
+        });
         window.addEventListener('open-task-modal', (e) => {
             this.openTaskModal(e.detail);
         });
@@ -128,52 +131,53 @@ Alpine.data('taskBoard', (updateUrlTemplate, initialTasks = []) => ({
         return this.tasks.filter(t => statuses.includes(t.status));
     },
 
+    async _patchStatus(taskId, newStatus) {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const url = (this.updateUrlTemplate || '').replace('TASK_ID_PLACEHOLDER', taskId);
+        const res = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfMeta?.getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ status: newStatus }),
+        });
+        return res.ok;
+    },
+
+    async setTaskStatus(taskId, newStatus) {
+        if (!taskId || !newStatus) return;
+        try {
+            const ok = await this._patchStatus(taskId, newStatus);
+            if (ok) {
+                const idx = this.tasks.findIndex(t => Number(t.id) === Number(taskId));
+                if (idx !== -1) this.tasks[idx].status = newStatus;
+            }
+        } catch (e) {
+            console.error('Error updating task status', e);
+        }
+    },
+
     async moveTaskToStatus(newStatus) {
         const currentTaskId = this.draggedTaskId;
-
-        if (!currentTaskId || this.isUpdating || !newStatus) {
-            return;
-        }
+        if (!currentTaskId || this.isUpdating || !newStatus) return;
 
         this.isUpdating = true;
         try {
-            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-            const csrf = csrfMeta ? csrfMeta.getAttribute('content') : null;
-            const urlTemplate = this.updateUrlTemplate || '';
-            const url = urlTemplate.replace('TASK_ID_PLACEHOLDER', currentTaskId);
-
-            const res = await fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({ status: newStatus }),
-            });
-
-            if (!res.ok) {
-                return;
-            }
+            const ok = await this._patchStatus(currentTaskId, newStatus);
+            if (!ok) return;
 
             const taskIdNum = Number(currentTaskId);
             const idx = this.tasks.findIndex(t => Number(t.id) === taskIdNum);
-            if (idx !== -1) {
-                this.tasks[idx].status = newStatus;
-            }
+            if (idx !== -1) this.tasks[idx].status = newStatus;
 
             try {
-                const cardSelector = `[data-task-id="${currentTaskId}"]`;
-                const targetColumnSelector = `[data-column-body="${newStatus}"]`;
-                const cardEl = document.querySelector(cardSelector);
-                const targetColumnBody = document.querySelector(targetColumnSelector);
-                if (cardEl && targetColumnBody) {
-                    targetColumnBody.appendChild(cardEl);
-                }
-            } catch (_) {
-                // silenciar errores de DOM fallback
-            }
+                const cardEl = document.querySelector(`[data-task-id="${currentTaskId}"]`);
+                const targetColumnBody = document.querySelector(`[data-column-body="${newStatus}"]`);
+                if (cardEl && targetColumnBody) targetColumnBody.appendChild(cardEl);
+            } catch (_) {}
         } catch (e) {
             console.error('Error updating task status', e);
         } finally {

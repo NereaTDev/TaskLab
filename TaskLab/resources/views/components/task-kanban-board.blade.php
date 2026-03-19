@@ -30,7 +30,7 @@
       'target'   => 'ready_for_dev',
       'icon'     => 'clock',
       'bg'       => 'bg-slate-900',
-      'header'   => 'bg-slate-800 border-slate-700',
+      'header'   => 'bg-[#F4C85E2E] border-slate-700',
       'badge'    => 'bg-tasklab-accent/10 text-tasklab-accent border border-tasklab-accent/40',
     ],
     'in_progress' => [
@@ -96,7 +96,7 @@
 @endphp
 
 <div
-  class="grid grid-cols-1 {{ ($archivedView || $filteredColumnKey) ? '' : 'md:grid-cols-3 lg:grid-cols-5' }} gap-4"
+  class="grid grid-cols-1 {{ ($archivedView || $filteredColumnKey) ? '' : 'lg:grid-cols-5' }} gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-x-visible pb-2 md:pb-0 -mx-4 px-4 mx-0 md:px-0"
   x-data="taskBoard('{{ route('tasks.updateStatus', ['task' => 'TASK_ID_PLACEHOLDER'], false) }}', @js($tasks->values()))"
   x-init="
     @if($openTaskId)
@@ -112,7 +112,7 @@
       $count = $tasks->whereIn('status', $col['statuses'])->count();
     @endphp
     <div
-      class="rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]"
+      class="snap-center shrink-0 w-[85vw] md:w-auto rounded-xl border border-slate-800 {{ $col['bg'] }} flex flex-col min-h-[400px]"
       @dragover.prevent
       @drop.prevent="moveTaskToStatus('{{ $col['target'] }}')"
     >
@@ -132,23 +132,23 @@
           @endif
           <span class="text-sm font-semibold text-tasklab-text">{{ $col['label'] }}</span>
         </div>
-        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $col['badge'] }}">{{ $count }}</span>
         @if(in_array($key, ['backlog', 'pending', 'in_progress']))
           <button
             type="button"
-            class="p-1 rounded-md text-tasklab-accent hover:bg-tasklab-accent/10 hover:text-tasklab-accent"
+            class="p-1 rounded-md text-tasklab-accent hover:bg-tasklab-accent/10 hover:text-tasklab-accent ml-auto"
             title="Añadir tarea"
             @click.stop="openCreateTaskModal({ status: '{{ $col['target'] }}' })"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           </button>
         @endif
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 ml-2 text-xs font-medium {{ $col['badge'] }}">{{ $count }}</span>
       </div>
 
-      <div class="flex-1 p-2 space-y-2 overflow-y-auto" data-column-body="{{ $col['target'] }}">
+      <div class="flex-1 p-2 justify-center space-y-2 overflow-x-auto md:overflow-x-hidden flex md:block gap-2 md:overflow-y-auto" data-column-body="{{ $col['target'] }}">
         <template x-for="task in columnTasks(@js($col['statuses']))" :key="task.id">
           <div
-            class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 shadow-card hover:border-tasklab-accent transition-shadow cursor-move"
+            class="block rounded-lg border border-slate-800 bg-tasklab-bg-muted p-3 max-md:min-w-[240px] shadow-card hover:border-tasklab-accent transition-shadow cursor-move"
             draggable="true"
             :data-task-id="task.id"
             @dragstart="draggedTaskId = task.id"

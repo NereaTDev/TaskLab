@@ -15,12 +15,12 @@
   <div
     x-cloak
     x-show="isTaskModalOpen"
-    class="fixed inset-0 z-40 flex items-center justify-center bg-black/60"
+    class="fixed inset-0 z-40 flex items-end md:items-center justify-center bg-black/60 p-4"
     @keydown.escape.window="closeTaskModal()"
   >
     <template x-if="modalTask">
       <div
-        class="w-full max-w-4xl rounded-2xl border border-slate-800 bg-tasklab-bg shadow-2xl flex flex-col overflow-hidden"
+        class="w-full md:max-w-6xl md:w-[80dvw] h-[95dvh] md:max-h-[92dvh] rounded-2xl border border-slate-800 bg-tasklab-bg shadow-2xl flex flex-col overflow-hidden"
         @click.outside="closeTaskModal()"
       >
         <x-task-modal.form :users="$users" />

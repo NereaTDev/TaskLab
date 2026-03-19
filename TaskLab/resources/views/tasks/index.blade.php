@@ -1,9 +1,29 @@
 <x-app-layout>
+    {{-- Persistencia del modo de vista (kanban/lista) en localStorage --}}
+    @if(!request()->has('view_mode'))
+    <script>
+        (function () {
+            var saved = localStorage.getItem('tasklab_view_mode');
+            if (saved === 'list') {
+                var params = new URLSearchParams(window.location.search);
+                params.set('view_mode', 'list');
+                window.location.replace(window.location.pathname + '?' + params.toString());
+            }
+        })();
+    </script>
+    @endif
+
     <div class="max-w-[1600px] mx-auto py-6 px-4">
-        {{-- Barra de búsqueda y filtros (estilo DevTask) --}}
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-            <div class="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-                <div class="flex-1 min-w-[200px] flex items-center gap-2 rounded-xl border border-slate-800 bg-tasklab-bg-muted px-3 py-1 text-body">
+        {{-- Barra de búsqueda y filtros --}}
+        @php
+            $hasActiveFilters = ($status ?? 'all') !== 'all'
+                || ($priority ?? 'all') !== 'all'
+                || (($assigneeId ?? 'all') !== 'all');
+        @endphp
+        <div x-data="{ showFilters: {{ $hasActiveFilters ? 'true' : 'false' }} }" class="flex flex-col gap-3 mb-6">
+            {{-- Fila principal: búsqueda + acciones --}}
+            <div class="flex items-center gap-2">
+                <div class="flex-1 flex items-center gap-2 rounded-xl border border-slate-800 bg-tasklab-bg-muted px-3 py-1 text-body">
                     <svg class="h-4 w-4 shrink-0 text-tasklab-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
                         type="text"
@@ -11,38 +31,58 @@
                         class="w-full bg-transparent border-none text-body text-tasklab-text placeholder:text-tasklab-muted focus:outline-none focus:ring-0 p-1"
                     >
                 </div>
-                @php
-                    $hasActiveFilters = ($status ?? 'all') !== 'all'
-                        || ($priority ?? 'all') !== 'all'
-                        || (($assigneeId ?? 'all') !== 'all');
-                @endphp
-
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <x-task-view-filter />
-                    <x-task-priority-filter :current="$priority ?? 'all'" />
-                    <x-task-status-filter :current="$status ?? 'all'" :view="$view" />
-                    <x-task-assignee-filter :current="$assigneeId ?? 'all'" :users="$selectableUsers ?? collect()" />
-
-                    @if($hasActiveFilters)
-                        <a
-                            href="{{ route('tasks.index', ['view' => $view, 'view_mode' => $viewMode]) }}"
-                            class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-danger hover:text-tasklab-danger transition-colors"
-                        >
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            Limpiar filtros
-                        </a>
-                    @endif
-                </div>
+                {{-- Botón filtros (mobile) --}}
+                <button
+                    type="button"
+                    class="sm:hidden shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-slate-800 bg-tasklab-bg-muted px-3 py-2 text-body text-tasklab-muted"
+                    :class="showFilters ? 'border-tasklab-accent text-tasklab-accent' : ''"
+                    @click="showFilters = !showFilters"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                    @if($hasActiveFilters)<span class="h-1.5 w-1.5 rounded-full bg-tasklab-accent"></span>@endif
+                </button>
+                {{-- "Nueva Tarea" en desktop --}}
+                <button
+                    type="button"
+                    class="hidden sm:inline-flex shrink-0 items-center gap-2 rounded-full bg-tasklab-accent px-4 py-2 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
+                    onclick="window.dispatchEvent(new CustomEvent('open-create-task'))"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Nueva Tarea
+                </button>
             </div>
-            <button
-                type="button"
-                class="shrink-0 inline-flex items-center gap-2 rounded-full bg-tasklab-accent px-4 py-2 text-body font-medium text-slate-950 hover:bg-tasklab-accent-soft"
-                onclick="window.dispatchEvent(new CustomEvent('open-create-task'))"
+
+            {{-- Filtros: siempre visibles en sm+, colapsables en mobile --}}
+            <div
+                x-show="showFilters"
+                x-cloak
+                class="sm:!block flex flex-wrap items-center gap-1.5"
             >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Nueva Tarea
-            </button>
+                <x-task-view-filter />
+                <x-task-priority-filter :current="$priority ?? 'all'" />
+                <x-task-status-filter :current="$status ?? 'all'" :view="$view" />
+                <x-task-assignee-filter :current="$assigneeId ?? 'all'" :users="$selectableUsers ?? collect()" />
+
+                @if($hasActiveFilters)
+                    <a
+                        href="{{ route('tasks.index', ['view' => $view, 'view_mode' => $viewMode]) }}"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-3 py-2 text-body font-medium text-tasklab-muted hover:border-tasklab-danger hover:text-tasklab-danger transition-colors"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Limpiar filtros
+                    </a>
+                @endif
+            </div>
         </div>
+
+        {{-- FAB Nueva Tarea (mobile only) --}}
+        <button
+            type="button"
+            class="sm:hidden fixed bottom-20 right-4 z-20 inline-flex h-14 w-14 items-center justify-center rounded-full bg-tasklab-accent shadow-lg text-slate-950 hover:bg-tasklab-accent-soft"
+            onclick="window.dispatchEvent(new CustomEvent('open-create-task'))"
+        >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </button>
 
         @php
             $total = $stats['total'] ?? 0;

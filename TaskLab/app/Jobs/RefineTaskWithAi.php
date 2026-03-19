@@ -119,13 +119,16 @@ class RefineTaskWithAi implements ShouldQueue
         }
 
         // 5. Aplicar refinamiento completo
-        $this->applyRefinement($result);
+        // Calculamos los category value IDs una sola vez para reutilizarlos en la asignación
+        $categoryValueIds = $this->mapCategoriesToValues($result['categories'] ?? []);
+        $this->applyRefinement($result, $categoryValueIds);
 
-        // 6. Asignar la tarea (pasando el equipo y posición sugeridos por la IA)
+        // 6. Asignar la tarea (pasando equipo, posición y category values sugeridos por la IA)
         $assignment->assign(
             $this->task->fresh(),
             $result['team']              ?? '',
             $result['required_position'] ?? '',
+            $categoryValueIds,
         );
     }
 
@@ -160,12 +163,18 @@ class RefineTaskWithAi implements ShouldQueue
     }
 
     /**
-     * Construye el contexto de equipos para la IA: por cada CategoryType lista
-     * los perfiles (posición) de los usuarios asignados a él.
+     * Construye el contexto de equipos para la IA.
+     * Por cada CategoryType muestra la jerarquía de valores (roles/departamentos)
+     * con el número de miembros asignados a cada uno y su carga de trabajo actual.
+     * Esto permite a la IA elegir el equipo y posición adecuados para cada tarea.
      */
     private function buildTeamContext(): string
     {
-        $types = CategoryType::orderBy('name')->get();
+        $types = CategoryType::with([
+            'values' => fn ($q) => $q->whereNull('parent_id')->orderBy('sort_order')->with([
+                'children' => fn ($q) => $q->orderBy('sort_order'),
+            ]),
+        ])->orderBy('name')->get();
 
         if ($types->isEmpty()) {
             return '';
@@ -175,7 +184,7 @@ class RefineTaskWithAi implements ShouldQueue
 
         foreach ($types as $type) {
             // IDs de usuarios con asignaciones en este CategoryType
-            $userIds = UserCategoryAssignment::join(
+            $typeUserIds = UserCategoryAssignment::join(
                 'category_values',
                 'category_values.id', '=', 'user_category_assignments.category_value_id'
             )
@@ -183,26 +192,46 @@ class RefineTaskWithAi implements ShouldQueue
                 ->distinct()
                 ->pluck('user_category_assignments.user_id');
 
-            if ($userIds->isEmpty()) {
-                continue;
-            }
-
-            $users = User::whereIn('id', $userIds)
-                ->where('is_super_admin', false)
-                ->get(['id', 'name', 'position']);
-
-            if ($users->isEmpty()) {
+            if ($typeUserIds->isEmpty()) {
                 continue;
             }
 
             $lines[] = "Equipo: {$type->name}";
 
-            $positions = $users->pluck('position')->filter()->unique()->values();
-            if ($positions->isNotEmpty()) {
-                $lines[] = "  Perfiles disponibles: " . $positions->implode(', ');
+            // Mostrar la jerarquía de valores con miembros y carga
+            foreach ($type->values as $rootValue) {
+                $rootUserIds = UserCategoryAssignment::where('category_value_id', $rootValue->id)
+                    ->pluck('user_id');
+
+                $childLines = [];
+                foreach ($rootValue->children as $child) {
+                    $childUserIds = UserCategoryAssignment::where('category_value_id', $child->id)
+                        ->pluck('user_id');
+
+                    if ($childUserIds->isEmpty()) {
+                        continue;
+                    }
+
+                    $totalHours = (float) Task::whereIn('assignee_id', $childUserIds)
+                        ->whereIn('status', ['new', 'ready_for_dev', 'in_progress'])
+                        ->sum('points');
+
+                    $childLines[] = "      - {$child->name} [{$childUserIds->count()} miembro(s), {$totalHours}h activas]";
+                }
+
+                if ($rootUserIds->isNotEmpty() || ! empty($childLines)) {
+                    $rootHours = (float) Task::whereIn('assignee_id', $rootUserIds)
+                        ->whereIn('status', ['new', 'ready_for_dev', 'in_progress'])
+                        ->sum('points');
+
+                    $lines[] = "  - {$rootValue->name} [{$rootUserIds->count()} miembro(s), {$rootHours}h activas]";
+                    foreach ($childLines as $cl) {
+                        $lines[] = $cl;
+                    }
+                }
             }
 
-            $lines[] = "  Miembros: {$users->count()}";
+            $lines[] = ''; // línea en blanco entre equipos
         }
 
         return implode("\n", $lines);
@@ -277,7 +306,7 @@ class RefineTaskWithAi implements ShouldQueue
         Log::info("RefineTaskWithAi: tarea #{$this->task->id} fusionada en #{$existingTask->id}");
     }
 
-    private function applyRefinement(array $result): void
+    private function applyRefinement(array $result, array $categoryValueIds = []): void
     {
         $points = $result['points'] ?? null;
         if (is_numeric($points)) {
@@ -318,7 +347,10 @@ class RefineTaskWithAi implements ShouldQueue
         $this->task->update($update);
 
         // Mapear categorías propuestas por la IA contra los valores reales de la BD
-        $categoryValueIds = $this->mapCategoriesToValues($result['categories'] ?? []);
+        // (si ya se calcularon fuera, se reutilizan; evita doble llamada)
+        if (empty($categoryValueIds)) {
+            $categoryValueIds = $this->mapCategoriesToValues($result['categories'] ?? []);
+        }
         if (! empty($categoryValueIds)) {
             $this->task->categoryValues()->sync($categoryValueIds);
         }

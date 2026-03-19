@@ -7,7 +7,7 @@
     };
 @endphp
 
-<div class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-2 py-1">
+<div x-data class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-tasklab-bg px-2 py-1">
     {{-- Botón Kanban --}}
     <a
         href="{{ $linkFor('board') }}"
@@ -15,6 +15,7 @@
             ? 'bg-tasklab-accent text-slate-950'
             : 'bg-tasklab-bg text-tasklab-muted hover:bg-tasklab-bg-muted hover:text-tasklab-text' }} transition-colors"
         title="Vista Kanban"
+        @click="localStorage.setItem('tasklab_view_mode', 'board')"
     >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -29,6 +30,7 @@
             ? 'bg-tasklab-accent text-slate-950'
             : 'bg-tasklab-bg text-tasklab-muted hover:bg-tasklab-bg-muted hover:text-tasklab-text' }} transition-colors"
         title="Vista Lista"
+        @click="localStorage.setItem('tasklab_view_mode', 'list')"
     >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10" />
