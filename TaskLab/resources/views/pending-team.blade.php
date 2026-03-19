@@ -40,6 +40,20 @@
                 @endif
             </div>
 
+            {{-- Estado de comprobación automática --}}
+            <div x-data="pendingCheck()" x-init="start()" class="text-xs text-tasklab-muted flex items-center justify-center gap-2">
+                <span x-show="!assigned" class="flex items-center gap-2">
+                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-tasklab-muted animate-pulse"></span>
+                    <span x-text="status"></span>
+                </span>
+                <span x-show="assigned" class="flex items-center gap-2 text-emerald-400">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Asignado — redirigiendo…
+                </span>
+            </div>
+
             {{-- Acciones --}}
             <div class="flex items-center justify-center gap-3 pt-2">
                 <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-tasklab-bg-muted px-4 py-2 text-xs font-medium text-tasklab-muted hover:text-tasklab-text hover:border-slate-600 transition-colors">
@@ -60,4 +74,34 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function pendingCheck() {
+        return {
+            assigned: false,
+            status: 'Comprobando asignación…',
+            timer: null,
+
+            start() {
+                this.timer = setInterval(() => this.check(), 5000);
+            },
+
+            async check() {
+                try {
+                    const res  = await fetch('/pending-team/check');
+                    const data = await res.json();
+                    if (data.has_team) {
+                        this.assigned = true;
+                        clearInterval(this.timer);
+                        setTimeout(() => { window.location.href = '{{ route('tasks.index') }}'; }, 1000);
+                    } else {
+                        this.status = 'Esperando asignación…';
+                    }
+                } catch {
+                    this.status = 'Comprobando asignación…';
+                }
+            },
+        };
+    }
+    </script>
 </x-app-layout>

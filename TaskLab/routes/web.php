@@ -37,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Página de espera de asignación de equipo (accesible sin equipo)
     Route::get('/pending-team', fn () => view('pending-team'))->name('pending-team');
+    Route::get('/pending-team/check', fn () => response()->json([
+        'has_team' => (bool) request()->user()?->hasTeam(),
+    ]))->name('pending-team.check');
 
     // GitHub OAuth callback (fuera de team.required, la sesión ya está activa)
     Route::get('/settings/github/callback', [GithubConnectionController::class, 'callback'])->name('settings.github.callback');

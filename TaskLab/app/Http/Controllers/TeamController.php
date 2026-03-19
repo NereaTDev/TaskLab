@@ -33,6 +33,24 @@ class TeamController extends Controller
             ->where('is_super_admin', false)
             ->with(['developerProfile', 'categoryValues.type', 'categoryValues.parent']);
 
+        // Admin de área: limitar a miembros de sus propios equipos (CategoryTypes)
+        if ($user->isAreaAdmin()) {
+            $adminTypeIds = \DB::table('user_category_assignments')
+                ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+                ->where('user_category_assignments.user_id', $user->id)
+                ->pluck('category_values.category_type_id')
+                ->unique();
+
+            $memberIds = \DB::table('user_category_assignments')
+                ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+                ->whereIn('category_values.category_type_id', $adminTypeIds)
+                ->pluck('user_category_assignments.user_id')
+                ->unique()
+                ->push($user->id);
+
+            $query->whereIn('id', $memberIds);
+        }
+
         // Filtros clásicos solo cuando no estamos en modo tablero especial
         if (! $group) {
             if ($filters['department']) {
@@ -76,9 +94,22 @@ class TeamController extends Controller
         $areaOptions = collect(['web', 'plataforma', 'frontierz', 'dashboard_empresas']);
 
         // Tipos de categoría (= equipos), con sus valores para los selectores de asignación
-        $categoryTypes = CategoryType::with(['values' => function ($q) {
+        // Admin de área: solo ve los tipos a los que él pertenece
+        $categoryTypesQuery = CategoryType::with(['values' => function ($q) {
             $q->orderBy('sort_order')->orderBy('name');
-        }])->orderBy('name')->get();
+        }])->orderBy('name');
+
+        if ($user->isAreaAdmin()) {
+            $adminTypeIds = \DB::table('user_category_assignments')
+                ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+                ->where('user_category_assignments.user_id', $user->id)
+                ->pluck('category_values.category_type_id')
+                ->unique();
+
+            $categoryTypesQuery->whereIn('id', $adminTypeIds);
+        }
+
+        $categoryTypes = $categoryTypesQuery->get();
 
         // Agrupaciones especiales para vistas tipo tablero
         $categoryBoardType = null;
@@ -180,12 +211,13 @@ class TeamController extends Controller
             }
         }
 
-        // Usuarios sin ninguna asignación de categoría (= sin equipo) — solo visible para superadmin
-        // Los CategoryTypes son los "equipos": si no tienes ningún valor asignado, no perteneces a ningún equipo.
+        // Usuarios sin ninguna asignación de categoría (= sin equipo)
+        // SA ve todos; Admin de área también los ve para poder asignarlos a sus equipos.
         $pendingUsers = collect();
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() || $user->isAreaAdmin()) {
             $pendingUsers = User::where('is_super_admin', false)
-                ->where(fn ($q) => $q->whereNull('user_type')->orWhere('user_type', '!=', 'requester'))
+                ->where('email', 'not like', 'discord+%')
+                ->where('email', 'not like', 'teams+%')
                 ->whereDoesntHave('categoryAssignments')
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -241,8 +273,7 @@ class TeamController extends Controller
     {
         $current = $request->user();
 
-        // Solo el Super Admin puede mover/clonar/eliminar asignaciones de categorías por ahora
-        abort_unless($current && $current->isSuperAdmin(), 403);
+        abort_unless($current && ($current->isSuperAdmin() || $current->isAreaAdmin()), 403);
 
         $validated = $request->validate([
             'user_id'           => ['required', 'integer', 'exists:users,id'],
@@ -258,6 +289,17 @@ class TeamController extends Controller
         $type         = CategoryType::where('slug', $validated['category_type_slug'])->firstOrFail();
         $clone        = (bool) ($validated['clone'] ?? false);
         $deleteSingle = (bool) ($validated['delete_single'] ?? false);
+
+        // Admin de área: solo puede gestionar CategoryTypes a los que él mismo pertenece
+        if ($current->isAreaAdmin()) {
+            $adminTypeIds = \DB::table('user_category_assignments')
+                ->join('category_values', 'category_values.id', '=', 'user_category_assignments.category_value_id')
+                ->where('user_category_assignments.user_id', $current->id)
+                ->pluck('category_values.category_type_id')
+                ->unique();
+
+            abort_unless($adminTypeIds->contains($type->id), 403);
+        }
 
         // Si no se especifica category_value_id, eliminar todas las asignaciones de este tipo
         if (! $validated['category_value_id']) {

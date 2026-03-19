@@ -37,6 +37,13 @@ class User extends Authenticatable
         ];
     }
 
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
     public function developerProfile()
     {
         return $this->hasOne(DeveloperProfile::class);

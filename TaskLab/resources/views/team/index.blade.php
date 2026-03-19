@@ -41,6 +41,7 @@
         $totalMembers  = $teamMembers->count();
         $adminsCount   = $teamMembers->where('is_admin', true)->count();
         $isSuperAdmin  = auth()->user()->isSuperAdmin();
+        $isAreaAdmin   = auth()->user()->isAreaAdmin();
 
         // Pre-build JSON-safe data for Alpine (avoids Blade bracket-matching issues inside @json())
         $categoryTypesJson = $categoryTypes->map(function ($t) {
@@ -78,13 +79,13 @@
                         <span class="text-tasklab-muted">Admins</span>
                         <span class="text-tasklab-text font-semibold">{{ $adminsCount }}</span>
                     </div>
-                    @if($pendingUsers->isNotEmpty())
-                        <div class="inline-flex items-center gap-2 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-3 py-1.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-yellow-400"></span>
-                            <span class="text-yellow-300">Sin equipo</span>
-                            <span class="text-yellow-200 font-semibold">{{ $pendingUsers->count() }}</span>
-                        </div>
-                    @endif
+                @endif
+                @if(($isSuperAdmin || $isAreaAdmin) && $pendingUsers->isNotEmpty())
+                    <div class="inline-flex items-center gap-2 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-3 py-1.5">
+                        <span class="h-1.5 w-1.5 rounded-full bg-yellow-400"></span>
+                        <span class="text-yellow-300">Sin equipo</span>
+                        <span class="text-yellow-200 font-semibold">{{ $pendingUsers->count() }}</span>
+                    </div>
                 @endif
             </div>
         </div>
@@ -105,8 +106,8 @@
             <span x-text="toast"></span>
         </div>
 
-        {{-- ── Pending users (SuperAdmin only) ── --}}
-        @if($isSuperAdmin && $pendingUsers->isNotEmpty())
+        {{-- ── Pending users ── --}}
+        @if(($isSuperAdmin || $isAreaAdmin) && $pendingUsers->isNotEmpty())
             <div class="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5 shadow-card space-y-4">
                 <div class="flex items-center gap-2">
                     <svg class="h-4 w-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,19 +120,7 @@
 
                 <div class="space-y-2">
                     @foreach($pendingUsers as $pUser)
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/60 bg-tasklab-bg/60 px-4 py-3"
-                            x-data="{
-                                typeSlug: '',
-                                valueId: '',
-                                loading: false,
-                                allTypes: @json($categoryTypesJson),
-                                get currentValues() {
-                                    const t = this.allTypes.find(t => t.slug === this.typeSlug);
-                                    return t ? t.values : [];
-                                }
-                            }"
-                        >
+                        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700/60 bg-tasklab-bg/60 px-4 py-3">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-tasklab-text">
                                     {{ strtoupper(substr($pUser->name, 0, 2)) }}
@@ -146,40 +135,33 @@
 
                             <div class="flex flex-wrap items-center gap-2">
                                 <select
-                                    x-model="typeSlug"
-                                    @change="valueId = ''"
+                                    @change="initPending({{ $pUser->id }}, $event.target.value)"
                                     class="rounded-lg border border-slate-700 bg-tasklab-bg px-2 py-1.5 text-xs text-tasklab-text focus:border-tasklab-accent focus:outline-none"
                                 >
                                     <option value="">Selecciona equipo…</option>
-                                    <template x-for="t in allTypes" :key="t.slug">
+                                    <template x-for="t in categoryTypes" :key="t.slug">
                                         <option :value="t.slug" x-text="t.name"></option>
                                     </template>
                                 </select>
 
                                 <select
-                                    x-model="valueId"
-                                    x-show="typeSlug && currentValues.length"
+                                    x-show="pendingTypeSlug({{ $pUser->id }})"
+                                    @change="setPendingValue({{ $pUser->id }}, $event.target.value)"
                                     class="rounded-lg border border-slate-700 bg-tasklab-bg px-2 py-1.5 text-xs text-tasklab-text focus:border-tasklab-accent focus:outline-none"
+                                    style="display:none"
                                 >
                                     <option value="">Selecciona categoría…</option>
-                                    <template x-for="v in currentValues" :key="v.id">
+                                    <template x-for="v in pendingValues({{ $pUser->id }})" :key="v.id">
                                         <option :value="v.id" x-text="v.name"></option>
                                     </template>
                                 </select>
 
                                 <button
-                                    @click="
-                                        if (!typeSlug || !valueId) return;
-                                        loading = true;
-                                        $dispatch('assign-user', { userId: {{ $pUser->id }}, typeSlug, valueId });
-                                        typeSlug = ''; valueId = '';
-                                        setTimeout(() => { loading = false; }, 1200);
-                                    "
-                                    :disabled="!typeSlug || !valueId || loading"
+                                    @click="assignPending({{ $pUser->id }})"
+                                    :disabled="!pendingTypeSlug({{ $pUser->id }}) || !pendingValueId({{ $pUser->id }})"
                                     class="inline-flex items-center gap-1.5 rounded-lg bg-tasklab-accent/20 border border-tasklab-accent/40 px-3 py-1.5 text-xs font-medium text-tasklab-accent hover:bg-tasklab-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    <span x-show="!loading">Asignar</span>
-                                    <span x-show="loading">…</span>
+                                    Asignar
                                 </button>
                             </div>
                         </div>
@@ -249,8 +231,8 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Actions dropdown (SuperAdmin only) --}}
-                                                @if($isSuperAdmin)
+                                                {{-- Actions dropdown (SA + Area Admin) --}}
+                                                @if($isSuperAdmin || $isAreaAdmin)
                                                     <div class="relative shrink-0" x-data="{ open: false }" @click.outside="open = false">
                                                         <button
                                                             @click="open = !open"
@@ -269,26 +251,27 @@
                                                             class="absolute right-0 top-7 z-30 w-48 rounded-xl border border-slate-700 bg-tasklab-bg shadow-xl py-1"
                                                             style="display:none"
                                                         >
-                                                            {{-- Role actions --}}
-                                                            @if(!$member->is_admin)
-                                                                <button
-                                                                    @click="open=false; updateRole({{ $member->id }}, 'admin')"
-                                                                    class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
-                                                                >
-                                                                    <svg class="h-3.5 w-3.5 text-tasklab-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                                    Hacer admin
-                                                                </button>
-                                                            @else
-                                                                <button
-                                                                    @click="open=false; updateRole({{ $member->id }}, 'standard')"
-                                                                    class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
-                                                                >
-                                                                    <svg class="h-3.5 w-3.5 text-tasklab-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                                                    Quitar admin
-                                                                </button>
+                                                            {{-- Role actions (SA only) --}}
+                                                            @if($isSuperAdmin)
+                                                                @if(!$member->is_admin)
+                                                                    <button
+                                                                        @click="open=false; updateRole({{ $member->id }}, 'admin')"
+                                                                        class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
+                                                                    >
+                                                                        <svg class="h-3.5 w-3.5 text-tasklab-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                                                        Hacer admin
+                                                                    </button>
+                                                                @else
+                                                                    <button
+                                                                        @click="open=false; updateRole({{ $member->id }}, 'standard')"
+                                                                        class="flex w-full items-center gap-2 px-3 py-2 text-xs text-tasklab-text hover:bg-slate-800 transition-colors"
+                                                                    >
+                                                                        <svg class="h-3.5 w-3.5 text-tasklab-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                                        Quitar admin
+                                                                    </button>
+                                                                @endif
+                                                                <div class="my-1 border-t border-slate-800"></div>
                                                             @endif
-
-                                                            <div class="my-1 border-t border-slate-800"></div>
 
                                                             {{-- Move to another team --}}
                                                             <button
@@ -463,12 +446,37 @@
             },
 
             categoryTypes: @json($categoryTypesJson),
+            pending: {}, // { userId: { typeSlug, valueId } }
 
             init() {
                 this.$el.addEventListener('assign-user', (e) => {
                     const { userId, typeSlug, valueId } = e.detail;
                     this.doAssign(userId, typeSlug, valueId, false);
                 });
+            },
+
+            initPending(userId, typeSlug) {
+                this.pending[userId] = { typeSlug, valueId: '' };
+            },
+            setPendingValue(userId, valueId) {
+                if (this.pending[userId]) this.pending[userId].valueId = valueId;
+            },
+            pendingTypeSlug(userId) {
+                return this.pending[userId]?.typeSlug || '';
+            },
+            pendingValueId(userId) {
+                return this.pending[userId]?.valueId || '';
+            },
+            pendingValues(userId) {
+                const slug = this.pendingTypeSlug(userId);
+                const t = this.categoryTypes.find(t => t.slug === slug);
+                return t ? t.values : [];
+            },
+            async assignPending(userId) {
+                const sel = this.pending[userId];
+                if (!sel?.typeSlug || !sel?.valueId) return;
+                await this.doAssign(userId, sel.typeSlug, sel.valueId, false);
+                delete this.pending[userId];
             },
 
             modalValues() {
