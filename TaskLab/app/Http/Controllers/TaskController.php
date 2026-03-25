@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TaskStatus;
+use App\Http\Requests\TaskStoreRequest;
+use App\Http\Requests\TaskUpdateRequest;
 use App\Jobs\RefineTaskWithAi;
+use App\Models\CategoryType;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\CategoryType;
+use App\Services\TaskAnalyticsService;
 use App\Services\TaskAssignmentService;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, TaskAnalyticsService $analytics)
     {
         $user = $request->user();
 
@@ -78,11 +82,10 @@ class TaskController extends Controller
             'done'        => $statusCounts['done'] ?? 0,
         ];
 
-        // Datos adicionales para la vista de análisis
-        $analysisTypeStats = [];
-        $analysisPriorityStats = [];
+        $analysisTypeStats      = [];
+        $analysisPriorityStats  = [];
         $analysisDeveloperStats = [];
-        $analysisTeamMembers = [];
+        $analysisTeamMembers    = [];
 
         if ($view === 'analysis') {
             // Tareas por tipo (mapeadas a categorías de negocio)
@@ -266,8 +269,8 @@ class TaskController extends Controller
             }
         }
 
-        $boardTasks = null;     // tablero global (solo admins)
-        $dashboardTasks = null; // tareas del usuario (dashboard personal)
+        $boardTasks     = null;
+        $dashboardTasks = null;
 
         if ($view === 'board') {
             $boardTasksQuery = Task::with(['reporter', 'assignee', 'categoryValues', 'taskImages']);
@@ -323,14 +326,8 @@ class TaskController extends Controller
             $dashboardTasks = $dashboardTasksQuery->get();
         }
 
-        // Tipos de categoría genéricos (definidos por el superadmin)
-        $categoryTypes = CategoryType::with(['values.children'])
-            ->orderBy('name')
-            ->get();
-
-        // Usuarios disponibles para selects de requester/owner.
-        // TODO: filtrar por rol y categorías (departamentos/áreas/equipos).
-        $selectableUsers = User::orderBy('name')->get();
+        $categoryTypes   = CategoryType::with(['values.children'])->orderBy('name')->get();
+        $selectableUsers = User::orderBy('name')->get(['id', 'name', 'email']);
 
         $openTaskId = $request->get('task');
 
@@ -355,7 +352,7 @@ class TaskController extends Controller
     }
 
 
-    public function store(Request $request, TaskAssignmentService $assignmentService)
+    public function store(TaskStoreRequest $request, TaskAssignmentService $assignmentService)
     {
         $validated = $request->validate([
             'title'            => ['nullable', 'string', 'max:255'],
@@ -412,10 +409,7 @@ class TaskController extends Controller
         // El job RefineTaskWithAi seguirá ejecutándose para Discord/Teams desde sus propios flujos.
         // (Aquí no llamamos a RefineTaskWithAi::dispatch($task)).
 
-        // Redirección según rol: usuarios estándar al dashboard, admins/SA al tablero
-        $targetView = ($user && method_exists($user, 'isStandardUser') && $user->isStandardUser())
-            ? 'dashboard'
-            : 'board';
+        $targetView = $user->isStandardUser() ? 'dashboard' : 'board';
 
         return redirect()
             ->route('tasks.index', ['view' => $targetView])
@@ -441,7 +435,7 @@ class TaskController extends Controller
         ]);
     }
 
-    public function update(Request $request, Task $task)
+    public function update(TaskUpdateRequest $request, Task $task)
     {
         $validated = $request->validate([
             'title'           => ['nullable', 'string', 'max:255'],
@@ -486,9 +480,6 @@ class TaskController extends Controller
             $task->archived_at = now();
         }
 
-        $task->save();
-
-        // Sincronizar categorías dinámicas
         $task->categoryValues()->sync($validated['category_values'] ?? []);
 
         return redirect()
@@ -498,6 +489,8 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
+        $this->authorize('updateStatus', $task);
+
         $validated = $request->validate([
             'status' => ['required', 'in:new,ready_for_dev,in_progress,done,blocked,archived'],
         ]);

@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\TaskStatus;
+use App\Enums\TaskType;
+use App\Enums\TaskPriority;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\CategoryValue;
 
 class Task extends Model
 {
     use HasFactory;
-
-    public function categoryValues()
-    {
-        return $this->belongsToMany(CategoryValue::class, 'task_category_values');
-    }
 
     protected $fillable = [
         'title',
@@ -54,6 +51,8 @@ class Task extends Model
         'done_at'           => 'datetime',
         'ai_refined_at'     => 'datetime',
     ];
+
+    // ─── Relations ────────────────────────────────────────────────────────────
 
     public function reporter()
     {
