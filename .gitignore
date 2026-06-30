@@ -1,3 +1,7 @@
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
+
 # Archivos internos de proceso — no publicar
 AGENTS.md
 HEARTBEAT.md
