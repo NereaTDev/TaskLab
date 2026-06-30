@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Notifications\NewUserRegistered;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,19 +29,17 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'position' => $validated['position'] ?? null,
+            'name'           => $validated['name'],
+            'email'          => $validated['email'],
+            'password'       => Hash::make($validated['password']),
+            'position'       => $validated['position'] ?? null,
+            'is_super_admin' => true,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Notificar a todos los superadmins para asignar al nuevo usuario a un equipo
-        User::where('is_super_admin', true)->each(fn (User $admin) => $admin->notify(new NewUserRegistered($user)));
-
-        return redirect()->route('profile.edit');
+        return redirect()->route('onboarding.show');
     }
 }

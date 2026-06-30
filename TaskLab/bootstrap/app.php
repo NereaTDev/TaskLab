@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'integrations/teams/messages',
             'integrations/discord/messages',
             'integrations/discord/inspect',
+            'integrations/slack/events',
         ]);
 
         // Middleware de alias para verificación de equipo

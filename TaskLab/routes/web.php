@@ -3,8 +3,11 @@
 use App\Http\Controllers\DiscordIntegrationController;
 use App\Http\Controllers\GithubConnectionController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SlackConnectionController;
+use App\Http\Controllers\SlackIntegrationController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskImageController;
 use App\Http\Controllers\TeamController;
@@ -15,11 +18,13 @@ Route::get('/', function () {
     return redirect()->route('tasks.index');
 });
 
-// Endpoints públicos de integraciones (protegidos por token propio)
+// Endpoints públicos de integraciones (protegidos por token/firma propia)
 Route::post('/integrations/teams/messages', [TeamsIntegrationController::class, 'store'])
     ->name('integrations.teams.messages');
 Route::post('/integrations/discord/messages', [DiscordIntegrationController::class, 'store'])
     ->name('integrations.discord.messages');
+Route::post('/integrations/slack/events', [SlackIntegrationController::class, 'events'])
+    ->name('integrations.slack.events');
 Route::post('/integrations/discord/inspect', function (\Illuminate\Http\Request $request) {
     return response()->json([
         'headers'     => $request->headers->all(),
@@ -33,6 +38,12 @@ Route::post('/integrations/discord/inspect', function (\Illuminate\Http\Request 
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // ─── Onboarding (SuperAdmin) ──────────────────────────────────────────────
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding/profile', [OnboardingController::class, 'saveProfile'])->name('onboarding.profile');
+    Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+    Route::post('/onboarding/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
+
     Route::get('/dashboard', fn () => redirect()->route('tasks.index', ['view' => 'dashboard']))->name('dashboard');
 
     // Página de espera de asignación de equipo (accesible sin equipo)
@@ -41,8 +52,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'has_team' => (bool) request()->user()?->hasTeam(),
     ]))->name('pending-team.check');
 
-    // GitHub OAuth callback (fuera de team.required, la sesión ya está activa)
+    // OAuth callbacks — fuera de team.required porque llegan desde servicios externos
     Route::get('/settings/github/callback', [GithubConnectionController::class, 'callback'])->name('settings.github.callback');
+    Route::get('/settings/slack/callback', [SlackConnectionController::class, 'callback'])->name('settings.slack.callback');
 
     // ─── Rutas que requieren equipo ───────────────────────────────────────────
     Route::middleware('team.required')->group(function () {
@@ -71,6 +83,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings/category-types/{categoryType}/values', [SettingsController::class, 'storeCategoryValue'])->name('settings.category-values.store');
         Route::patch('/settings/category-values/{categoryValue}', [SettingsController::class, 'updateCategoryValue'])->name('settings.category-values.update');
         Route::delete('/settings/category-values/{categoryValue}', [SettingsController::class, 'destroyCategoryValue'])->name('settings.category-values.destroy');
+
+        // Slack connection (OAuth)
+        Route::get('/settings/slack/auth', [SlackConnectionController::class, 'redirect'])->name('settings.slack.auth');
+        Route::delete('/settings/slack', [SlackConnectionController::class, 'destroy'])->name('settings.slack.destroy');
 
         // GitHub OAuth connection
         Route::get('/settings/github/auth', [GithubConnectionController::class, 'redirect'])->name('settings.github.auth');

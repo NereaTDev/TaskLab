@@ -28,6 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // SA que no ha completado el onboarding → redirigir al onboarding (solo 1 vez)
+        if ($request->user()->needsOnboarding()) {
+            return redirect()->route('onboarding.show');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

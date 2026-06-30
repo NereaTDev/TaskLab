@@ -18,8 +18,12 @@ class User extends Authenticatable
         'password',
         'department',
         'position',
+        'phone',
+        'avatar_url',
         'user_type',
         'is_admin',
+        'is_super_admin',
+        'onboarding_completed_at',
     ];
 
     protected $hidden = [
@@ -30,11 +34,17 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_admin'          => 'boolean',
-            'is_super_admin'    => 'boolean',
+            'email_verified_at'       => 'datetime',
+            'password'                => 'hashed',
+            'is_admin'                => 'boolean',
+            'is_super_admin'          => 'boolean',
+            'onboarding_completed_at' => 'datetime',
         ];
+    }
+
+    public function needsOnboarding(): bool
+    {
+        return $this->isSuperAdmin() && $this->onboarding_completed_at === null;
     }
 
     public function teams()
