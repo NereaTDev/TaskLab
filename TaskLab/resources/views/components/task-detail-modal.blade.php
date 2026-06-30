@@ -26,9 +26,9 @@
       {{-- Cabecera: título + metadatos clave --}}
       <div class="border-b border-slate-800 bg-tasklab-bg-muted px-6 py-4 flex flex-col gap-3">
         <div class="flex items-start gap-3">
-          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text border border-slate-700">
+          <!-- <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-tasklab-text border border-slate-700">
             <span x-text="modalTask && modalTask.title ? modalTask.title.substring(0,2).toUpperCase() : 'TS'"></span>
-          </span>
+          </span> -->
           <div class="flex-1 min-w-0">
             <input
               type="text"
