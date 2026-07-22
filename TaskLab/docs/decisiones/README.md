@@ -21,6 +21,7 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - [D-002 — El problema es la pérdida de contexto (Sprint 01)](D-002-el-problema-es-la-perdida-de-contexto.md)
 - [D-003 — El tiempo más caro es el de comprensión (Sprint 02)](D-003-el-tiempo-mas-caro-es-el-de-comprension.md)
 - [D-004 — Ready to Understand como concepto central (Sprint 03)](D-004-ready-to-understand-como-concepto-central.md)
+- [D-005 — Incertidumbre como métrica (Sprint 04)](D-005-incertidumbre-como-metrica.md)
 
 ## Referencias cruzadas
 
@@ -28,7 +29,9 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - `docs/second-brain/02-problema.md`
 - `docs/investigacion/flujo-del-desarrollador.md`
 - `docs/investigacion/validacion-externa.md`
+- `docs/investigacion/incertidumbre.md`
 - `docs/producto/ready-to-understand.md`
+- `docs/modelo/proceso-mental-del-desarrollador.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 03)*
+*Última actualización: 2026-07-23 (Sprint 04)*

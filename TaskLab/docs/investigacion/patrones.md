@@ -112,6 +112,30 @@ Descripción
 
 La implementación comienza únicamente cuando el desarrollador entiende el funcionamiento actual del sistema.
 
+## P-012
+
+Nombre
+
+Reducción progresiva de incertidumbre.
+
+Descripción
+
+Los desarrolladores no pasan directamente de recibir una tarea a implementar una solución.
+
+Antes reducen progresivamente la incertidumbre hasta sentirse capaces de actuar.
+
+## P-013
+
+Nombre
+
+Las preguntas determinan la preparación.
+
+Descripción
+
+Una tarea puede contener mucha información y seguir generando preguntas importantes.
+
+Otra puede contener menos información y permitir comenzar inmediatamente.
+
 ## Referencias
 
 - `docs/casos/2026-07-descuentos.md`
@@ -121,6 +145,9 @@ La implementación comienza únicamente cuando el desarrollador entiende el func
 - `docs/validaciones/H-002-tiempo-de-comprension.md`
 - `docs/investigacion/validacion-externa.md`
 - `docs/producto/ready-to-understand.md`
+- `docs/investigacion/incertidumbre.md`
+- `docs/producto/incertidumbre.md`
+- `docs/validaciones/H-004-incertidumbre.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 03)*
+*Última actualización: 2026-07-23 (Sprint 04)*

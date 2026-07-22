@@ -13,13 +13,14 @@ Reunir la definición funcional del producto: qué hace TaskLab, para quién, y 
 - Relación entre features y la propuesta de valor (ver `docs/second-brain/04-propuesta-valor.md`)
 - [modelo-del-dominio.md](modelo-del-dominio.md) — primer modelo de actores, artefactos, conceptos y eventos del dominio (provisional, Sprint 02)
 - [ready-to-understand.md](ready-to-understand.md) — definición del concepto "Ready to Understand" y sus criterios iniciales (Sprint 03)
+- [incertidumbre.md](incertidumbre.md) — definición de la incertidumbre como métrica de riesgo de la información, no de la persona (Sprint 04)
 
 ## Pendiente
 
 - [ ] Documentar el MVP inicial en detalle (agente de IA conectado a canal de comunicación)
 - [ ] Documentar features planificadas (ver "Próximas features planificadas" en `CLAUDE.md`)
 - [ ] Evolucionar el modelo de dominio hacia el modelo completo de una petición de desarrollo (ver `docs/sprints/Sprint-02.md`)
-- [ ] Diseñar el primer MVP de TaskLab (ver `docs/sprints/Sprint-03.md`)
+- [ ] Diseñar el primer MVP de TaskLab (ver `docs/sprints/Sprint-04.md`)
 
 ## Referencias cruzadas
 
@@ -27,4 +28,4 @@ Reunir la definición funcional del producto: qué hace TaskLab, para quién, y 
 - `docs/roadmap/README.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 03)*
+*Última actualización: 2026-07-23 (Sprint 04)*

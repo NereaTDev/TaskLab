@@ -38,6 +38,14 @@ TaskLab buscará que cualquier petición pueda evaluarse antes de llegar a desar
 
 Ver el concepto `docs/producto/ready-to-understand.md` y la decisión `docs/decisiones/D-004-ready-to-understand-como-concepto-central.md`.
 
+## Ampliación de la misión (Sprint 04 — 2026-07-23)
+
+TaskLab no pretende generar más documentación.
+
+Pretende reducir la incertidumbre necesaria para comenzar una implementación.
+
+Ver el concepto `docs/producto/incertidumbre.md` y la decisión `docs/decisiones/D-005-incertidumbre-como-metrica.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -49,7 +57,8 @@ Ver el concepto `docs/producto/ready-to-understand.md` y la decisión `docs/deci
 
 - [[02-problema]]
 - [[04-propuesta-valor]]
+- [[frases-clave]] — frases textuales que resumen los giros de posicionamiento de cada sprint
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-23 (Sprint 03)*
+*Última actualización: 2026-07-23 (Sprint 04)*
