@@ -12,6 +12,7 @@ Centralizar hallazgos de investigación que informan decisiones de producto y es
 - Entrevistas o conversaciones con clientes potenciales
 - Investigación sobre el problema descrito en `docs/second-brain/02-problema.md`
 - [problemas-observados.md](problemas-observados.md) — registro exclusivo de evidencia (sin ideas ni soluciones) recogida en empresas reales
+- [patrones.md](patrones.md) — patrones repetitivos (P-001 a P-005) extraídos de los casos reales en `docs/casos/` (Sprint 01)
 
 ## Pendiente
 
@@ -26,4 +27,4 @@ Centralizar hallazgos de investigación que informan decisiones de producto y es
 - `docs/validaciones/README.md`
 
 ---
-*Última actualización: 2026-07-22*
+*Última actualización: 2026-07-22 (Sprint 01)*
