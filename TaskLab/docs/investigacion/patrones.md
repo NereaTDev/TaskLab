@@ -92,6 +92,26 @@ Descripción
 
 Muchas tareas indican que algo está roto sin explicar cuál debería ser el comportamiento correcto.
 
+## P-010
+
+Nombre
+
+Reconstrucción manual del contexto.
+
+Descripción
+
+Cuando la información necesaria no aparece en la tarea, los desarrolladores reconstruyen el contexto utilizando historial de Git, conversaciones y reuniones.
+
+## P-011
+
+Nombre
+
+Comprender antes de modificar.
+
+Descripción
+
+La implementación comienza únicamente cuando el desarrollador entiende el funcionamiento actual del sistema.
+
 ## Referencias
 
 - `docs/casos/2026-07-descuentos.md`
@@ -99,6 +119,8 @@ Muchas tareas indican que algo está roto sin explicar cuál debería ser el com
 - `docs/validaciones/H-001-expediente-completo.md`
 - `docs/investigacion/flujo-del-desarrollador.md`
 - `docs/validaciones/H-002-tiempo-de-comprension.md`
+- `docs/investigacion/validacion-externa.md`
+- `docs/producto/ready-to-understand.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 02)*
+*Última actualización: 2026-07-23 (Sprint 03)*

@@ -12,8 +12,9 @@ Centralizar hallazgos de investigación que informan decisiones de producto y es
 - Entrevistas o conversaciones con clientes potenciales
 - Investigación sobre el problema descrito en `docs/second-brain/02-problema.md`
 - [problemas-observados.md](problemas-observados.md) — registro exclusivo de evidencia (sin ideas ni soluciones) recogida en empresas reales
-- [patrones.md](patrones.md) — patrones repetitivos (P-001 a P-009) extraídos de los casos reales en `docs/casos/` y de conversaciones con desarrolladores (Sprint 01–02)
+- [patrones.md](patrones.md) — patrones repetitivos (P-001 a P-011) extraídos de los casos reales en `docs/casos/` y de conversaciones con desarrolladores (Sprint 01–03)
 - [flujo-del-desarrollador.md](flujo-del-desarrollador.md) — flujo mental real de un desarrollador desde que recibe una tarea hasta que empieza a programar (Sprint 02)
+- [validacion-externa.md](validacion-externa.md) — validación de los problemas observados con equipos de desarrollo externos (Sprint 03)
 
 ## Pendiente
 
@@ -28,4 +29,4 @@ Centralizar hallazgos de investigación que informan decisiones de producto y es
 - `docs/validaciones/README.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 02)*
+*Última actualización: 2026-07-23 (Sprint 03)*

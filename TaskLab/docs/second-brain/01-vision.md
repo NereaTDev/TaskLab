@@ -32,6 +32,12 @@ Su objetivo no es únicamente conservar decisiones de negocio, sino ayudar a cua
 
 Ver `docs/decisiones/D-003-el-tiempo-mas-caro-es-el-de-comprension.md` y `docs/investigacion/flujo-del-desarrollador.md`.
 
+## Ampliación de la misión (Sprint 03 — 2026-07-23)
+
+TaskLab buscará que cualquier petición pueda evaluarse antes de llegar a desarrollo para determinar si contiene suficiente información para ser comprendida sin depender de conocimiento implícito.
+
+Ver el concepto `docs/producto/ready-to-understand.md` y la decisión `docs/decisiones/D-004-ready-to-understand-como-concepto-central.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -46,4 +52,4 @@ Ver `docs/decisiones/D-003-el-tiempo-mas-caro-es-el-de-comprension.md` y `docs/i
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-23 (Sprint 02)*
+*Última actualización: 2026-07-23 (Sprint 03)*
