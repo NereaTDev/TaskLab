@@ -17,10 +17,11 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 ## Índice de decisiones
 
 - [001 — No competir con Jira](001-no-competir-con-jira.md)
+- [D-001 — No competir con Jira (Sprint 00)](D-001-no-competir-con-jira.md)
 
 ## Referencias cruzadas
 
 - `docs/second-brain/05-principios.md`
 
 ---
-*Última actualización: 2026-07-22*
+*Última actualización: 2026-07-22 (Sprint 00)*

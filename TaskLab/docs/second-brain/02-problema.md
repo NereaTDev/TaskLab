@@ -1,8 +1,20 @@
 # 02 · Problema
 
-> Plantilla inicial — Second Brain de TaskLab. Completar y revisar a medida que el producto evoluciona.
+> Second Brain de TaskLab. Completar y revisar a medida que el producto evoluciona.
 
-## Problema principal
+## Problema principal (Sprint 00 — 2026-07-22)
+
+Actualmente creemos que el problema principal es:
+
+- La información cambia continuamente durante el ciclo de vida de una petición.
+- El contexto se pierde entre departamentos.
+- Las tareas llegan con información insuficiente.
+- Nadie tiene una única fuente de verdad.
+- Los desarrolladores trabajan con incertidumbre.
+
+> **Nota:** esta definición todavía es una hipótesis que deberá validarse con más empresas. Ver [[../validaciones/README]] para el proceso de validación y [[../investigacion/problemas-observados]] para la evidencia recogida.
+
+## Problema principal (formulación previa)
 
 La información entre negocio, soporte, producto y desarrollo **llega incompleta, desordenada o perdida**.
 
@@ -33,4 +45,4 @@ Esto provoca:
 - Ver `docs/validaciones/README.md` para evidencia recogida sobre este problema.
 
 ---
-*Última actualización: 2026-07-22*
+*Última actualización: 2026-07-22 (Sprint 00)*

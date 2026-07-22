@@ -11,6 +11,7 @@ Centralizar hallazgos de investigación que informan decisiones de producto y es
 - Análisis de competidores (Jira, Linear, Shortcut, Trello, ClickUp y otros)
 - Entrevistas o conversaciones con clientes potenciales
 - Investigación sobre el problema descrito en `docs/second-brain/02-problema.md`
+- [problemas-observados.md](problemas-observados.md) — registro exclusivo de evidencia (sin ideas ni soluciones) recogida en empresas reales
 
 ## Pendiente
 

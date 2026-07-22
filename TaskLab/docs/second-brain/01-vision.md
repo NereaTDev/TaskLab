@@ -1,6 +1,16 @@
 # 01 · Visión
 
-> Plantilla inicial — Second Brain de TaskLab. Completar y revisar a medida que el producto evoluciona.
+> Second Brain de TaskLab. Completar y revisar a medida que el producto evoluciona.
+
+## Origen (Sprint 00 — 2026-07-22)
+
+TaskLab nace para resolver un problema observado repetidamente durante el desarrollo de software.
+
+Las empresas pierden información, contexto y decisiones desde que aparece una necesidad hasta que una funcionalidad llega a producción.
+
+**La misión de TaskLab será reducir esa pérdida de conocimiento.**
+
+No pretende ser simplemente otro gestor de tareas. Su objetivo es **preservar el contexto completo de cada decisión** para reducir incertidumbre, reuniones, retrabajo y cambios tardíos.
 
 ## Declaración de visión
 
@@ -28,4 +38,4 @@ TaskLab debe definirse como **una capa de inteligencia entre la comunicación de
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-22*
+*Última actualización: 2026-07-22 (Sprint 00)*

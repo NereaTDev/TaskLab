@@ -96,11 +96,15 @@ Además de la documentación técnica anterior, `docs/` incluye un espacio de do
 | `docs/marketing/` | Mensajes, posicionamiento y estrategia de comunicación |
 | `docs/ventas/` | Pitch de ventas, objeciones, pricing |
 | `docs/arquitectura/` | Arquitectura técnica estratégica (complementa este archivo) |
-| `docs/validaciones/` | Experimentos y validación de hipótesis de negocio |
+| `docs/validaciones/` | Experimentos y validación de hipótesis de negocio (formato: Hipótesis / Evidencias / Cómo validarla / Resultado / Estado) |
 | `docs/feedback-clientes/` | Feedback cualitativo recogido de clientes/usuarios |
 | `docs/metricas/` | Métricas de producto y negocio |
+| `docs/casos/` | Casos reales ocurridos durante el desarrollo de software (solo hechos: qué ocurrió, qué información faltó/cambió, consecuencias, aprendizaje) |
+| `docs/sprints/` | Bitácora de sprints del Second Brain (objetivo, resultados, pendientes), p.ej. `Sprint-00.md` |
 
-**Idea clave a recordar en todo momento:** TaskLab no debe tratarse como "un gestor de tareas más". Es una **capa de inteligencia entre la comunicación de una empresa y sus sistemas de trabajo**. No compite inicialmente con Jira/Linear/Shortcut/Trello/ClickUp — se integra con ellos (ver `docs/decisiones/001-no-competir-con-jira.md`). Cualquier sugerencia de producto o arquitectura debe respetar este posicionamiento salvo indicación expresa en contra.
+**Idea clave a recordar en todo momento:** TaskLab no debe tratarse como "un gestor de tareas más". Es una **capa de inteligencia entre la comunicación de una empresa y sus sistemas de trabajo**, cuya misión es reducir la pérdida de contexto y conocimiento desde que aparece una necesidad hasta que llega a producción. No compite inicialmente con Jira/Linear/Shortcut/Trello/ClickUp — se integra con ellos (ver `docs/decisiones/001-no-competir-con-jira.md` y `docs/decisiones/D-001-no-competir-con-jira.md`). Cualquier sugerencia de producto o arquitectura debe respetar este posicionamiento salvo indicación expresa en contra.
+
+**Estado del Second Brain:** Sprint 00 completado (ver `docs/sprints/Sprint-00.md`). El problema documentado en `docs/second-brain/02-problema.md` es todavía una **hipótesis pendiente de validar** con más empresas, no un hecho confirmado.
 
 ## Pipeline de IA (RefineTaskWithAi)
 
