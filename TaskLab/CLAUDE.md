@@ -82,6 +82,26 @@ APP_URL=https://tu-app.onrender.com
 - `docs/ai-task-refiner-spec.md` — especificación del refinador de IA
 - `docs/founderz-tasklab-flow.md` — flujo general de la aplicación
 
+## Second Brain — documentación estratégica
+
+Además de la documentación técnica anterior, `docs/` incluye un espacio de documentación estratégica ("Second Brain") separado del código, pensado para mantener contexto de negocio, producto y estrategia a lo largo del tiempo:
+
+| Carpeta | Contenido |
+|---------|-----------|
+| `docs/second-brain/` | Núcleo estratégico: visión, problema, cliente ideal, propuesta de valor, principios (`01-vision.md` a `05-principios.md`) |
+| `docs/producto/` | Definiciones funcionales de producto |
+| `docs/investigacion/` | Investigación de mercado, competencia y usuarios |
+| `docs/decisiones/` | Registro de decisiones estratégicas (ADR de negocio/producto), p.ej. `001-no-competir-con-jira.md` |
+| `docs/roadmap/` | Planificación temporal de features |
+| `docs/marketing/` | Mensajes, posicionamiento y estrategia de comunicación |
+| `docs/ventas/` | Pitch de ventas, objeciones, pricing |
+| `docs/arquitectura/` | Arquitectura técnica estratégica (complementa este archivo) |
+| `docs/validaciones/` | Experimentos y validación de hipótesis de negocio |
+| `docs/feedback-clientes/` | Feedback cualitativo recogido de clientes/usuarios |
+| `docs/metricas/` | Métricas de producto y negocio |
+
+**Idea clave a recordar en todo momento:** TaskLab no debe tratarse como "un gestor de tareas más". Es una **capa de inteligencia entre la comunicación de una empresa y sus sistemas de trabajo**. No compite inicialmente con Jira/Linear/Shortcut/Trello/ClickUp — se integra con ellos (ver `docs/decisiones/001-no-competir-con-jira.md`). Cualquier sugerencia de producto o arquitectura debe respetar este posicionamiento salvo indicación expresa en contra.
+
 ## Pipeline de IA (RefineTaskWithAi)
 
 El job hace una sola llamada a OpenAI con contexto completo y luego orquesta:
