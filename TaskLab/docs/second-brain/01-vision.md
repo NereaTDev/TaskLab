@@ -46,6 +46,12 @@ Pretende reducir la incertidumbre necesaria para comenzar una implementación.
 
 Ver el concepto `docs/producto/incertidumbre.md` y la decisión `docs/decisiones/D-005-incertidumbre-como-metrica.md`.
 
+## Ampliación de la misión (Sprint 05 — 2026-07-23)
+
+TaskLab se diseñará siguiendo el razonamiento natural de un desarrollador y no la estructura de las herramientas que utiliza.
+
+Ver `docs/modelo/motor-de-comprension.md` y la decisión `docs/decisiones/D-006-modelo-mental-del-desarrollador.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -58,7 +64,8 @@ Ver el concepto `docs/producto/incertidumbre.md` y la decisión `docs/decisiones
 - [[02-problema]]
 - [[04-propuesta-valor]]
 - [[frases-clave]] — frases textuales que resumen los giros de posicionamiento de cada sprint
+- [[preguntas-abiertas]] — preguntas sin resolver detectadas durante la investigación
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-23 (Sprint 04)*
+*Última actualización: 2026-07-23 (Sprint 05)*

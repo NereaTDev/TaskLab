@@ -22,6 +22,7 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - [D-003 — El tiempo más caro es el de comprensión (Sprint 02)](D-003-el-tiempo-mas-caro-es-el-de-comprension.md)
 - [D-004 — Ready to Understand como concepto central (Sprint 03)](D-004-ready-to-understand-como-concepto-central.md)
 - [D-005 — Incertidumbre como métrica (Sprint 04)](D-005-incertidumbre-como-metrica.md)
+- [D-006 — Modelo mental del desarrollador (Sprint 05)](D-006-modelo-mental-del-desarrollador.md)
 
 ## Referencias cruzadas
 
@@ -32,6 +33,7 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - `docs/investigacion/incertidumbre.md`
 - `docs/producto/ready-to-understand.md`
 - `docs/modelo/proceso-mental-del-desarrollador.md`
+- `docs/modelo/motor-de-comprension.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 04)*
+*Última actualización: 2026-07-23 (Sprint 05)*

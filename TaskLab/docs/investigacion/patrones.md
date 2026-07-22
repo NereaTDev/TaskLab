@@ -136,6 +136,28 @@ Una tarea puede contener mucha información y seguir generando preguntas importa
 
 Otra puede contener menos información y permitir comenzar inmediatamente.
 
+## P-014
+
+Nombre
+
+El razonamiento comienza por la localización.
+
+Descripción
+
+Antes de comprender una petición, el desarrollador necesita localizar la funcionalidad dentro del sistema.
+
+## P-015
+
+Nombre
+
+El conocimiento tiene propietarios.
+
+Descripción
+
+En los equipos de desarrollo el conocimiento suele estar distribuido entre distintas personas.
+
+Conocer quién posee ese conocimiento reduce la incertidumbre.
+
 ## Referencias
 
 - `docs/casos/2026-07-descuentos.md`
@@ -148,6 +170,10 @@ Otra puede contener menos información y permitir comenzar inmediatamente.
 - `docs/investigacion/incertidumbre.md`
 - `docs/producto/incertidumbre.md`
 - `docs/validaciones/H-004-incertidumbre.md`
+- `docs/modelo/motor-de-comprension.md`
+- `docs/modelo/contextos.md`
+- `docs/modelo/cadena-de-confianza.md`
+- `docs/validaciones/H-005-motor-de-comprension.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 04)*
+*Última actualización: 2026-07-23 (Sprint 05)*
