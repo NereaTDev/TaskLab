@@ -32,12 +32,14 @@ A partir del Sprint 00, cada validación registrada en esta carpeta debe seguir 
 ## Índice de hipótesis registradas
 
 - [H-001 — Expediente completo](H-001-expediente-completo.md) (Sprint 01, pendiente de validar)
+- [H-002 — Tiempo de comprensión](H-002-tiempo-de-comprension.md) (Sprint 02, pendiente de validar)
 
 ## Pendiente
 
 - [ ] Diseñar primer experimento de validación de la hipótesis principal
 - [ ] Definir métricas de éxito (ver `docs/metricas/README.md`)
 - [ ] Diseñar cómo validar H-001
+- [ ] Diseñar cómo validar H-002
 
 ## Referencias cruzadas
 
@@ -46,4 +48,4 @@ A partir del Sprint 00, cada validación registrada en esta carpeta debe seguir 
 - `docs/metricas/README.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 01)*
+*Última actualización: 2026-07-23 (Sprint 02)*

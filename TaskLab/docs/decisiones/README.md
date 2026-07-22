@@ -19,11 +19,13 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - [001 — No competir con Jira](001-no-competir-con-jira.md)
 - [D-001 — No competir con Jira (Sprint 00)](D-001-no-competir-con-jira.md)
 - [D-002 — El problema es la pérdida de contexto (Sprint 01)](D-002-el-problema-es-la-perdida-de-contexto.md)
+- [D-003 — El tiempo más caro es el de comprensión (Sprint 02)](D-003-el-tiempo-mas-caro-es-el-de-comprension.md)
 
 ## Referencias cruzadas
 
 - `docs/second-brain/05-principios.md`
 - `docs/second-brain/02-problema.md`
+- `docs/investigacion/flujo-del-desarrollador.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 01)*
+*Última actualización: 2026-07-23 (Sprint 02)*

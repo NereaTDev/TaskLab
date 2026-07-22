@@ -52,11 +52,53 @@ Descripción
 
 Los desarrolladores comienzan tareas sin saber si la información es suficiente o si cambiará al día siguiente.
 
+## P-006
+
+Nombre
+
+Comprensión antes que implementación.
+
+Descripción
+
+La mayor parte del tiempo inicial no se dedica a programar sino a comprender el sistema existente.
+
+## P-007
+
+Nombre
+
+Git como fuente de contexto.
+
+Descripción
+
+Los desarrolladores utilizan git blame y el historial de commits para intentar reconstruir el contexto que no existe en la tarea.
+
+## P-008
+
+Nombre
+
+Estado actual desconocido.
+
+Descripción
+
+Muchas tareas indican qué debe cambiar pero no describen claramente cuál es el comportamiento actual.
+
+## P-009
+
+Nombre
+
+Estado esperado ambiguo.
+
+Descripción
+
+Muchas tareas indican que algo está roto sin explicar cuál debería ser el comportamiento correcto.
+
 ## Referencias
 
 - `docs/casos/2026-07-descuentos.md`
 - `docs/casos/2026-07-cambios-prioridades.md`
 - `docs/validaciones/H-001-expediente-completo.md`
+- `docs/investigacion/flujo-del-desarrollador.md`
+- `docs/validaciones/H-002-tiempo-de-comprension.md`
 
 ---
-*Última actualización: 2026-07-22 (Sprint 01)*
+*Última actualización: 2026-07-23 (Sprint 02)*

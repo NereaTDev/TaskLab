@@ -24,6 +24,14 @@ TaskLab debe definirse como **una capa de inteligencia entre la comunicación de
 - TaskLab se sitúa *antes* de las herramientas de gestión (Jira, Linear, Shortcut, Trello, ClickUp...), no en su lugar.
 - El producto actúa como intermediario inteligente entre canales de comunicación (Discord, Teams, formularios web, etc.) y los sistemas donde el trabajo realmente se ejecuta y se rastrea.
 
+## Ampliación de la misión (Sprint 02 — 2026-07-23)
+
+TaskLab aspira a convertirse en la **memoria operativa del desarrollo de software**.
+
+Su objetivo no es únicamente conservar decisiones de negocio, sino ayudar a cualquier desarrollador a comprender rápidamente cómo funciona una funcionalidad, por qué existe y qué debe cambiar.
+
+Ver `docs/decisiones/D-003-el-tiempo-mas-caro-es-el-de-comprension.md` y `docs/investigacion/flujo-del-desarrollador.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -38,4 +46,4 @@ TaskLab debe definirse como **una capa de inteligencia entre la comunicación de
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-22 (Sprint 00)*
+*Última actualización: 2026-07-23 (Sprint 02)*
