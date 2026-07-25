@@ -62,6 +62,12 @@ Aunque el primer mercado sean los equipos de desarrollo, el modelo conceptual po
 
 Ver `docs/dominio/necesidad.md`, `docs/dominio/cadena-de-decisiones.md` y las decisiones `docs/decisiones/D-007-necesidad-como-objeto-raiz.md` y `docs/decisiones/D-008-decisiones-como-unidades-trazables.md`.
 
+## Ampliación de la misión (Sprint 08 — 2026-07-25)
+
+TaskLab se desarrollará sobre el repositorio Laravel existente. El Segundo Cerebro seguirá siendo la memoria documental del producto y el código evolucionará progresivamente hacia la implementación del Motor de Comprensión.
+
+Ver `docs/arquitectura/auditoria-repositorio-sprint-08.md`, `docs/arquitectura/primer-flujo-motor-comprension.md` y las decisiones `docs/decisiones/D-010-adaptar-repositorio-laravel-existente.md` y `docs/decisiones/D-011-primer-motor-simulado.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -78,4 +84,4 @@ Ver `docs/dominio/necesidad.md`, `docs/dominio/cadena-de-decisiones.md` y las de
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-23 (Sprint 06)*
+*Última actualización: 2026-07-25 (Sprint 08)*

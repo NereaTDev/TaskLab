@@ -26,6 +26,8 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - [D-007 — Necesidad como objeto raíz (Sprint 06)](D-007-necesidad-como-objeto-raiz.md)
 - [D-008 — Decisiones como unidades trazables (Sprint 06)](D-008-decisiones-como-unidades-trazables.md)
 - [D-009 — Posicionamiento (Sprint 07)](D-009-posicionamiento.md)
+- [D-010 — Adaptar el repositorio Laravel existente (Sprint 08)](D-010-adaptar-repositorio-laravel-existente.md)
+- [D-011 — Comenzar con un Motor de Comprensión simulado (Sprint 08)](D-011-primer-motor-simulado.md)
 
 ## Referencias cruzadas
 
@@ -40,6 +42,8 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - `docs/modelo/motor-de-comprension.md`
 - `docs/dominio/necesidad.md`
 - `docs/dominio/decision.md`
+- `docs/arquitectura/auditoria-repositorio-sprint-08.md`
+- `docs/arquitectura/primer-flujo-motor-comprension.md`
 
 ---
-*Última actualización: 2026-07-25 (Sprint 07)*
+*Última actualización: 2026-07-25 (Sprint 08)*
