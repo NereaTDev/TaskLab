@@ -52,6 +52,16 @@ TaskLab se diseñará siguiendo el razonamiento natural de un desarrollador y no
 
 Ver `docs/modelo/motor-de-comprension.md` y la decisión `docs/decisiones/D-006-modelo-mental-del-desarrollador.md`.
 
+## Ampliación de la misión (Sprint 06 — 2026-07-23)
+
+TaskLab parte de necesidades, no de tickets.
+
+Su propósito es ayudar a transformar necesidades inciertas en cadenas de decisiones explícitas, comprensibles, atribuibles y validables.
+
+Aunque el primer mercado sean los equipos de desarrollo, el modelo conceptual podrá evaluarse posteriormente en otros tipos de trabajo basado en conocimiento.
+
+Ver `docs/dominio/necesidad.md`, `docs/dominio/cadena-de-decisiones.md` y las decisiones `docs/decisiones/D-007-necesidad-como-objeto-raiz.md` y `docs/decisiones/D-008-decisiones-como-unidades-trazables.md`.
+
 ## Horizonte a largo plazo
 
 - [ ] Definir el horizonte a 1 año
@@ -68,4 +78,4 @@ Ver `docs/modelo/motor-de-comprension.md` y la decisión `docs/decisiones/D-006-
 - Ver también `docs/producto/README.md` para la visión de producto aplicada al día a día.
 
 ---
-*Última actualización: 2026-07-23 (Sprint 05)*
+*Última actualización: 2026-07-23 (Sprint 06)*

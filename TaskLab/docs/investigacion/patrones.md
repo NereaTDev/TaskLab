@@ -158,6 +158,78 @@ En los equipos de desarrollo el conocimiento suele estar distribuido entre disti
 
 Conocer quién posee ese conocimiento reduce la incertidumbre.
 
+## P-016
+
+Nombre
+
+Toda ejecución contiene decisiones.
+
+Descripción
+
+Incluso los cambios aparentemente pequeños implican decisiones sobre qué modificar, cómo hacerlo, quién debe aprobarlo o cómo comprobar el resultado.
+
+## P-017
+
+Nombre
+
+Las decisiones tienen propietarios diferentes.
+
+Descripción
+
+Una necesidad genera decisiones funcionales, técnicas, visuales, legales o estratégicas que pueden depender de distintas personas o departamentos.
+
+## P-018
+
+Nombre
+
+El contexto se reconstruye buscando decisiones anteriores.
+
+Descripción
+
+Las personas consultan código, historial, conversaciones y documentación para entender por qué se eligió una actuación concreta.
+
+## P-019
+
+Nombre
+
+La ejecución no implica autoridad.
+
+Descripción
+
+La persona responsable de aplicar un cambio no siempre posee autoridad para decidir todos sus detalles.
+
+## P-020
+
+Nombre
+
+Las herramientas registran decisiones explícitas.
+
+Descripción
+
+Las herramientas actuales permiten documentar decisiones ya identificadas.
+
+No ayudan necesariamente a descubrir cuáles faltan.
+
+## P-021
+
+Nombre
+
+Toda decisión ausente genera una consecuencia observable.
+
+Descripción
+
+Las decisiones implícitas producen bloqueos, retrasos, implementaciones erróneas o abandono.
+
+## P-022
+
+Nombre
+
+Los errores de decisión son diferentes de los errores de implementación.
+
+Descripción
+
+Un sistema puede estar correctamente implementado y, aun así, responder a una decisión equivocada.
+
 ## Referencias
 
 - `docs/casos/2026-07-descuentos.md`
@@ -174,6 +246,19 @@ Conocer quién posee ese conocimiento reduce la incertidumbre.
 - `docs/modelo/contextos.md`
 - `docs/modelo/cadena-de-confianza.md`
 - `docs/validaciones/H-005-motor-de-comprension.md`
+- `docs/dominio/necesidad.md`
+- `docs/dominio/decision.md`
+- `docs/dominio/cadena-de-decisiones.md`
+- `docs/dominio/propiedad-de-la-decision.md`
+- `docs/modelo/transformacion-de-tasklab.md`
+- `docs/modelo/contexto-como-decisiones.md`
+- `docs/validaciones/H-006-necesidad-como-objeto-raiz.md`
+- `docs/validaciones/H-007-decisiones-implicitas.md`
+- `docs/investigacion/mercado-decisiones.md`
+- `docs/investigacion/errores-de-decision.md`
+- `docs/investigacion/consecuencias-de-decisiones-ausentes.md`
+- `docs/validaciones/H-008-descubrimiento-de-decisiones.md`
+- `docs/decisiones/D-009-posicionamiento.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 05)*
+*Última actualización: 2026-07-25 (Sprint 07)*

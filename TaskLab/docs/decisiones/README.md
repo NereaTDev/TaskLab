@@ -23,6 +23,9 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - [D-004 — Ready to Understand como concepto central (Sprint 03)](D-004-ready-to-understand-como-concepto-central.md)
 - [D-005 — Incertidumbre como métrica (Sprint 04)](D-005-incertidumbre-como-metrica.md)
 - [D-006 — Modelo mental del desarrollador (Sprint 05)](D-006-modelo-mental-del-desarrollador.md)
+- [D-007 — Necesidad como objeto raíz (Sprint 06)](D-007-necesidad-como-objeto-raiz.md)
+- [D-008 — Decisiones como unidades trazables (Sprint 06)](D-008-decisiones-como-unidades-trazables.md)
+- [D-009 — Posicionamiento (Sprint 07)](D-009-posicionamiento.md)
 
 ## Referencias cruzadas
 
@@ -31,9 +34,12 @@ Cada archivo sigue el patrón `NNN-titulo-de-la-decision.md` y debe incluir:
 - `docs/investigacion/flujo-del-desarrollador.md`
 - `docs/investigacion/validacion-externa.md`
 - `docs/investigacion/incertidumbre.md`
+- `docs/investigacion/mercado-decisiones.md`
 - `docs/producto/ready-to-understand.md`
 - `docs/modelo/proceso-mental-del-desarrollador.md`
 - `docs/modelo/motor-de-comprension.md`
+- `docs/dominio/necesidad.md`
+- `docs/dominio/decision.md`
 
 ---
-*Última actualización: 2026-07-23 (Sprint 05)*
+*Última actualización: 2026-07-25 (Sprint 07)*

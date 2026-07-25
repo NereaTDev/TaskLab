@@ -46,6 +46,7 @@ Las hipótesis deben validarse antes de convertirse en funcionalidades. Ver `doc
 
 - [[01-vision]]
 - [[04-propuesta-valor]]
+- [[principios]] — principios adicionales derivados del modelo de dominio, registrados a partir del Sprint 06
 
 ---
-*Última actualización: 2026-07-22 (Sprint 00)*
+*Última actualización: 2026-07-23 (Sprint 06)*
